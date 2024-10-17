@@ -23,16 +23,12 @@ twitter_access_token_secret = os.environ.get('TWITTER_ACCESS_TOKEN_SECRET')
 # Initialize Anthropic client
 anthropic_client = anthropic.Anthropic(api_key=anthropic_api_key)
 
-# Initialize Twitter API client
-twitter_auth = tweepy.OAuthHandler(
-    twitter_consumer_key,
-    twitter_consumer_secret
+client = tweepy.Client(
+    consumer_key=twitter_consumer_key,
+    consumer_secret=twitter_consumer_secret,
+    access_token=twitter_access_token,
+    access_token_secret=twitter_access_token_secret
 )
-twitter_auth.set_access_token(
-    twitter_access_token,
-    twitter_access_token_secret
-)
-twitter_api = tweepy.API(twitter_auth)
 
 # Initialize database connection
 """ if database_url:
@@ -61,7 +57,7 @@ def generate_tweet():
         system=[
             {
                 "type": "text",
-                "text": "You are an AI assistant tasked with generating engaging tweets. Your goal is to create short, interesting tweets that build upon or relate to previous tweets."
+                "text": "Craft tweets in 200 characters or less, packed with niche nostalgia and edgy energy that make commentary on current events and the internet of 2000s be self reflecting and edgy. Think Leeroy Jenkins, Napster downloads, and LimeWire download. Dive deep into forgotten internet culture. No meme is too obscure, no reference too niche. Go wild, be original. DO NOT USE HASHTAGS OR EMOJIS."
             },
             {
                 "type": "text",
@@ -81,9 +77,10 @@ def generate_tweet():
 
 def post_tweet(content):
     try:
-        tweet = twitter_api.update_status(content)
+        response = client.create_tweet(text=content)
+        tweet_id = response.data['id']
         print(f"Tweet posted: {content}")
-        return tweet.id
+        return tweet_id
     except Exception as e:
         print(f"Error posting tweet: {e}")
         return None
@@ -99,9 +96,8 @@ def get_recent_tweets(n=10):
 
 def tweet_job():
     content = generate_tweet()
-    print(content)
-"""     tweet_id = post_tweet(content)
-    if tweet_id:
+    tweet_id = post_tweet(content)
+    """if tweet_id:
         save_tweet(content) """
 
 
