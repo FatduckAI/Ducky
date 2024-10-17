@@ -17,7 +17,7 @@ twitter_consumer_key = os.environ.get('TWITTER_CONSUMER_KEY')
 twitter_consumer_secret = os.environ.get('TWITTER_CONSUMER_SECRET')
 twitter_access_token = os.environ.get('TWITTER_ACCESS_TOKEN')
 twitter_access_token_secret = os.environ.get('TWITTER_ACCESS_TOKEN_SECRET')
-database_url = os.environ.get('DATABASE_URL', '/data/tweets.db')
+#database_url = os.environ.get('DATABASE_URL', '/data/tweets.db')
 
 
 # Initialize Anthropic client
@@ -35,12 +35,12 @@ twitter_auth.set_access_token(
 twitter_api = tweepy.API(twitter_auth)
 
 # Initialize database connection
-if database_url:
+""" if database_url:
     url = urlparse(database_url)
-    db_path = url.path[1:]  # Remove the leading '/'
+    db_path = url.path[1:]  # Remove the leading '/' """
 
 # Connect to the SQLite database
-conn = sqlite3.connect(db_path)
+""" conn = sqlite3.connect(db_path)
 c = conn.cursor()
 
 # Create the tweets table if it doesn't exist
@@ -48,7 +48,7 @@ c.execute('''CREATE TABLE IF NOT EXISTS tweets
              (id INTEGER PRIMARY KEY AUTOINCREMENT,
               content TEXT,
               timestamp DATETIME)''')
-conn.commit()
+conn.commit() """
 
 
 def generate_tweet():
@@ -88,14 +88,14 @@ def post_tweet(content):
         print(f"Error posting tweet: {e}")
         return None
 
-def save_tweet(content):
+""" def save_tweet(content):
     c.execute("INSERT INTO tweets (content, timestamp) VALUES (%s, %s)",
               (content, datetime.now()))
     conn.commit()
 
 def get_recent_tweets(n=10):
     c.execute("SELECT content FROM tweets ORDER BY timestamp DESC LIMIT %s", (n,))
-    return [row[0] for row in c.fetchall()]
+    return [row[0] for row in c.fetchall()] """
 
 def tweet_job():
     content = generate_tweet()
@@ -107,4 +107,4 @@ def tweet_job():
 
 if __name__ == "__main__":
     tweet_job()
-    conn.close()
+    #conn.close()
