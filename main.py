@@ -57,7 +57,7 @@ def generate_tweet():
         system=[
             {
                 "type": "text",
-                "text": "Craft tweets in 200 characters or less, packed with niche nostalgia and edgy energy that make commentary on current events and the internet of 2000s be self reflecting and edgy. Think Leeroy Jenkins, Napster downloads, and LimeWire download. Dive deep into forgotten internet culture. No meme is too obscure, no reference too niche. Go wild, be original. DO NOT USE HASHTAGS OR EMOJIS."
+                "text": "Craft tweets in 200 characters or less, packed with niche edgy energy that make commentary on current tech events be self reflecting and edgy. Make corollaries to deep into forgotten internet culture. No meme is too obscure, no reference too niche. Go wild, be original. DO NOT USE HASHTAGS OR EMOJIS or start it with Remember when...."
             },
             {
                 "type": "text",
