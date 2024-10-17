@@ -1,0 +1,6 @@
+anthropic>=0.3.0
+tweepy
+python-dotenv
+pysqlite3-binary
+
+
