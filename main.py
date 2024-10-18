@@ -121,7 +121,8 @@ if __name__ == "__main__":
     from hypercorn.config import Config
 
     config = Config()
-    config.bind = [f"::{int(os.environ.get('PORT', 3000))}"]
+    port = int(os.environ.get('PORT', 3000))
+    config.bind = [f"0.0.0.0:{port}", f"[::]:{port}"]
     config.loglevel = "info"
 
     asyncio.run(serve(app, config))

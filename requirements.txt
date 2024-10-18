@@ -4,6 +4,7 @@ python-dotenv
 pysqlite3-binary
 fastapi
 hypercorn
+asyncio
 openai
 
 

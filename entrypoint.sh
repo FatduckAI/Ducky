@@ -7,7 +7,7 @@ mkdir -p /data
 # Initialize the database if it doesn't exist
 
 if [ "$1" = "web" ]; then
-    exec python main.py
+    exec python -m main.py
 elif [ "$1" = "hitchiker" ]; then
     exec python -m agents.hitchiker.hitchiker
 elif [ "$1" = "edgelord" ]; then
