@@ -109,6 +109,23 @@ async def save_new_tweet(tweet: Tweet, api_key: str = Depends(verify_api_key)):
         return {"status": "success", "message": "Tweet saved successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+      
+@app.get("/api/get_edgelord_tweets")
+async def get_edgelord_tweets(api_key: str = Depends(verify_api_key)):
+    try:
+        tweets = db_utils.get_edgelord_tweets()
+        return {"status": "success", "tweets": tweets}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+      
+@app.post("/api/save_edgelord_tweet")
+async def save_new_tweet(tweet: Tweet, api_key: str = Depends(verify_api_key)):
+    try:
+        timestamp = datetime.now().isoformat()
+        db_utils.save_edgelord_tweet(tweet.content, tweet.tweet_id, timestamp)
+        return {"status": "success", "message": "Tweet saved successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/health")
 async def healthcheck():

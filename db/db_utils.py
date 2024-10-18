@@ -63,3 +63,20 @@ def save_edgelord_oneoff_tweet(content, tweet_id, timestamp):
                    (content, tweet_id, timestamp))
     conn.commit()
     conn.close()
+
+
+def save_edgelord_tweet(content, tweet_id, timestamp):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO edgelord (content, tweet_id, timestamp) VALUES (?, ?, ?)",
+                   (content, tweet_id, timestamp))
+    conn.commit()
+    conn.close()
+
+def get_edgelord_tweets():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT content FROM edgelord ORDER BY timestamp DESC")
+    tweets = [row['content'] for row in cursor.fetchall()]
+    conn.close()
+    return tweets

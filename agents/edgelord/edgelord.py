@@ -6,6 +6,7 @@ import tweepy
 from dotenv import load_dotenv
 
 from db import db_utils
+from db.sdk import get_edgelord_tweets, save_edgelord_to_db
 from lib.twitter import post_tweet
 
 # Check if we're running locally (not in Railway)
@@ -30,12 +31,9 @@ client = tweepy.Client(
     access_token_secret=twitter_access_token_secret
 )
 
-db_utils.ensure_db_initialized()
-conn = db_utils.get_db_connection()
-cursor = conn.cursor()
 
 def generate_tweet():
-    recent_tweets = get_recent_tweets()
+    recent_tweets = get_edgelord_tweets()
     cached_tweets = "\n".join(recent_tweets)
 
     response = anthropic_client.messages.create(
@@ -51,16 +49,6 @@ def generate_tweet():
     )
     return response.content[0].text.strip()
 
-# Interact with the database
-def save_tweet(content, tweet_id, timestamp):
-    cursor.execute("INSERT INTO edgelord (content, tweet_id, timestamp) VALUES (?, ?, ?)",
-              (content, tweet_id, timestamp))
-    conn.commit()
-
-def get_recent_tweets():
-    cursor.execute("SELECT content FROM edgelord ORDER BY timestamp DESC")
-    recent_tweets = [row['content'] for row in cursor.fetchall()]
-    return recent_tweets
 
 def tweet_job():
     content = generate_tweet()
@@ -69,8 +57,7 @@ def tweet_job():
         content = content[:280]
     tweet_id = post_tweet(content)
     if tweet_id:
-        timestamp = datetime.now().isoformat()
-        save_tweet(content, tweet_id, timestamp)
+        save_edgelord_to_db(content, tweet_id)
 
 if __name__ == "__main__":
     tweet_job()
