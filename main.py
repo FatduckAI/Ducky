@@ -1,106 +1,96 @@
 import os
-from datetime import datetime
-from urllib.parse import urlparse
+from contextlib import asynccontextmanager
+from datetime import datetime, timedelta
 
-import anthropic
-import pysqlite3 as sqlite3
-import tweepy
-from dotenv import load_dotenv
+from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 
-# Check if we're running locally (not in Railway)
-if not os.environ.get('RAILWAY_ENVIRONMENT'):
-    # Load environment variables from .env file for local development
-    load_dotenv()
+from db.db_utils import ensure_db_initialized, get_db_connection
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup: Initialize the database
+    ensure_db_initialized()
+    yield
+    # Shutdown: Add any cleanup here if needed
+
+app = FastAPI(lifespan=lifespan)
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+@app.get("/", response_class=HTMLResponse)
+async def read_root():
+    with open("static/index.html", "r") as f:
+        return f.read()
+
+@app.get("/api/conversations")
+async def get_conversations():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM hitchiker_conversations ORDER BY timestamp DESC LIMIT 10")
+    conversations = cursor.fetchall()
+    conn.close()
+
+    conversation_list = [
+        {
+            'id': conv['id'],
+            'timestamp': conv['timestamp'],
+            'content': conv['content'],
+            'summary': conv['summary'],
+            'tweet_url': conv['tweet_url']
+        }
+        for conv in conversations
+    ]
+
+    next_conversation_time = datetime.now().replace(second=0, microsecond=0) + timedelta(minutes=60 - datetime.now().minute % 60)
+    return {"conversations": conversation_list, "next_conversation": next_conversation_time.isoformat()}
+
+@app.get("/api/tweets")
+async def get_tweets():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM edgelord ORDER BY timestamp DESC LIMIT 10")
+    tweets = cursor.fetchall()
+    conn.close()
+
+    tweet_list = [
+        {
+            'id': tweet['id'],
+            'content': tweet['content'],
+            'tweet_id': tweet['tweet_id'],
+            'timestamp': tweet['timestamp']
+        }
+        for tweet in tweets
+    ]
     
-anthropic_api_key = os.environ.get('ANTHROPIC_API_KEY')
-twitter_consumer_key = os.environ.get('TWITTER_CONSUMER_KEY')
-twitter_consumer_secret = os.environ.get('TWITTER_CONSUMER_SECRET')
-twitter_access_token = os.environ.get('TWITTER_ACCESS_TOKEN')
-twitter_access_token_secret = os.environ.get('TWITTER_ACCESS_TOKEN_SECRET')
-#database_url = os.environ.get('DATABASE_URL', '/data/tweets.db')
+    next_tweet_time = datetime.now().replace(second=0, microsecond=0) + timedelta(minutes=30 - datetime.now().minute % 30)
+    return {"tweets": tweet_list, "next_tweet": next_tweet_time.isoformat()}
 
+@app.get("/api/tweets_oneoff")
+async def get_tweets_oneoff():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM edgelord_oneoff ORDER BY timestamp DESC LIMIT 10")
+    tweets = cursor.fetchall()
+    conn.close()
 
-# Initialize Anthropic client
-anthropic_client = anthropic.Anthropic(api_key=anthropic_api_key)
+    tweet_list = [
+        {
+            'id': tweet['id'],
+            'content': tweet['content'],
+            'tweet_id': tweet['tweet_id'],
+            'timestamp': tweet['timestamp']
+        }
+        for tweet in tweets
+    ]
 
-client = tweepy.Client(
-    consumer_key=twitter_consumer_key,
-    consumer_secret=twitter_consumer_secret,
-    access_token=twitter_access_token,
-    access_token_secret=twitter_access_token_secret
-)
+    next_tweet_time = datetime.now().replace(second=0, microsecond=0) + timedelta(minutes=20 - datetime.now().minute % 20)
+    return {"tweets": tweet_list, "next_tweet": next_tweet_time.isoformat()}
 
-# Initialize database connection
-""" if database_url:
-    url = urlparse(database_url)
-    db_path = url.path[1:]  # Remove the leading '/' """
-
-# Connect to the SQLite database
-""" conn = sqlite3.connect(db_path)
-c = conn.cursor()
-
-# Create the tweets table if it doesn't exist
-c.execute('''CREATE TABLE IF NOT EXISTS tweets
-             (id INTEGER PRIMARY KEY AUTOINCREMENT,
-              content TEXT,
-              timestamp DATETIME)''')
-conn.commit() """
-
-
-def generate_tweet():
-    #recent_tweets = get_recent_tweets()
-    #cached_tweets = "\n".join(recent_tweets)
-
-    response = anthropic_client.beta.prompt_caching.messages.create(
-        model="claude-3-5-sonnet-20240620",  # Use the latest available model
-        max_tokens=1024,
-        system=[
-            {
-                "type": "text",
-                "text": "Craft tweets in 200 characters or less, packed with niche edgy energy that make commentary on current tech events be self reflecting and edgy. Make corollaries to deep into forgotten internet culture. No meme is too obscure, no reference too niche. Go wild, be original. DO NOT USE HASHTAGS OR EMOJIS or start it with Remember when...."
-            },
-            {
-                "type": "text",
-                "text": f"Recent tweets:",#\n{cached_tweets}",
-                "cache_control": {"type": "ephemeral"}
-            }
-        ],
-        messages=[
-            {
-                "role": "user",
-                "content": "Generate a short, engaging tweet about an interesting fact or idea. Keep it under 280 characters. Make sure it relates to or builds upon the themes in the recent tweets."
-            }
-        ]
-
-    )
-    return response.content[0].text.strip()
-
-def post_tweet(content):
-    try:
-        response = client.create_tweet(text=content)
-        tweet_id = response.data['id']
-        print(f"Tweet posted: {content}")
-        return tweet_id
-    except Exception as e:
-        print(f"Error posting tweet: {e}")
-        return None
-
-""" def save_tweet(content):
-    c.execute("INSERT INTO tweets (content, timestamp) VALUES (%s, %s)",
-              (content, datetime.now()))
-    conn.commit()
-
-def get_recent_tweets(n=10):
-    c.execute("SELECT content FROM tweets ORDER BY timestamp DESC LIMIT %s", (n,))
-    return [row[0] for row in c.fetchall()] """
-
-def tweet_job():
-    content = generate_tweet()
-    tweet_id = post_tweet(content)
-    """if tweet_id:
-        save_tweet(content) """
 
 
 if __name__ == "__main__":
-    tweet_job()
-    #conn.close()
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 3000)))

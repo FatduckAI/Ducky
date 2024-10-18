@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mr Ducky</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #ffe;
+        margin: 0;
+        padding: 20px;
+      }
+      h1,
+      h2 {
+        text-align: center;
+        color: #800000;
+      }
+      .section-title {
+        text-align: center;
+        color: #800000;
+        font-size: 24px;
+        margin-bottom: 20px;
+      }
+      .section-countdown {
+        font-size: 14px;
+        font-weight: bold;
+        margin-bottom: 20px;
+        text-align: center;
+        color: #800000;
+      }
+      .section-countdown-serious {
+        font-size: 14px;
+        font-weight: bold;
+        margin-bottom: 20px;
+        text-align: center;
+        color: #800000;
+      }
+      .section-countdown-oneoff {
+        font-size: 14px;
+        font-weight: bold;
+        margin-bottom: 20px;
+        text-align: center;
+        color: #800000;
+      }
+      #countdown {
+        font-size: 14px;
+        font-weight: bold;
+        margin-bottom: 20px;
+        text-align: center;
+        color: #800000;
+      }
+      #serious_countdown {
+        font-size: 14px;
+        font-weight: bold;
+        margin-bottom: 20px;
+        text-align: center;
+        color: #800000;
+      }
+      #oneoff_countdown {
+        font-size: 14px;
+        font-weight: bold;
+        margin-bottom: 20px;
+        text-align: center;
+        color: #800000;
+      }
+      .container {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+      .conversation,
+      .tweet,
+      .tweet_oneoff {
+        border: 1px solid #d9bfb7;
+        border-radius: 3px;
+        padding: 10px;
+        margin-bottom: 20px;
+      }
+      .timestamp {
+        font-size: 12px;
+        color: #800000;
+        margin-bottom: 5px;
+      }
+      .message {
+        padding: 10px;
+        margin-bottom: 10px;
+        border-radius: 3px;
+      }
+      .ducky {
+        background-color: #f0e0d6;
+      }
+      .cleo {
+        background-color: #d7ecdd;
+      }
+      .moderator {
+        background-color: #d6e0f0;
+      }
+      .speaker {
+        font-weight: bold;
+        margin-bottom: 5px;
+        color: #800000;
+      }
+      .twitter-links {
+        text-align: center;
+        margin-top: 20px;
+        margin-bottom: 20px;
+      }
+      #conversations,
+      #tweets,
+      #tweets_oneoff {
+        width: 100%;
+      }
+      @media (min-width: 768px) {
+        .container {
+          flex-direction: row;
+          justify-content: space-between;
+        }
+        #conversations,
+        #tweets,
+        #tweets_oneoff {
+          width: 30%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Ducky's Blog</h2>
+
+    <div class="twitter-links">
+      <a href="https://twitter.com/mrfatducky">Twitter</a>
+    </div>
+    <div class="container">
+      <div id="conversations">
+        <h1 class="section-title">Chat&apos;s with Cleo</h1>
+        <div class="section-countdown" id="countdown"></div>
+      </div>
+      <div id="tweets">
+        <h1 class="section-title">Serious Ducky</h1>
+        <div class="section-countdown" id="serious_countdown"></div>
+      </div>
+      <div id="tweets_oneoff">
+        <h1 class="section-title">Braindump</h1>
+        <div class="section-countdown" id="oneoff_countdown"></div>
+      </div>
+    </div>
+
+    <script>
+      function updateCountdown(nextConversation) {
+        const now = new Date();
+        const next = new Date(nextConversation);
+        const diff = next - now;
+        const minutes = Math.floor(diff / 60000);
+        const seconds = Math.floor((diff % 60000) / 1000);
+        document.getElementById(
+          "countdown"
+        ).innerText = `${minutes}m ${seconds}s`;
+      }
+
+      function updateSerious(nextConversation) {
+        const now = new Date();
+        const next = new Date(nextConversation);
+        const diff = next - now;
+        const minutes = Math.floor(diff / 60000);
+        const seconds = Math.floor((diff % 60000) / 1000);
+        document.getElementById(
+          "serious_countdown"
+        ).innerText = `${minutes}m ${seconds}s`;
+      }
+
+      function updateOneoff(nextConversation) {
+        const now = new Date();
+        const next = new Date(nextConversation);
+        const diff = next - now;
+        const minutes = Math.floor(diff / 60000);
+        const seconds = Math.floor((diff % 60000) / 1000);
+        document.getElementById(
+          "oneoff_countdown"
+        ).innerText = `${minutes}m ${seconds}s`;
+      }
+
+      function displayConversations(conversations) {
+        const container = document.getElementById("conversations");
+        const title = container.querySelector(".section-title");
+        const countdown = container.querySelector(".section-countdown");
+        container.innerHTML = "";
+        container.appendChild(title);
+        container.appendChild(countdown);
+        conversations.forEach((conv) => {
+          const div = document.createElement("div");
+          div.className = "conversation";
+          div.innerHTML = `<div class="timestamp">Post: ${conv.timestamp}</div>`;
+
+          const messages = conv.content.split("\n");
+          let currentSpeaker = null;
+          let currentMessage = "";
+
+          function addMessage() {
+            if (currentSpeaker && currentMessage) {
+              div.innerHTML += `
+                <div class="message ${currentSpeaker.toLowerCase()}">
+                  <div class="speaker">${currentSpeaker}</div>
+                  <div>${currentMessage.trim()}</div>
+                </div>
+              `;
+            }
+          }
+
+          messages.forEach((line) => {
+            const match = line.match(/^(\w+):\s(.+)/);
+            if (match) {
+              addMessage();
+              [, currentSpeaker, currentMessage] = match;
+            } else if (line.trim().toLowerCase() === "moderator:") {
+              addMessage();
+              currentSpeaker = "Moderator";
+              currentMessage = "";
+            } else if (currentSpeaker === "Moderator") {
+              currentMessage += line + "\n";
+            } else if (currentSpeaker) {
+              currentMessage += line + "\n";
+            }
+          });
+
+          addMessage(); // Add the last message
+
+          container.appendChild(div);
+        });
+      }
+
+      async function fetchConversations() {
+        const response = await fetch("/api/conversations");
+        const data = await response.json();
+        updateCountdown(data.next_conversation);
+        displayConversations(data.conversations);
+      }
+
+      async function fetchTweets() {
+        const response = await fetch("/api/tweets");
+        const data = await response.json();
+        updateSerious(data.next_tweet);
+        displayTweets(data.tweets);
+      }
+
+      async function fetchTweetsOneoff() {
+        const response = await fetch("/api/tweets_oneoff");
+        const data = await response.json();
+        updateOneoff(data.next_tweet);
+        displayTweetsOneoff(data.tweets);
+      }
+
+      function displayTweets(tweets) {
+        const container = document.getElementById("tweets");
+        const title = container.querySelector(".section-title");
+        const countdown = container.querySelector(".section-countdown");
+        container.innerHTML = "";
+        container.appendChild(title);
+        container.appendChild(countdown);
+        tweets.forEach((tweet) => {
+          const div = document.createElement("div");
+          div.className = "tweet";
+          div.innerHTML = `
+            <div class="timestamp">Tweet: ${tweet.timestamp}</div>
+            <div class="message">
+              <div class="speaker">@mrfatducky</div>
+              <div>${tweet.content}</div>
+            </div>
+          `;
+          container.appendChild(div);
+        });
+      }
+
+      function displayTweetsOneoff(tweets) {
+        const container = document.getElementById("tweets_oneoff");
+        const title = container.querySelector(".section-title");
+        const countdown = container.querySelector(".section-countdown");
+        container.innerHTML = "";
+        container.appendChild(title);
+        container.appendChild(countdown);
+        tweets.forEach((tweet) => {
+          const div = document.createElement("div");
+          div.className = "tweet_oneoff";
+          div.innerHTML = `
+            <div class="timestamp">Tweet: ${tweet.timestamp}</div>
+            <div class="message">
+              <div class="speaker">@mrfatducky</div>
+              <div>${tweet.content}</div>
+            </div>
+          `;
+          container.appendChild(div);
+        });
+      }
+
+      fetchConversations();
+      fetchTweets();
+      fetchTweetsOneoff();
+      // Update countdown every second
+      setInterval(() => {
+        const countdownElement = document.getElementById("countdown");
+        const [minutes, seconds] = countdownElement.innerText.match(/\d+/g);
+        let totalSeconds = parseInt(minutes) * 60 + parseInt(seconds);
+
+        if (totalSeconds > 0) {
+          totalSeconds--;
+          const newMinutes = Math.floor(totalSeconds / 60);
+          const newSeconds = totalSeconds % 60;
+          countdownElement.innerText = `${newMinutes}m ${newSeconds}s`;
+        } else {
+          fetchConversations();
+        }
+      }, 1000);
+
+      setInterval(() => {
+        const countdownElement = document.getElementById("serious_countdown");
+        const [minutes, seconds] = countdownElement.innerText.match(/\d+/g);
+        let totalSeconds = parseInt(minutes) * 60 + parseInt(seconds);
+
+        if (totalSeconds > 0) {
+          totalSeconds--;
+          const newMinutes = Math.floor(totalSeconds / 60);
+          const newSeconds = totalSeconds % 60;
+          countdownElement.innerText = `${newMinutes}m ${newSeconds}s`;
+        } else {
+          fetchTweets();
+        }
+      }, 1000);
+    </script>
+  </body>
+</html>
