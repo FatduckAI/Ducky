@@ -1,4 +1,12 @@
 #!/bin/bash
+set -e
+
+# Ensure the database directory exists
+mkdir -p /data
+
+# Initialize the database if it doesn't exist
+python -c "from db_utils import ensure_db_initialized; ensure_db_initialized()"
+
 if [ "$1" = "web" ]; then
     exec uvicorn main:app --host 0.0.0.0 --port 3000
 elif [ "$1" = "hitchiker" ]; then

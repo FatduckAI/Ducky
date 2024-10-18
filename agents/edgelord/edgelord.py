@@ -37,7 +37,6 @@ cursor = conn.cursor()
 def generate_tweet():
     recent_tweets = get_recent_tweets()
     cached_tweets = "\n".join(recent_tweets)
-    print(cached_tweets)
 
     response = anthropic_client.messages.create(
         model="claude-3-5-sonnet-20240620",

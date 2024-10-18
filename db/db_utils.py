@@ -6,7 +6,7 @@ import pysqlite3
 
 from .schema import SCHEMA
 
-DB_PATH = os.environ.get('DATABASE_URL', 'ducky.db')
+DB_PATH = os.environ.get('DATABASE_URL', '/data/ducky_new.db')
 
 def get_db_connection():
     conn = pysqlite3.connect(DB_PATH)
