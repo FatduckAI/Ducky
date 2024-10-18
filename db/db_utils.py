@@ -40,3 +40,15 @@ def ensure_db_initialized():
                 init_db()
                 break
         conn.close()
+        
+def get_db_path():
+    return DB_PATH
+  
+def healthcheck():
+    try:
+        conn = get_db_connection()
+        conn.close()
+        return True
+    except Exception as e:
+        print(f"Database healthcheck failed: {e}")
+        return False
