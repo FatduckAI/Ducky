@@ -115,10 +115,6 @@ async def save_new_tweet(tweet: Tweet, api_key: str = Depends(verify_api_key)):
 @app.get("/api/health")
 async def healthcheck():
     return {"status": "ok"}
-  
-@app.get("/api/db")
-async def dbpath():
-    return {"db_path": db_utils.get_db_path()}
 
 if __name__ == "__main__":
     import uvicorn
