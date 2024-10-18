@@ -9,9 +9,13 @@ from .schema import SCHEMA
 DB_PATH = os.environ.get('DATABASE_URL', '/data/ducky_new.db')
 
 def get_db_connection():
+  try:
     conn = pysqlite3.connect(DB_PATH)
     conn.row_factory = pysqlite3.Row
     return conn
+  except Exception as e:
+    print(f"Database connection failed: {e}")
+    return None
 
 def table_exists(conn, table_name):
     c = conn.cursor()
