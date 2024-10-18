@@ -2,10 +2,9 @@ import os
 
 import requests
 
-API_URL = os.environ.get('twitter-ai.railway.internal')
 
 def save_edgelord_oneoff_to_db(content, tweet_id):
-    api_url = f"https://{API_URL}/api/save_edgelord_oneoff_tweet"
+    api_url = f"https://twitter-ai.railway.internal:3000/api/save_edgelord_oneoff_tweet"
     headers = {
         "X-API-Key": os.environ.get('INTERNAL_API_KEY')
     }
