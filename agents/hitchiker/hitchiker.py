@@ -147,7 +147,7 @@ def conversation_job():
 
     # Generate summary for this conversation
     summary = generate_summary(new_conversation)
-    print(f"Moderator: \n{summary}")
+    #print(f"Moderator: \n{summary}")
     if len(summary) > 280:
         summary = summary[:280]
     # Post tweet
