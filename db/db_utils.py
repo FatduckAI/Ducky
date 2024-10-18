@@ -57,3 +57,12 @@ def healthcheck():
     except Exception as e:
         print(f"Database healthcheck failed: {e}")
         return False
+
+
+def save_edgelord_oneoff_tweet(content, tweet_id, timestamp):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO edgelord_oneoff (content, tweet_id, timestamp) VALUES (?, ?, ?)",
+                   (content, tweet_id, timestamp))
+    conn.commit()
+    conn.close()

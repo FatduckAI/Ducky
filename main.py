@@ -2,13 +2,15 @@ import os
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
 
 from db import db_utils
 from db.db_utils import ensure_db_initialized, get_db_connection
 
+API_KEY = os.environ.get('INTERNAL_API_KEY')
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -89,6 +91,26 @@ async def get_tweets_oneoff():
 
     next_tweet_time = datetime.now().replace(second=0, microsecond=0) + timedelta(minutes=20 - datetime.now().minute % 20)
     return {"tweets": tweet_list, "next_tweet": next_tweet_time.isoformat()}
+
+def verify_api_key(x_api_key: str = Header(...)):
+    if x_api_key != API_KEY:
+        raise HTTPException(status_code=403, detail="Invalid API Key")
+    return x_api_key
+
+class Tweet(BaseModel):
+    content: str
+    tweet_id: str
+
+@app.post("/api/save_edgelord_oneoff_tweet")
+async def save_new_tweet(tweet: Tweet, api_key: str = Depends(verify_api_key)):
+    try:
+        timestamp = datetime.now().isoformat()
+        db_utils.save_edgelord_oneoff_tweet(tweet.content, tweet.tweet_id, timestamp)
+        return {"status": "success", "message": "Tweet saved successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 
 @app.get("/api/health")
 async def healthcheck():
