@@ -7,7 +7,7 @@ mkdir -p /data
 # Initialize the database if it doesn't exist
 
 if [ "$1" = "web" ]; then
-    exec hypercorn main:app --bind 0.0.0.0:3000 --bind '[::]:3000' --worker-class asyncio
+    exec python main.py
 elif [ "$1" = "hitchiker" ]; then
     exec python -m agents.hitchiker.hitchiker
 elif [ "$1" = "edgelord" ]; then

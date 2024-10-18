@@ -117,10 +117,11 @@ async def healthcheck():
 if __name__ == "__main__":
     import asyncio
 
-    import hypercorn.asyncio
-    
-    config = hypercorn.Config()
-    config.bind = [f"0.0.0.0:{int(os.environ.get('PORT', 3000))}", f"[::]:{int(os.environ.get('PORT', 3000))}"]
+    from hypercorn.asyncio import serve
+    from hypercorn.config import Config
+
+    config = Config()
+    config.bind = [f"::{int(os.environ.get('PORT', 3000))}"]
     config.loglevel = "info"
-    
-    asyncio.run(hypercorn.asyncio.serve(app, config))
+
+    asyncio.run(serve(app, config))
