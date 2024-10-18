@@ -96,3 +96,19 @@ def get_hitchiker_conversations():
     conversations = [{"content": row['content'], "summary": row['summary'], "tweet_url": row['tweet_url']} for row in cursor.fetchall()]
     conn.close()
     return conversations
+  
+def save_narrative(timestamp, content, summary):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO narratives (timestamp, content, summary) VALUES (?, ?, ?)",
+                   (timestamp, content, summary))
+    conn.commit()
+    conn.close()
+
+def get_narrative():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT content, summary FROM narratives ORDER BY timestamp DESC LIMIT 1")
+    narratives = [{"content": row['content'], "summary": row['summary']} for row in cursor.fetchall()]
+    conn.close()
+    return narratives

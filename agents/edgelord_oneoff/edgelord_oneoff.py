@@ -3,8 +3,8 @@ import os
 import anthropic
 from dotenv import load_dotenv
 
-from db.sdk import save_edgelord_oneoff_to_db
 from lib.anthropic import get_anthropic_client
+from lib.sdk import save_edgelord_oneoff_to_db
 from lib.twitter import post_tweet
 
 # Check if we're running locally (not in Railway)
@@ -20,7 +20,7 @@ def generate_tweet():
         system=[
             {
                 "type": "text",
-                "text": "Craft tweets in 200 characters or less, packed with niche edgy energy that make commentary on current tech events be self reflecting and edgy. Make corollaries to deep into forgotten internet culture. No meme is too obscure, no reference too niche. Go wild, be original. DO NOT USE HASHTAGS OR EMOJIS or start it with Remember when...."
+                "text": "Craft tweets in 200 characters or less, packed with niche edgy energy that make commentary on current tech events be self reflecting and edgy. Make corollaries to deep into forgotten internet culture. No meme is too obscure, no reference too niche. Go wild, be original. DO NOT USE HASHTAGS OR EMOJIS or start it with Remember when... Do not mention Geocities that much you can refer to them as old internet."
             }
         ],
         messages=[

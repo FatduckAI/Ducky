@@ -15,6 +15,7 @@ API_KEY = os.environ.get('INTERNAL_API_KEY')
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup: Initialize the database
+    print(f"Initializing database: {os.environ.get('DATABASE_URL')}")
     ensure_db_initialized()
     yield
     # Shutdown: Add any cleanup here if needed
@@ -104,10 +105,13 @@ class Tweet(BaseModel):
     tweet_id: str
     
 class Conversation(BaseModel):
-    timestamp: str
     content: str
     summary: str
     tweet_url: str
+    
+class Narrative(BaseModel):
+    content: str
+    summary: str
 
 @app.post("/api/save_edgelord_oneoff_tweet")
 async def save_new_tweet(tweet: Tweet, api_key: str = Depends(verify_api_key)):
@@ -146,10 +150,32 @@ async def get_hitchiker_conversations(api_key: str = Depends(verify_api_key)):
 @app.post("/api/save_hitchiker_conversation")
 async def save_hitchiker_conversation(conversation: Conversation, api_key: str = Depends(verify_api_key)):
     try:
-        db_utils.save_hitchiker_conversation(conversation.timestamp, conversation.content, conversation.summary, conversation.tweet_url)
+        timestamp = datetime.now().isoformat()
+        db_utils.save_hitchiker_conversation(timestamp, conversation.content, conversation.summary, conversation.tweet_url)
         return {"status": "success", "message": "Conversation saved successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+      
+# Get the latest narrative
+@app.get("/api/get_narrative")
+async def get_narrative(api_key: str = Depends(verify_api_key)):
+    try:
+        narrative = db_utils.get_narrative()
+        return {"status": "success", "narrative": narrative}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+      
+@app.post("/api/save_narrative")
+async def save_narrative(narrative: Narrative, api_key: str = Depends(verify_api_key)):
+    try:
+        timestamp = datetime.now().isoformat()
+        db_utils.save_narrative(timestamp, narrative.content, narrative.summary)
+        return {"status": "success", "message": "Narrative saved successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+      
+      
+      
 
 @app.get("/api/health")
 async def healthcheck():

@@ -81,4 +81,12 @@ SCHEMA = {
             timestamp TEXT
         )
     ''',
+    'narratives': '''
+        CREATE TABLE IF NOT EXISTS narratives (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp TEXT,
+            content TEXT,
+            summary TEXT
+        )
+    ''',
 }

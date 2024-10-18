@@ -7,7 +7,7 @@ import anthropic
 import openai
 from dotenv import load_dotenv
 
-from db import sdk
+from lib import sdk
 from lib.anthropic import get_anthropic_client
 from lib.twitter import post_tweet
 
