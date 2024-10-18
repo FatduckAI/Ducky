@@ -3,7 +3,7 @@ tweepy
 python-dotenv
 pysqlite3-binary
 fastapi
-uvicorn
+hypercorn
 openai
 
 

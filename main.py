@@ -110,12 +110,17 @@ async def save_new_tweet(tweet: Tweet, api_key: str = Depends(verify_api_key)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
-
 @app.get("/api/health")
 async def healthcheck():
     return {"status": "ok"}
 
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("main:app", host="::", port=int(os.environ.get("PORT", 3000)), log_level="info")
+    import asyncio
+
+    import hypercorn.asyncio
+    
+    config = hypercorn.Config()
+    config.bind = [f"0.0.0.0:{int(os.environ.get('PORT', 3000))}", f"[::]:{int(os.environ.get('PORT', 3000))}"]
+    config.loglevel = "info"
+    
+    asyncio.run(hypercorn.asyncio.serve(app, config))
