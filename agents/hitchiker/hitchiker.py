@@ -9,7 +9,7 @@ import anthropic
 import openai
 from dotenv import load_dotenv
 
-from db import db_utils
+from db import db_utils, sdk
 from lib.twitter import post_tweet
 
 # Load environment variables
@@ -26,16 +26,10 @@ MODEL = "claude-3-5-sonnet-20240620"
 TEMPERATURE = 1
 MAX_RETRIES = 3
 
-conn = db_utils.get_db_connection()
-cursor = conn.cursor()
 
 def exponential_backoff(attempt):
     return (2 ** attempt) + random.random()
 
-def load_all_conversations():
-    cursor.execute("SELECT content FROM hitchiker_conversations ORDER BY timestamp DESC LIMIT 10")
-    conversations = cursor.fetchall()
-    return "\n\n".join([conv[0] for conv in conversations])
 
 
 
@@ -130,7 +124,7 @@ Provide a brief, humorous tweet that captures the essence of their interaction. 
         return None
 
 def conversation_job():
-    previous_conversations = load_all_conversations()
+    previous_conversations = sdk.get_hitchiker_conversations()
     
     # Randomize the length of this conversation (between 3 and 8 turns)
     conversation_length = random.randint(3, 8)
@@ -164,14 +158,9 @@ def conversation_job():
     # Save this conversation
     timestamp = datetime.now().isoformat()
     content = "\n\n".join([msg["content"] for msg in new_conversation])
-    cursor.execute('''
-        INSERT INTO hitchiker_conversations (timestamp, content, summary, tweet_url)
-        VALUES (?, ?, ?, ?)
-    ''', (timestamp, content, summary, tweet_url))
-    conn.commit()
+    sdk.save_hitchiker_conversation(timestamp, content, summary, tweet_url)
 
     print("Conversation completed.")
 
 if __name__ == "__main__":
     conversation_job()
-    conn.close()

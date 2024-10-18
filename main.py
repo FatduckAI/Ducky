@@ -100,6 +100,12 @@ def verify_api_key(x_api_key: str = Header(...)):
 class Tweet(BaseModel):
     content: str
     tweet_id: str
+    
+class Conversation(BaseModel):
+    timestamp: str
+    content: str
+    summary: str
+    tweet_url: str
 
 @app.post("/api/save_edgelord_oneoff_tweet")
 async def save_new_tweet(tweet: Tweet, api_key: str = Depends(verify_api_key)):
@@ -124,6 +130,22 @@ async def save_new_tweet(tweet: Tweet, api_key: str = Depends(verify_api_key)):
         timestamp = datetime.now().isoformat()
         db_utils.save_edgelord_tweet(tweet.content, tweet.tweet_id, timestamp)
         return {"status": "success", "message": "Tweet saved successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+      
+@app.get("/api/get_hitchiker_conversations")
+async def get_hitchiker_conversations(api_key: str = Depends(verify_api_key)):
+    try:
+        conversations = db_utils.get_hitchiker_conversations()
+        return {"status": "success", "conversations": conversations}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/save_hitchiker_conversation")
+async def save_hitchiker_conversation(conversation: Conversation, api_key: str = Depends(verify_api_key)):
+    try:
+        db_utils.save_hitchiker_conversation(conversation.timestamp, conversation.content, conversation.summary, conversation.tweet_url)
+        return {"status": "success", "message": "Conversation saved successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

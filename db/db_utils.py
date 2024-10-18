@@ -80,3 +80,19 @@ def get_edgelord_tweets():
     tweets = [row['content'] for row in cursor.fetchall()]
     conn.close()
     return tweets
+  
+def save_hitchiker_conversation(timestamp, content, summary, tweet_url):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO hitchiker_conversations (timestamp, content, summary, tweet_url) VALUES (?, ?, ?, ?)",
+                   (timestamp, content, summary, tweet_url))
+    conn.commit()
+    conn.close()
+
+def get_hitchiker_conversations():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT content, summary, tweet_url FROM hitchiker_conversations ORDER BY timestamp DESC")
+    conversations = [{"content": row['content'], "summary": row['summary'], "tweet_url": row['tweet_url']} for row in cursor.fetchall()]
+    conn.close()
+    return conversations
