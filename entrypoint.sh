@@ -1,5 +1,4 @@
 #!/bin/bash
-source .env
 if [ "$1" = "web" ]; then
     exec uvicorn main:app --host 0.0.0.0 --port 3000
 elif [ "$1" = "hitchiker" ]; then
