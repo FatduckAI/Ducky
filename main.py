@@ -89,7 +89,13 @@ async def get_tweets_oneoff():
     next_tweet_time = datetime.now().replace(second=0, microsecond=0) + timedelta(minutes=20 - datetime.now().minute % 20)
     return {"tweets": tweet_list, "next_tweet": next_tweet_time.isoformat()}
 
-
+@app.get("/api/healthcheck")
+async def healthcheck():
+    return {"status": "ok"}
+  
+@app.get("/api/db_path")
+async def get_db_path():
+    return {"db_path": get_db_path()}
 
 if __name__ == "__main__":
     import uvicorn
