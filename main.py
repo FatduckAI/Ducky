@@ -32,7 +32,7 @@ async def read_root():
 async def get_conversations():
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM hitchiker_conversations ORDER BY timestamp DESC LIMIT 10")
+    cursor.execute("SELECT * FROM hitchiker_conversations ORDER BY timestamp DESC")
     conversations = cursor.fetchall()
     conn.close()
 
@@ -97,6 +97,8 @@ def verify_api_key(x_api_key: str = Header(...)):
         raise HTTPException(status_code=403, detail="Invalid API Key")
     return x_api_key
 
+
+# INTERNAL API
 class Tweet(BaseModel):
     content: str
     tweet_id: str
