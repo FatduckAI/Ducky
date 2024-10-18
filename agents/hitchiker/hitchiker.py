@@ -1,7 +1,5 @@
-import json
 import os
 import random
-import re
 import time
 from datetime import datetime
 
@@ -9,16 +7,11 @@ import anthropic
 import openai
 from dotenv import load_dotenv
 
-from db import db_utils, sdk
+from db import sdk
+from lib.anthropic import get_anthropic_client
 from lib.twitter import post_tweet
 
-# Load environment variables
 load_dotenv()
-
-anthropic_api_key = os.environ.get('ANTHROPIC_API_KEY')
-
-# Initialize Anthropic client
-anthropic_client = anthropic.Anthropic(api_key=anthropic_api_key)
 
 ACTORS = ["Ducky", "Cleo"]
 MODERATOR = "Trillian"
@@ -29,10 +22,6 @@ MAX_RETRIES = 3
 
 def exponential_backoff(attempt):
     return (2 ** attempt) + random.random()
-
-
-
-
 
 def claude_conversation(actor, model, temperature, context, system_prompt=None):
     messages = [{"role": m["role"], "content": m["content"]} for m in context]
@@ -47,7 +36,7 @@ def claude_conversation(actor, model, temperature, context, system_prompt=None):
     
     for attempt in range(MAX_RETRIES):
         try:
-            message = anthropic_client.messages.create(**kwargs)
+            message = get_anthropic_client().messages.create(**kwargs)
             if hasattr(message, 'content') and message.content:
                 if isinstance(message.content, list) and len(message.content) > 0:
                     print(message.content[0].text)

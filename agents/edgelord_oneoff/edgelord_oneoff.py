@@ -1,10 +1,10 @@
 import os
 
 import anthropic
-import tweepy
 from dotenv import load_dotenv
 
 from db.sdk import save_edgelord_oneoff_to_db
+from lib.anthropic import get_anthropic_client
 from lib.twitter import post_tweet
 
 # Check if we're running locally (not in Railway)
@@ -12,26 +12,9 @@ if not os.environ.get('RAILWAY_ENVIRONMENT'):
     # Load environment variables from .env file for local development
     load_dotenv()
 
-anthropic_api_key = os.environ.get('ANTHROPIC_API_KEY')
-twitter_consumer_key = os.environ.get('TWITTER_CONSUMER_KEY')
-twitter_consumer_secret = os.environ.get('TWITTER_CONSUMER_SECRET')
-twitter_access_token = os.environ.get('TWITTER_ACCESS_TOKEN')
-twitter_access_token_secret = os.environ.get('TWITTER_ACCESS_TOKEN_SECRET')
-
-# Initialize Anthropic client
-anthropic_client = anthropic.Anthropic(api_key=anthropic_api_key)
-
-# Initialize Twitter client
-client = tweepy.Client(
-    consumer_key=twitter_consumer_key,
-    consumer_secret=twitter_consumer_secret,
-    access_token=twitter_access_token,
-    access_token_secret=twitter_access_token_secret
-)
-
 
 def generate_tweet():
-    response = anthropic_client.messages.create(
+    response = get_anthropic_client().messages.create(
         model="claude-3-5-sonnet-20240620",
         max_tokens=1024,
         system=[
@@ -48,8 +31,6 @@ def generate_tweet():
         ]
     )
     return response.content[0].text.strip()
-
-
 
 def tweet_job():
     content = generate_tweet()
