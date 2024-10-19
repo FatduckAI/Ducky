@@ -250,6 +250,7 @@
       async function fetchNarrative() {
         const response = await fetch("/api/narrative");
         const data = await response.json();
+        console.log(data);
         displayNarrative(data.narrative);
       }
 

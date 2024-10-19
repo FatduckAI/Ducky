@@ -75,6 +75,7 @@ async def get_tweets():
 async def get_narrative():
     try:
         narrative = db_utils.get_narrative()
+        print(f"Narrative: {narrative}")
         return {"status": "success", "narrative": narrative}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
