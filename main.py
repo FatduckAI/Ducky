@@ -11,11 +11,12 @@ from db import db_utils
 from db.db_utils import ensure_db_initialized, get_db_connection
 
 API_KEY = os.environ.get('INTERNAL_API_KEY')
-
+DATABASE_URL = os.environ.get('DATABASE_URL')
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup: Initialize the database
-    print(f"Initializing database: {os.environ.get('DATABASE_URL')}")
+    print(f"API_KEY: {API_KEY}")
+    print(f"DATABASE_URL: {DATABASE_URL}")
     ensure_db_initialized()
     yield
     # Shutdown: Add any cleanup here if needed

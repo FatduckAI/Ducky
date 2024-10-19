@@ -145,9 +145,8 @@ def conversation_job():
         print(f"Tweet URL: {tweet_url}")
 
     # Save this conversation
-    timestamp = datetime.now().isoformat()
     content = "\n\n".join([msg["content"] for msg in new_conversation])
-    sdk.save_hitchiker_conversation(timestamp, content, summary, tweet_url)
+    sdk.save_hitchiker_conversation(content, summary, tweet_url)
 
     print("Conversation completed.")
 
