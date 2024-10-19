@@ -3,8 +3,11 @@
 import os
 
 import pysqlite3
+from dotenv import load_dotenv
 
 from .schema import SCHEMA
+
+load_dotenv()
 
 DB_PATH = os.environ.get('DATABASE_URL', '/data/ducky_new.db')
 
@@ -34,6 +37,8 @@ def init_db():
     conn.close()
 
 def ensure_db_initialized():
+    DB_PATH = os.environ.get('DATABASE_URL', '/data/ducky_new.db')
+    print(f"Ensuring database is initialized: {DB_PATH}")
     if not os.path.exists(DB_PATH):
         print("Database does not exist. Initializing...")
         init_db()

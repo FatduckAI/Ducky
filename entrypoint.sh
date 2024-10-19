@@ -1,7 +1,6 @@
 #!/bin/bash
 set -e
 
-# Initialize the database if it doesn't exist
 
 if [ "$1" = "web" ]; then
     exec hypercorn main:app --bind 0.0.0.0:3000 --bind '[::]:4000' --worker-class asyncio
