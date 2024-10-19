@@ -3,6 +3,8 @@ Schedule:
 - 00:00 UTC every day
 
 """
+import json
+
 from lib import sdk
 from lib.anthropic import get_anthropic_client
 from lib.defillama import Narratives
@@ -23,7 +25,7 @@ def analyze_fdv_performance(period: str) -> str:
         ]
     )
     
-    sdk.save_narrative(data,response.content[0].text.strip())
+    sdk.save_narrative(json.dumps(data),response.content[0].text.strip())
     print('Narrative saved')
   
   
