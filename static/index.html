@@ -98,7 +98,6 @@
         font-size: 14px;
         margin-bottom: 20px;
         text-align: left;
-        color: #800000;
         border: 1px solid #d9bfb7;
         border-radius: 3px;
         padding: 15px;
@@ -107,10 +106,6 @@
       .narrative .timestamp {
         font-weight: bold;
         margin-bottom: 10px;
-      }
-
-      .narrative .message {
-        line-height: 1.5;
       }
       .ducky {
         background-color: #f0e0d6;
@@ -296,7 +291,7 @@
         div.className = "narrative";
         const formattedContent = narrative.summary.replace(
           /(\d+\..*?)(?=\n\d+\.|$)/gs,
-          "<br>$1<br>"
+          "<br>$1"
         );
 
         div.innerHTML = `
@@ -308,9 +303,8 @@
                 year: "numeric",
               }
             )}</div>
-            <div class="message">
               <div>${formattedContent}</div>
-            </div>
+            
           `;
         container.appendChild(div);
       }
