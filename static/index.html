@@ -278,8 +278,12 @@
         container.appendChild(countdown);
         const div = document.createElement("div");
         div.className = "narrative";
+        const formattedContent = narrative.summary.replace(
+          /(\d+\.)/g,
+          "<br>$1<br>"
+        );
         div.innerHTML = `
-            <div class="timestamp">Narrative: ${narrative.timestamp}</div>
+            <div class="timestamp">Narrative: ${new Date().toLocaleString()}</div>
             <div class="message">
               <div>${narrative.summary}</div>
             </div>
