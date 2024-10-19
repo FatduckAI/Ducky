@@ -242,9 +242,9 @@
       }
 
       async function fetchNarratives() {
-        const response = await fetch("/api/narratives");
+        const response = await fetch("/api/narrative");
         const data = await response.json();
-        displayNarratives(data.narratives);
+        displayNarratives(data.narrative);
       }
 
       async function fetchTweets() {
