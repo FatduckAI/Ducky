@@ -283,8 +283,14 @@
         const div = document.createElement("div");
         div.className = "narrative";
         const formattedContent = narrative.summary.replace(
-          /(\d+\..*?)(?=\n\d+\.|$)/gs,
-          "<br>$1"
+          /(\d+\.\s*.*?):\s*(.*?)(?=\n\d+\.|$)/gs,
+          (match, p1, p2) => {
+            const formattedP2 = p2.replace(
+              /\s*-\s*/g,
+              "<br>&nbsp;&nbsp;&nbsp;&nbsp;- "
+            );
+            return `<br>${p1}:<br>${formattedP2}`;
+          }
         );
 
         div.innerHTML = `
