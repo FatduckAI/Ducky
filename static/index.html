@@ -126,9 +126,8 @@
   </head>
   <body>
     <h2>Ducky's Blog</h2>
-    <div id="narratives">
+    <div id="narrative">
       <h1 class="section-title">Daily Crypto Report</h1>
-      <div class="section-countdown" id="narrative_countdown"></div>
     </div>
     <div class="twitter-links">
       Fathered by
@@ -241,10 +240,10 @@
         displayConversations(data.conversations);
       }
 
-      async function fetchNarratives() {
+      async function fetchNarrative() {
         const response = await fetch("/api/narrative");
         const data = await response.json();
-        displayNarratives(data.narrative);
+        displayNarrative(data.narrative);
       }
 
       async function fetchTweets() {
@@ -261,25 +260,23 @@
         displayTweetsOneoff(data.tweets);
       }
 
-      function displayNarratives(narratives) {
-        const container = document.getElementById("narratives");
+      function displayNarrative(narrative) {
+        const container = document.getElementById("narrative");
         const title = container.querySelector(".section-title");
         const countdown = container.querySelector(".section-countdown");
         container.innerHTML = "";
         container.appendChild(title);
         container.appendChild(countdown);
-        narratives.forEach((narrative) => {
-          const div = document.createElement("div");
-          div.className = "narrative";
-          div.innerHTML = `
+        const div = document.createElement("div");
+        div.className = "narrative";
+        div.innerHTML = `
             <div class="timestamp">Narrative: ${narrative.timestamp}</div>
             <div class="message">
               <div class="speaker">@mrfatducky</div>
               <div>${narrative.content}</div>
             </div>
           `;
-          container.appendChild(div);
-        });
+        container.appendChild(div);
       }
 
       function displayTweets(tweets) {
@@ -327,7 +324,7 @@
       fetchConversations();
       fetchTweets();
       fetchTweetsOneoff();
-      fetchNarratives();
+      fetchNarrative();
       // Update countdown every second
       setInterval(() => {
         const countdownElement = document.getElementById("countdown");
