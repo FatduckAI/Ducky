@@ -273,7 +273,6 @@
         console.log(narrative);
         const container = document.getElementById("narrative");
         const title = container.querySelector(".section-title");
-        const countdown = container.querySelector(".section-countdown");
         container.innerHTML = "";
         container.appendChild(title);
         container.appendChild(countdown);
@@ -282,7 +281,6 @@
         div.innerHTML = `
             <div class="timestamp">Narrative: ${narrative.timestamp}</div>
             <div class="message">
-              <div class="speaker">@mrfatducky</div>
               <div>${narrative.summary}</div>
             </div>
           `;
