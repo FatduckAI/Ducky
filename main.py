@@ -70,6 +70,15 @@ async def get_tweets():
     next_tweet_time = datetime.now().replace(second=0, microsecond=0) + timedelta(minutes=30 - datetime.now().minute % 30)
     return {"tweets": tweet_list, "next_tweet": next_tweet_time.isoformat()}
 
+# Get the latest narrative
+@app.get("/api/get_narrative")
+async def get_narrative():
+    try:
+        narrative = db_utils.get_narrative()
+        return {"status": "success", "narrative": narrative}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/api/tweets_oneoff")
 async def get_tweets_oneoff():
     conn = get_db_connection()
@@ -154,15 +163,7 @@ async def save_hitchiker_conversation(conversation: Conversation, api_key: str =
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
       
-# Get the latest narrative
-@app.get("/api/get_narrative")
-async def get_narrative(api_key: str = Depends(verify_api_key)):
-    try:
-        narrative = db_utils.get_narrative()
-        return {"status": "success", "narrative": narrative}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-      
+            
 @app.post("/api/save_narrative")
 async def save_narrative(narrative: Narrative, api_key: str = Depends(verify_api_key)):
     try:
