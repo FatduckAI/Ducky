@@ -71,7 +71,7 @@ async def get_tweets():
     return {"tweets": tweet_list, "next_tweet": next_tweet_time.isoformat()}
 
 # Get the latest narrative
-@app.get("/api/get_narrative")
+@app.get("/api/narrative")
 async def get_narrative():
     try:
         narrative = db_utils.get_narrative()
