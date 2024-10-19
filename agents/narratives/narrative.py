@@ -10,7 +10,6 @@ from lib.defillama import Narratives
 
 def analyze_fdv_performance(period: str) -> str:
     data = Narratives.fdv_performance(period)
-    print(f"Data: {data}")
     prompt = f"Here's some DeFiLlama FDV (Fully Diluted Valuation) performance data for the past {period} days: {data}\n\nPlease provide a concise summary of the key trends and insights from this data, focusing on the top performers and any notable patterns or changes in the DeFi market based on this FDV performance data."
 
     response = get_anthropic_client().messages.create(
@@ -29,4 +28,4 @@ def analyze_fdv_performance(period: str) -> str:
   
   
 if __name__ == "__main__":
-    print(analyze_fdv_performance('7'))
+    analyze_fdv_performance('7')
