@@ -283,7 +283,14 @@
         );
 
         div.innerHTML = `
-            <div class="timestamp">Narrative: ${new Date().toLocaleString()}</div>
+            <div class="timestamp">Narrative: ${new Date().toLocaleString(
+              "en-US",
+              {
+                month: "long",
+                day: "numeric",
+                year: "numeric",
+              }
+            )}</div>
             <div class="message">
               <div>${formattedContent}</div>
             </div>
