@@ -1,16 +1,25 @@
+import asyncio
+import json
 import os
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 
-from fastapi import Depends, FastAPI, Header, HTTPException
-from fastapi.responses import HTMLResponse
+from anthropic import AI_PROMPT, HUMAN_PROMPT
+from fastapi import Depends, FastAPI, Header, HTTPException, Request
+from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from db import db_utils
 from db.db_utils import ensure_db_initialized, get_db_connection
+from lib.anthropic import get_anthropic_client
 
+# Rate limiting configuration
+RATE_LIMIT = 5  # Number of requests allowed
+RATE_LIMIT_DURATION = timedelta(minutes=1)  # Time window for rate limit
 API_KEY = os.environ.get('INTERNAL_API_KEY')
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup: Initialize the database
@@ -75,7 +84,6 @@ async def get_tweets():
 async def get_narrative():
     try:
         narrative = db_utils.get_narrative()
-        print(f"Narrative: {narrative}")
         return {"status": "success", "narrative": narrative}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -248,6 +256,86 @@ async def save_coin_prices(coin: CoinPrices, api_key: str = Depends(verify_api_k
 @app.get("/api/health")
 async def healthcheck():
     return {"status": "ok"}
+
+def get_client_ip(request: Request):
+    forwarded_for = request.headers.get("X-Forwarded-For")
+    if forwarded_for:
+        return forwarded_for.split(",")[0]
+    return request.client.host
+
+async def rate_limit(request: Request):
+    client_ip = get_client_ip(request)
+    now = datetime.now()
+    
+    conn = db_utils.get_db_connection()
+    cursor = conn.cursor()
+    
+    # Get the current rate limit info for this IP
+    cursor.execute("SELECT request_count, last_request_time FROM rate_limit WHERE ip_address = ?", (client_ip,))
+    result = cursor.fetchone()
+    
+    if result:
+        count, last_time = result
+        last_time = datetime.fromisoformat(last_time)
+        
+        # Reset count if it's been longer than the rate limit duration
+        if now - last_time > RATE_LIMIT_DURATION:
+            count = 0
+        
+        if count >= RATE_LIMIT:
+            conn.close()
+            reset_time = last_time + RATE_LIMIT_DURATION
+            time_left = reset_time - now
+            minutes, seconds = divmod(time_left.seconds, 60)
+            raise HTTPException(
+                status_code=429, 
+                detail=f"Rate limit exceeded. Please try again in {minutes} minutes and {seconds} seconds."
+            )
+        
+        # Increment the count
+        cursor.execute("UPDATE rate_limit SET request_count = ?, last_request_time = ? WHERE ip_address = ?",
+                       (count + 1, now.isoformat(), client_ip))
+    else:
+        # First request from this IP
+        cursor.execute("INSERT INTO rate_limit (ip_address, request_count, last_request_time) VALUES (?, ?, ?)",
+                       (client_ip, 1, now.isoformat()))
+    
+    conn.commit()
+    conn.close()
+
+@app.post("/api/chat")
+async def chat(request: Request, _: None = Depends(rate_limit)):
+    try:
+        data = await request.json()
+        user_message = data["message"]
+        print("Chat request received", user_message)
+        
+        async def generate():
+            client = get_anthropic_client()
+            stream = client.messages.create(
+                max_tokens=1000,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": user_message,
+                    }
+                ],
+                model="claude-3-opus-20240229",
+                stream=True
+            )
+            for chunk in stream:
+                if chunk.type == "content_block_delta":
+                    yield f"data: {json.dumps({'text': chunk.delta.text, 'role': 'Ducky'})}\n\n"
+                await asyncio.sleep(0)  # Yield control to the event loop
+            yield "data: [DONE]\n\n"
+
+        return StreamingResponse(generate(), media_type="text/event-stream")
+    except HTTPException as e:
+        if e.status_code == 429:
+            return JSONResponse(status_code=429, content={"error": "Rate limit exceeded", "message": str(e.detail)})
+        raise
+
+
 
 if __name__ == "__main__":
     import asyncio

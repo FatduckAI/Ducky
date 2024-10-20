@@ -126,5 +126,12 @@ SCHEMA = {
             PRIMARY KEY (id, timestamp),
             FOREIGN KEY (id) REFERENCES coin_info(id)
         )
+    ''',
+    'rate_limit': '''
+        CREATE TABLE IF NOT EXISTS rate_limit (
+            ip_address TEXT PRIMARY KEY,
+            request_count INTEGER,
+            last_request_time TEXT
+        )
     '''
 }

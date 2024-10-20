@@ -39,6 +39,24 @@
       >
     </div>
 
+    <div class="mb-8 max-w-2xl mx-auto">
+      <div
+        id="chat-messages"
+        class="border border-ducky-border rounded p-4 h-96 overflow-y-auto mb-4"
+      ></div>
+      <form id="chat-form" class="flex gap-2">
+        <input
+          type="text"
+          id="user-input"
+          class="flex-grow border border-ducky-border p-2"
+          placeholder="Type your message..."
+        />
+        <button type="submit" class="bg-ducky-text text-white px-4 py-2">
+          Send
+        </button>
+      </form>
+    </div>
+
     <div class="flex flex-col md:flex-row justify-between gap-5">
       <div id="conversations" class="w-full md:w-1/3">
         <h1 class="text-center text-ducky-text text-2xl mb-5">
@@ -70,6 +88,119 @@
       </h1>
     </div>
     <script>
+      const chatForm = document.getElementById("chat-form");
+      const userInput = document.getElementById("user-input");
+      const chatMessages = document.getElementById("chat-messages");
+
+      chatForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const message = userInput.value.trim();
+        if (message) {
+          addMessage("User", message);
+          userInput.value = "";
+          await streamResponse(message);
+        }
+      });
+
+      async function streamResponse(message) {
+        try {
+          const response = await fetch("/api/chat", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ message }),
+          });
+
+          if (!response.ok) {
+            let errorMessage;
+            if (response.status === 429) {
+              const errorData = await response.json();
+              console.log(errorData);
+              errorMessage =
+                errorData.detail ||
+                "Rate limit exceeded. Please try again later.";
+            } else {
+              errorMessage = `Error: ${response.status} ${response.statusText}`;
+            }
+            console.error("Error:", errorMessage);
+            addMessage("Error", errorMessage, true);
+            return;
+          }
+
+          const reader = response.body.getReader();
+          const decoder = new TextDecoder();
+          let assistantResponse = "";
+
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            const chunk = decoder.decode(value);
+            const lines = chunk.split("\n");
+
+            for (const line of lines) {
+              if (line.startsWith("data: ")) {
+                const data = line.slice(6);
+                if (data === "[DONE]") {
+                  break;
+                }
+                try {
+                  const parsed = JSON.parse(data);
+                  assistantResponse += parsed.text;
+                  updateAssistantMessage(assistantResponse, parsed.role);
+                } catch (error) {
+                  console.error("Error parsing SSE data:", error);
+                  addMessage("Error", "Error parsing response data", true);
+                }
+              }
+            }
+          }
+        } catch (error) {
+          console.error("Error:", error);
+          addMessage("Error", "An unexpected error occurred", true);
+        }
+      }
+
+      function updateAssistantMessage(content, role = "Ducky") {
+        let assistantMessageDiv = chatMessages.lastElementChild;
+        if (
+          !assistantMessageDiv ||
+          assistantMessageDiv.querySelector(".font-bold").textContent !==
+            `${role}:`
+        ) {
+          assistantMessageDiv = document.createElement("div");
+          assistantMessageDiv.className = "mb-4";
+          assistantMessageDiv.innerHTML = `
+      <div class="font-bold ${
+        role === "Error" ? "text-red-600" : "text-ducky-text"
+      }">${role}:</div>
+      <div class="pl-4"></div>
+    `;
+          chatMessages.appendChild(assistantMessageDiv);
+        }
+        const contentDiv = assistantMessageDiv.querySelector(".pl-4");
+        contentDiv.textContent = content;
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+
+      function addMessage(sender, content, isError = false) {
+        const messageDiv = document.createElement("div");
+        messageDiv.className = "mb-4";
+        messageDiv.innerHTML = `
+    <div class="font-bold ${
+      isError
+        ? "text-red-600"
+        : sender === "User"
+        ? "text-blue-600"
+        : "text-ducky-text"
+    }">${sender}:</div>
+    <div class="pl-4">${content}</div>
+  `;
+        chatMessages.appendChild(messageDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+
       function updateCountdown(nextConversation) {
         const now = new Date();
         const next = new Date(nextConversation);

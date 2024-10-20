@@ -6,5 +6,6 @@ fastapi
 hypercorn
 asyncio
 openai
-
+python-telegram-bot
+aiohttp
 
