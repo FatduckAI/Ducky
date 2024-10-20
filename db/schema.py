@@ -89,4 +89,42 @@ SCHEMA = {
             summary TEXT
         )
     ''',
+    'coin_info': '''
+        CREATE TABLE IF NOT EXISTS coin_info (
+            id TEXT PRIMARY KEY,
+            symbol TEXT,
+            name TEXT,
+            image TEXT
+        )
+    ''',
+    'price_data': '''
+        CREATE TABLE IF NOT EXISTS price_data (
+            id TEXT,
+            timestamp TEXT,
+            current_price REAL,
+            market_cap REAL,
+            market_cap_rank INTEGER,
+            fully_diluted_valuation REAL,
+            total_volume REAL,
+            high_24h REAL,
+            low_24h REAL,
+            price_change_24h REAL,
+            price_change_percentage_24h REAL,
+            market_cap_change_24h REAL,
+            market_cap_change_percentage_24h REAL,
+            circulating_supply REAL,
+            total_supply REAL,
+            max_supply REAL,
+            ath REAL,
+            ath_change_percentage REAL,
+            ath_date TEXT,
+            atl REAL,
+            atl_change_percentage REAL,
+            atl_date TEXT,
+            roi TEXT,
+            last_updated TEXT,
+            PRIMARY KEY (id, timestamp),
+            FOREIGN KEY (id) REFERENCES coin_info(id)
+        )
+    '''
 }

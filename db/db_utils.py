@@ -1,6 +1,8 @@
 # db_utils.py
 
+import json
 import os
+from datetime import datetime
 
 import pysqlite3
 
@@ -113,3 +115,67 @@ def get_narrative():
     narratives = [{"content": row['content'], "summary": row['summary']} for row in cursor.fetchall()]
     conn.close()
     return narratives
+  
+def insert_price_data(coin):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    timestamp = datetime.now().isoformat()
+    sql = '''
+    INSERT INTO price_data (
+        id, timestamp, current_price, market_cap, market_cap_rank, 
+        fully_diluted_valuation, total_volume, high_24h, low_24h, 
+        price_change_24h, price_change_percentage_24h, market_cap_change_24h, 
+        market_cap_change_percentage_24h, circulating_supply, total_supply, 
+        max_supply, ath, ath_change_percentage, ath_date, atl, 
+        atl_change_percentage, atl_date, roi, last_updated
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    '''
+    values = (
+        coin['id'], timestamp, coin['current_price'], coin['market_cap'], 
+        coin['market_cap_rank'], coin['fully_diluted_valuation'], coin['total_volume'], 
+        coin['high_24h'], coin['low_24h'], coin['price_change_24h'], 
+        coin['price_change_percentage_24h'], coin['market_cap_change_24h'], 
+        coin['market_cap_change_percentage_24h'], coin['circulating_supply'], 
+        coin['total_supply'], coin['max_supply'], coin['ath'], 
+        coin['ath_change_percentage'], coin['ath_date'], coin['atl'], 
+        coin['atl_change_percentage'], coin['atl_date'], 
+        json.dumps(coin['roi']), coin['last_updated']
+    )
+    cursor.execute(sql, values)
+    conn.close()
+
+
+def upsert_coin_info(coin):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    sql = '''
+    INSERT OR REPLACE INTO coin_info (id, symbol, name, image)
+    VALUES (?, ?, ?, ?)
+    '''
+    cursor.execute(sql, (coin['id'], coin['symbol'], coin['name'], coin['image']))
+    conn.close()
+
+
+def get_coin_info():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM coin_info")
+    coin_info = cursor.fetchall()
+    conn.close()
+    return coin_info
+  
+def get_coin_prices():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM price_data")
+    coin_prices = cursor.fetchall()
+    conn.close()
+    return coin_prices
+  
+def get_coin_info_by_id(id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM coin_info WHERE id = ?", (id,))
+    coin_info = cursor.fetchone()
+    conn.close()
+    return coin_info

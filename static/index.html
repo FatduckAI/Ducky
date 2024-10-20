@@ -4,165 +4,70 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Mr Ducky</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        background-color: #ffe;
-        margin: 0;
-        padding: 20px;
-      }
-      h1,
-      h2 {
-        text-align: center;
-        color: #800000;
-      }
-      .section-title {
-        text-align: center;
-        color: #800000;
-        font-size: 24px;
-        margin-bottom: 20px;
-      }
-      .section-countdown {
-        font-size: 14px;
-        font-weight: bold;
-        margin-bottom: 20px;
-        text-align: center;
-        color: #800000;
-      }
-      .section-countdown-serious {
-        font-size: 14px;
-        font-weight: bold;
-        margin-bottom: 20px;
-        text-align: center;
-        color: #800000;
-      }
-      .section-countdown-oneoff {
-        font-size: 14px;
-        font-weight: bold;
-        margin-bottom: 20px;
-        text-align: center;
-        color: #800000;
-      }
-      #countdown {
-        font-size: 14px;
-        font-weight: bold;
-        margin-bottom: 20px;
-        text-align: center;
-        color: #800000;
-      }
-      #serious_countdown {
-        font-size: 14px;
-        font-weight: bold;
-        margin-bottom: 20px;
-        text-align: center;
-        color: #800000;
-      }
-      #oneoff_countdown {
-        font-size: 14px;
-        font-weight: bold;
-        margin-bottom: 20px;
-        text-align: center;
-        color: #800000;
-      }
-      .container {
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-      }
-      .conversation,
-      .tweet,
-      .tweet_oneoff {
-        border: 1px solid #d9bfb7;
-        border-radius: 3px;
-        padding: 10px;
-        margin-bottom: 20px;
-      }
-      .timestamp {
-        font-size: 12px;
-        color: #800000;
-        margin-bottom: 5px;
-      }
-      .message {
-        padding: 10px;
-        margin-bottom: 10px;
-        border-radius: 3px;
-      }
-      .narrative {
-        font-size: 14px;
-        margin-bottom: 20px;
-        text-align: left;
-        border: 1px solid #d9bfb7;
-        border-radius: 3px;
-        padding: 15px;
-      }
-
-      .narrative .timestamp {
-        font-weight: bold;
-        margin-bottom: 10px;
-      }
-      .ducky {
-        background-color: #f0e0d6;
-      }
-      .cleo {
-        background-color: #d7ecdd;
-      }
-      .moderator {
-        background-color: #d6e0f0;
-      }
-      .speaker {
-        font-weight: bold;
-        margin-bottom: 5px;
-        color: #800000;
-      }
-      .twitter-links {
-        text-align: center;
-        margin-top: 20px;
-        margin-bottom: 20px;
-      }
-      #conversations,
-      #tweets,
-      #tweets_oneoff {
-        width: 100%;
-      }
-      @media (min-width: 768px) {
-        .container {
-          flex-direction: row;
-          justify-content: space-between;
-        }
-        #conversations,
-        #tweets,
-        #tweets_oneoff {
-          width: 30%;
-        }
-      }
-    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              "ducky-bg": "#ffe",
+              "ducky-text": "#800000",
+              "ducky-border": "#d9bfb7",
+              "ducky-msg": "#f0e0d6",
+              "cleo-msg": "#d7ecdd",
+              "moderator-msg": "#d6e0f0",
+            },
+          },
+        },
+      };
+    </script>
   </head>
-  <body>
-    <h2>Ducky's Blog</h2>
+  <body class="bg-ducky-bg font-sans p-5">
+    <h2 class="text-center text-ducky-text text-2xl mb-4">Ducky's Blog</h2>
 
-    <div class="twitter-links">
-      Fathered by
-      <a href="https://fatduck.ai">Fatduck AI</a>
-      <br />
-      <a href="https://twitter.com/mrfatducky">Ducky Twitter</a>
+    <div class="text-center mb-8">
+      <p>
+        Fathered by
+        <a href="https://fatduck.ai" class="text-blue-600 hover:underline"
+          >Fatduck AI</a
+        >
+      </p>
+      <a
+        href="https://twitter.com/mrfatducky"
+        class="text-blue-600 hover:underline"
+        >Ducky Twitter</a
+      >
     </div>
 
-    <div class="container">
-      <div id="conversations">
-        <h1 class="section-title">Chat&apos;s with Cleo</h1>
-        <div class="section-countdown" id="countdown"></div>
+    <div class="flex flex-col md:flex-row justify-between gap-5">
+      <div id="conversations" class="w-full md:w-1/3">
+        <h1 class="text-center text-ducky-text text-2xl mb-5">
+          Chat's with Cleo
+        </h1>
+        <div
+          id="countdown"
+          class="text-center text-ducky-text text-sm font-bold mb-5"
+        ></div>
       </div>
-      <div id="tweets">
-        <h1 class="section-title">Serious Ducky</h1>
-        <div class="section-countdown" id="serious_countdown"></div>
+      <div id="tweets" class="w-full md:w-1/3">
+        <h1 class="text-center text-ducky-text text-2xl mb-5">Serious Ducky</h1>
+        <div
+          id="serious_countdown"
+          class="text-center text-ducky-text text-sm font-bold mb-5"
+        ></div>
       </div>
-      <div id="tweets_oneoff">
-        <h1 class="section-title">Braindump</h1>
-        <div class="section-countdown" id="oneoff_countdown"></div>
+      <div id="tweets_oneoff" class="w-full md:w-1/3">
+        <h1 class="text-center text-ducky-text text-2xl mb-5">Braindump</h1>
+        <div
+          id="oneoff_countdown"
+          class="text-center text-ducky-text text-sm font-bold mb-5"
+        ></div>
       </div>
     </div>
     <div id="narrative">
-      <h1 class="section-title">Daily Crypto Report</h1>
+      <h1 class="text-center text-ducky-text text-2xl mb-5">
+        Daily Crypto Report
+      </h1>
     </div>
     <script>
       function updateCountdown(nextConversation) {
@@ -200,15 +105,15 @@
 
       function displayConversations(conversations) {
         const container = document.getElementById("conversations");
-        const title = container.querySelector(".section-title");
-        const countdown = container.querySelector(".section-countdown");
+        const title = container.querySelector("h1");
+        const countdown = container.querySelector("#countdown");
         container.innerHTML = "";
         container.appendChild(title);
         container.appendChild(countdown);
         conversations.forEach((conv) => {
           const div = document.createElement("div");
-          div.className = "conversation";
-          div.innerHTML = `<div class="timestamp">Post: ${conv.timestamp}</div>`;
+          div.className = "border border-ducky-border rounded p-3 mb-5";
+          div.innerHTML = `<div class="text-sm text-ducky-text mb-2">Post: ${conv.timestamp}</div>`;
 
           const messages = conv.content.split("\n");
           let currentSpeaker = null;
@@ -216,9 +121,15 @@
 
           function addMessage() {
             if (currentSpeaker && currentMessage) {
+              const bgColor =
+                currentSpeaker.toLowerCase() === "ducky"
+                  ? "bg-ducky-msg"
+                  : currentSpeaker.toLowerCase() === "cleo"
+                  ? "bg-cleo-msg"
+                  : "bg-moderator-msg";
               div.innerHTML += `
-                <div class="message ${currentSpeaker.toLowerCase()}">
-                  <div class="speaker">${currentSpeaker}</div>
+                <div class="p-3 mb-3 rounded ${bgColor}">
+                  <div class="font-bold text-ducky-text mb-2">${currentSpeaker}</div>
                   <div>${currentMessage.trim()}</div>
                 </div>
               `;
@@ -275,13 +186,12 @@
       }
 
       function displayNarrative(narrative) {
-        console.log(narrative);
         const container = document.getElementById("narrative");
-        const title = container.querySelector(".section-title");
+        const title = container.querySelector("h1");
         container.innerHTML = "";
         container.appendChild(title);
         const div = document.createElement("div");
-        div.className = "narrative";
+        div.className = "border border-ducky-border rounded p-4";
         const formattedContent = narrative.summary.replace(
           /(\d+\.\s*.*?):\s*(.*?)(?=\n\d+\.|$)/gs,
           (match, p1, p2) => {
@@ -294,7 +204,7 @@
         );
 
         div.innerHTML = `
-            <div class="timestamp">Narrative: ${new Date().toLocaleString(
+            <div class="font-bold text-ducky-text mb-3">Narrative: ${new Date().toLocaleString(
               "en-US",
               {
                 month: "long",
@@ -303,25 +213,24 @@
               }
             )}</div>
               <div>${formattedContent}</div>
-            
           `;
         container.appendChild(div);
       }
 
       function displayTweets(tweets) {
         const container = document.getElementById("tweets");
-        const title = container.querySelector(".section-title");
-        const countdown = container.querySelector(".section-countdown");
+        const title = container.querySelector("h1");
+        const countdown = container.querySelector("#serious_countdown");
         container.innerHTML = "";
         container.appendChild(title);
         container.appendChild(countdown);
         tweets.forEach((tweet) => {
           const div = document.createElement("div");
-          div.className = "tweet";
+          div.className = "border border-ducky-border rounded p-3 mb-5";
           div.innerHTML = `
-            <div class="timestamp">Tweet: ${tweet.timestamp}</div>
-            <div class="message">
-              <div class="speaker">@mrfatducky</div>
+            <div class="text-sm text-ducky-text mb-2">Tweet: ${tweet.timestamp}</div>
+            <div class="p-3 bg-ducky-msg rounded">
+              <div class="font-bold text-ducky-text mb-2">@mrfatducky</div>
               <div>${tweet.content}</div>
             </div>
           `;
@@ -331,18 +240,18 @@
 
       function displayTweetsOneoff(tweets) {
         const container = document.getElementById("tweets_oneoff");
-        const title = container.querySelector(".section-title");
-        const countdown = container.querySelector(".section-countdown");
+        const title = container.querySelector("h1");
+        const countdown = container.querySelector("#oneoff_countdown");
         container.innerHTML = "";
         container.appendChild(title);
         container.appendChild(countdown);
         tweets.forEach((tweet) => {
           const div = document.createElement("div");
-          div.className = "tweet_oneoff";
+          div.className = "border border-ducky-border rounded p-3 mb-5";
           div.innerHTML = `
-            <div class="timestamp">Tweet: ${tweet.timestamp}</div>
-            <div class="message">
-              <div class="speaker">@mrfatducky</div>
+            <div class="text-sm text-ducky-text mb-2">Tweet: ${tweet.timestamp}</div>
+            <div class="p-3 bg-ducky-msg rounded">
+              <div class="font-bold text-ducky-text mb-2">@mrfatducky</div>
               <div>${tweet.content}</div>
             </div>
           `;

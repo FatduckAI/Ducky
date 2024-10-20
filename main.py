@@ -120,7 +120,37 @@ class Conversation(BaseModel):
 class Narrative(BaseModel):
     content: str
     summary: str
+    
+class Coin(BaseModel):
+    id: str
+    symbol: str
+    name: str
+    image: str
 
+class CoinPrices(BaseModel):
+    id: str
+    current_price: float
+    market_cap: float
+    market_cap_rank: int
+    fully_diluted_valuation: float
+    total_volume: float
+    high_24h: float
+    low_24h: float
+    price_change_24h: float
+    price_change_percentage_24h: float
+    market_cap_change_24h: float
+    market_cap_change_percentage_24h: float
+    circulating_supply: float
+    total_supply: float
+    max_supply: float
+    ath: float
+    ath_change_percentage: float
+    ath_date: str
+    atl: float
+    atl_change_percentage: float
+    atl_date: str
+    roi: str
+    last_updated: str
 @app.post("/api/save_edgelord_oneoff_tweet")
 async def save_new_tweet(tweet: Tweet, api_key: str = Depends(verify_api_key)):
     try:
@@ -174,7 +204,45 @@ async def save_narrative(narrative: Narrative, api_key: str = Depends(verify_api
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
       
+@app.get("/api/get_coin_info")
+async def get_coin_info(api_key: str = Depends(verify_api_key)):
+    try:
+        coin_info = db_utils.get_coin_info()
+        return {"status": "success", "coin_info": coin_info}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/get_coin_prices")
+async def get_coin_prices(api_key: str = Depends(verify_api_key)):
+    try:
+        coin_prices = db_utils.get_coin_prices()
+        return {"status": "success", "coin_prices": coin_prices}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/get_coin_info_by_id")
+async def get_coin_info_by_id(id: str, api_key: str = Depends(verify_api_key)):
+    try:
+        coin_info = db_utils.get_coin_info_by_id(id)
+        return {"status": "success", "coin_info": coin_info}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
       
+@app.post("/api/save_coin_info")
+async def save_coin_info(coin: Coin, api_key: str = Depends(verify_api_key)):
+    try:
+        db_utils.upsert_coin_info(coin)
+        return {"status": "success", "message": "Coin info saved successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+      
+@app.post("/api/save_coin_prices")
+async def save_coin_prices(coin: CoinPrices, api_key: str = Depends(verify_api_key)):
+    try:
+        db_utils.insert_price_data(coin)
+        return {"status": "success", "message": "Coin prices saved successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
       
 
 @app.get("/api/health")

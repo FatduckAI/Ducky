@@ -108,3 +108,78 @@ def get_narrative():
     except requests.exceptions.RequestException as e:
         print(f"Error fetching narrative from database: {e}")
         return []
+
+def save_coin_info(coin):
+    api_url = f"{API_URL}/save_coin_info"
+    headers = {
+        "X-API-Key": os.environ.get('INTERNAL_API_KEY')
+    }
+    data = {
+        "coin": coin
+    }
+    try:
+        response = requests.post(api_url, json=data, headers=headers)
+        response.raise_for_status()
+        print("Coin info saved to database successfully")
+    except requests.exceptions.RequestException as e:
+        print(f"Error saving coin info to database: {e}")
+        
+def get_coin_info():
+    api_url = f"{API_URL}/get_coin_info"
+    headers = {
+        "X-API-Key": os.environ.get('INTERNAL_API_KEY')
+    }
+    try:
+        response = requests.get(api_url, headers=headers)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching coin info from database: {e}")
+        return []
+
+def save_coin_prices(coin):
+    api_url = f"{API_URL}/save_coin_prices"
+    headers = {
+        "X-API-Key": os.environ.get('INTERNAL_API_KEY')
+    }
+    data = {
+        "coin": coin
+    }
+    try:
+        response = requests.post(api_url, json=data, headers=headers)
+        response.raise_for_status()
+        print("Coin prices saved to database successfully")
+    except requests.exceptions.RequestException as e:
+        print(f"Error saving coin prices to database: {e}") 
+        
+def get_coin_prices():
+    api_url = f"{API_URL}/get_coin_prices"
+    headers = {
+        "X-API-Key": os.environ.get('INTERNAL_API_KEY')
+    }
+    try:
+        response = requests.get(api_url, headers=headers)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching coin prices from database: {e}")
+        return []
+    
+def get_coin_info_by_id(id):
+    api_url = f"{API_URL}/get_coin_info_by_id"
+    headers = {
+        "X-API-Key": os.environ.get('INTERNAL_API_KEY')
+    }
+    data = {
+        "id": id
+    }
+    try:
+        response = requests.post(api_url, json=data, headers=headers)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching coin info by id from database: {e}")
+        return []
+      
+      
+      

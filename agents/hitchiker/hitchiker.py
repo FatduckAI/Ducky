@@ -15,7 +15,7 @@ load_dotenv()
 
 ACTORS = ["Ducky", "Cleo"]
 MODERATOR = "Trillian"
-MODEL = "claude-3-5-sonnet-20240620"
+MODEL = "claude-3-opus-20240229"
 TEMPERATURE = 1
 MAX_RETRIES = 3
 
