@@ -14,7 +14,7 @@ load_dotenv()
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
 API_URL = os.environ.get("API_URL")
 # Replace with your actual API endpoint
-CHAT_API_ENDPOINT = f"{API_URL}/api/chat"
+CHAT_API_ENDPOINT = f"{API_URL}/chat"
 
 # Replace with the ID of the channel you want the bot to monitor
 TARGET_CHANNEL_ID = os.environ.get("TARGET_CHANNEL_ID")
