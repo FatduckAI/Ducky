@@ -81,13 +81,20 @@
         id="countdown"
         class="text-center text-ducky-text text-sm font-bold mb-5"
       ></div>
-      <div id="conversation-container"></div>
-      <div class="flex justify-center mt-4">
+      <div id="conversation-container" class="mb-4"></div>
+      <div class="flex justify-center gap-4">
         <button
-          id="load-more"
+          id="prev-conversation"
           class="bg-ducky-text text-white px-4 py-2 rounded"
         >
-          Load More
+          &larr; Previous
+        </button>
+        <span id="page-indicator" class="text-ducky-text font-bold"></span>
+        <button
+          id="next-conversation"
+          class="bg-ducky-text text-white px-4 py-2 rounded"
+        >
+          Next &rarr;
         </button>
       </div>
     </div>
@@ -451,49 +458,71 @@
       }, 1000);
 
       let currentPage = 1;
-      const conversationsPerPage = 10;
+      let totalConversations = 0;
 
-      async function fetchConversations(page = 1) {
-        const response = await fetch(
-          `/api/conversations?page=${page}&limit=${conversationsPerPage}`
-        );
+      async function fetchConversation(page = 1) {
+        const response = await fetch(`/api/conversations?page=${page}&limit=1`);
         const data = await response.json();
         updateCountdown(data.next_conversation);
-        return data.conversations;
+        totalConversations = data.total_count;
+        return data;
       }
 
-      function displayConversations(conversations, append = false) {
+      function displayConversation(conversation) {
         const container = document.getElementById("conversation-container");
-        if (!append) {
-          container.innerHTML = "";
-        }
-        conversations.forEach((conv) => {
+        container.innerHTML = "";
+        if (conversation) {
           const div = document.createElement("div");
           div.className = "border border-ducky-border rounded p-3 mb-5";
-          // ... (rest of the conversation display logic)
+          div.innerHTML = `
+      <div class="text-sm text-ducky-text mb-2">Post: ${conversation.timestamp}</div>
+      <div class="p-3 bg-ducky-msg rounded">
+        <div class="font-bold text-ducky-text mb-2">Conversation</div>
+        <div>${conversation.content}</div>
+      </div>
+    `;
           container.appendChild(div);
-        });
+        }
+        updatePageIndicator();
       }
 
-      async function loadMoreConversations() {
-        currentPage++;
-        const conversations = await fetchConversations(currentPage);
-        displayConversations(conversations, true);
-        if (conversations.length < conversationsPerPage) {
-          document.getElementById("load-more").style.display = "none";
+      function updatePageIndicator() {
+        const indicator = document.getElementById("page-indicator");
+        indicator.textContent = `${currentPage} / ${totalConversations}`;
+      }
+
+      async function loadConversation(page) {
+        const data = await fetchConversation(page);
+        if (data.conversations.length > 0) {
+          displayConversation(data.conversations[0]);
+        } else {
+          displayConversation(null);
+        }
+      }
+
+      async function nextConversation() {
+        if (currentPage < totalConversations) {
+          currentPage++;
+          await loadConversation(currentPage);
+        }
+      }
+
+      async function prevConversation() {
+        if (currentPage > 1) {
+          currentPage--;
+          await loadConversation(currentPage);
         }
       }
 
       document
-        .getElementById("load-more")
-        .addEventListener("click", loadMoreConversations);
+        .getElementById("next-conversation")
+        .addEventListener("click", nextConversation);
+      document
+        .getElementById("prev-conversation")
+        .addEventListener("click", prevConversation);
 
       async function initConversations() {
-        const conversations = await fetchConversations();
-        displayConversations(conversations);
-        if (conversations.length < conversationsPerPage) {
-          document.getElementById("load-more").style.display = "none";
-        }
+        await loadConversation(currentPage);
       }
 
       initConversations();
