@@ -30,13 +30,11 @@ def generate_tweet():
             }
         ]
     )
-    return response.content[0].text
+    return response.content[0].text.strip()
 
 def tweet_job():
     content = generate_tweet()
     #print(content)
-    if len(content) >= 280:
-        content = content[:280]
     tweet_id = post_tweet(content)
     if tweet_id:
         save_edgelord_oneoff_to_db(content, tweet_id)
