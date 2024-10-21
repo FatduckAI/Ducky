@@ -433,6 +433,70 @@
           fetchTweets();
         }
       }, 1000);
+
+      setInterval(() => {
+        const countdownElement = document.getElementById("countdown");
+        const [minutes, seconds] = countdownElement.innerText.match(/\d+/g);
+        let totalSeconds = parseInt(minutes) * 60 + parseInt(seconds);
+
+        if (totalSeconds > 0) {
+          totalSeconds--;
+          const newMinutes = Math.floor(totalSeconds / 60);
+          const newSeconds = totalSeconds % 60;
+          countdownElement.innerText = `${newMinutes}m ${newSeconds}s`;
+        } else {
+          currentPage = 1;
+          initConversations();
+        }
+      }, 1000);
+
+      let currentPage = 1;
+      const conversationsPerPage = 10;
+
+      async function fetchConversations(page = 1) {
+        const response = await fetch(
+          `/api/conversations?page=${page}&limit=${conversationsPerPage}`
+        );
+        const data = await response.json();
+        updateCountdown(data.next_conversation);
+        return data.conversations;
+      }
+
+      function displayConversations(conversations, append = false) {
+        const container = document.getElementById("conversation-container");
+        if (!append) {
+          container.innerHTML = "";
+        }
+        conversations.forEach((conv) => {
+          const div = document.createElement("div");
+          div.className = "border border-ducky-border rounded p-3 mb-5";
+          // ... (rest of the conversation display logic)
+          container.appendChild(div);
+        });
+      }
+
+      async function loadMoreConversations() {
+        currentPage++;
+        const conversations = await fetchConversations(currentPage);
+        displayConversations(conversations, true);
+        if (conversations.length < conversationsPerPage) {
+          document.getElementById("load-more").style.display = "none";
+        }
+      }
+
+      document
+        .getElementById("load-more")
+        .addEventListener("click", loadMoreConversations);
+
+      async function initConversations() {
+        const conversations = await fetchConversations();
+        displayConversations(conversations);
+        if (conversations.length < conversationsPerPage) {
+          document.getElementById("load-more").style.display = "none";
+        }
+      }
+
+      initConversations();
     </script>
   </body>
 </html>
