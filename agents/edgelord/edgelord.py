@@ -23,7 +23,7 @@ def generate_tweet():
             }
         ]
     )
-    return response.content[0].text.strip()
+    return response.content[0].text
 
 
 def tweet_job():
