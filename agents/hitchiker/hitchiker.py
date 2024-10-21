@@ -140,9 +140,9 @@ def conversation_job():
     if len(summary) > 280:
         summary = summary[:280]
     # Post tweet
-    tweet_url = post_tweet(summary)
-    if tweet_url:
-        print(f"Tweet URL: {tweet_url}")
+    #tweet_url = post_tweet(summary)
+    #if tweet_url:
+    #    print(f"Tweet URL: {tweet_url}")
 
     # Save this conversation
     content = "\n\n".join([msg["content"] for msg in new_conversation])
