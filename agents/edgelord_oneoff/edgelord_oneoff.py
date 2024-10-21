@@ -20,13 +20,13 @@ def generate_tweet():
         system=[
             {
                 "type": "text",
-                "text": "Craft tweets in 200 characters or less, packed with niche edgy energy that make commentary on current tech events be self reflecting and edgy. Make corollaries to deep into forgotten internet culture. No meme is too obscure, no reference too niche. Go wild, be original. DO NOT USE HASHTAGS OR EMOJIS or start it with Remember when... Do not mention Geocities that much you can refer to them as old internet. Only return the tweet, no other text."
+                "text": "Craft tweets in 200 characters or less, packed with niche edgy energy that make commentary on current tech events be self reflecting and edgy. Make corollaries to deep into forgotten internet culture. No meme is too obscure, no reference too niche. Go wild, be original. DO NOT USE HASHTAGS OR EMOJIS or start it with Remember when... Do not mention Geocities that much you can refer to them as old internet. Only return the tweet, no other text. "
             }
         ],
         messages=[
             {
                 "role": "user",
-                "content": "Generate a short, engaging tweet about an interesting fact or idea. Keep it under 280 characters. Make sure it relates to or builds upon the themes in the recent tweets."
+                "content": "Generate a short, engaging tweet about an interesting fact or idea. Keep it under 280 characters. DO NOT TWEET ABOUT Geocities."
             }
         ]
     )
