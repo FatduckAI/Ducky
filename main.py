@@ -37,10 +37,11 @@ async def read_root():
         return f.read()
 
 @app.get("/api/conversations")
-async def get_conversations():
+async def get_conversations(page: int = 1, limit: int = 10):
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM hitchiker_conversations ORDER BY timestamp DESC")
+    offset = (page - 1) * limit
+    cursor.execute("SELECT * FROM hitchiker_conversations ORDER BY timestamp DESC LIMIT ? OFFSET ?", (limit, offset))
     conversations = cursor.fetchall()
     conn.close()
 
@@ -57,7 +58,8 @@ async def get_conversations():
 
     next_conversation_time = datetime.now().replace(second=0, microsecond=0) + timedelta(minutes=60 - datetime.now().minute % 60)
     return {"conversations": conversation_list, "next_conversation": next_conversation_time.isoformat()}
-
+  
+  
 @app.get("/api/tweets")
 async def get_tweets():
     conn = get_db_connection()
