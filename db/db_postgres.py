@@ -37,20 +37,20 @@ except Exception as e:
 
 @contextmanager
 def get_db_connection():
-    """Context manager for database connections"""
-    conn = None
     try:
-        conn = pool.getconn()
-        yield conn
-        conn.commit()
+        # Parse the DATABASE_URL to handle any special characters in password
+        result = urlparse(DATABASE_URL)
+        conn = psycopg2.connect(
+            database=result.path[1:],
+            user=result.username,
+            password=result.password,
+            host=result.hostname,
+            port=result.port
+        )
+        return conn
     except Exception as e:
-        if conn:
-            conn.rollback()
-        print(f"Database error: {e}")
-        raise
-    finally:
-        if conn:
-            pool.putconn(conn)
+        print(f"Database connection failed: {e}")
+        return None
 
 @contextmanager
 def get_cursor(commit=True):
@@ -65,15 +65,29 @@ def get_cursor(commit=True):
             cursor.close()
 
 def table_exists(table_name):
-    with get_cursor(commit=False) as c:
-        c.execute("""
+    """Check if a table exists in the database"""
+    conn = get_db_connection()
+    if not conn:
+        return False
+    
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
             SELECT EXISTS (
-                SELECT FROM information_schema.tables 
+                SELECT 1 
+                FROM information_schema.tables 
                 WHERE table_schema = 'public' 
                 AND table_name = %s
             );
         """, (table_name,))
-        return c.fetchone()[0]
+        exists = cursor.fetchone()[0]
+        return exists
+    except Exception as e:
+        print(f"Error checking table existence: {e}")
+        return False
+    finally:
+        cursor.close()
+        conn.close()
 
 def init_db():
     with get_cursor() as c:
@@ -83,12 +97,30 @@ def init_db():
                 print(f"Created table: {table_name}")
 
 def ensure_db_initialized():
+    """Ensure all required tables exist in the database"""
     print("Ensuring database is initialized")
-    for table_name in PG_SCHEMA.keys():
+    tables = [
+        'edgelord',
+        'edgelord_oneoff',
+        'hitchiker_conversations',
+        'narratives',
+        'coin_info',
+        'price_data',
+        'rate_limit'
+    ]
+    
+    needs_init = False
+    for table_name in tables:
         if not table_exists(table_name):
-            print(f"Table {table_name} does not exist. Initializing...")
-            init_db()
+            print(f"Table {table_name} does not exist")
+            needs_init = True
             break
+    
+    if needs_init:
+        print("Initializing database...")
+        init_db()
+    else:
+        print("All required tables exist")
 
 def healthcheck():
     try:
