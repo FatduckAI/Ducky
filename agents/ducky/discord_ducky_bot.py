@@ -40,7 +40,8 @@ async def on_message(message):
 
 # Run the bot
 if __name__ == "__main__":
-    token = os.getenv('DISCORD_TOKEN')
+    token = os.environ.get('DISCORD_TOKEN')
+    print(token)
     if not token:
         print("Error: No Discord token found! Make sure you have a .env file with DISCORD_TOKEN=your_token")
     else:
