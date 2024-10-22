@@ -129,7 +129,16 @@ def save_edgelord_oneoff_tweet(content, tweet_id, timestamp):
     cursor.close()
     conn.close()
 
-# Rest of synchronous methods for db_utils.py
+def save_edgelord_tweet(content, tweet_id, timestamp):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO edgelord (content, tweet_id, timestamp) VALUES (%s, %s, %s)",
+                   (content, tweet_id, timestamp))
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+
 
 def get_edgelord_tweets():
     conn = get_db_connection()
@@ -141,6 +150,18 @@ def get_edgelord_tweets():
     finally:
         cursor.close()
         conn.close()
+        
+def get_edgelord_oneoff_tweets():
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    try:
+        cursor.execute("SELECT content FROM edgelord_oneoff ORDER BY timestamp DESC")
+        tweets = [row['content'] for row in cursor.fetchall()]
+        return tweets
+    finally:
+        cursor.close()
+        conn.close()
+
 
 def save_hitchiker_conversation(timestamp, content, summary, tweet_url):
     conn = get_db_connection()
