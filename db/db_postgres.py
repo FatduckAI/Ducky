@@ -6,12 +6,19 @@ from datetime import datetime
 from urllib.parse import urlparse
 
 import psycopg2
+from dotenv import load_dotenv
 from psycopg2.extras import RealDictCursor
 
 from db.pg_schema import PG_SCHEMA
 
-# Railway provides the database URL in the DATABASE_URL environment variable
-DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://localhost:5432/ducky')
+load_dotenv()
+
+RAILWAY_ENVIRONMENT_NAME = os.environ.get('RAILWAY_ENVIRONMENT_NAME', 'local')
+if RAILWAY_ENVIRONMENT_NAME == 'production':
+    # Railway provides the database URL in the DATABASE_URL environment variable
+    DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://localhost:5432/ducky')
+else:
+    DATABASE_URL = os.environ.get('DATABASE_PUBLIC_URL', 'postgresql://localhost:5432/ducky')
 
 def get_db_connection():
     try:

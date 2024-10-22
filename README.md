@@ -9,3 +9,17 @@ Fatduck agents
 3. Add api endpoint in [main.py](main.py)
 4. Add sdk logic in [/db/sdk.py](/db/sdk.py)
 5. Add new service in railway
+
+### Drizzle Studio
+
+`./entrypoint studio`
+
+### Runpod:
+
+Better Ollama CUDA12
+4 x A40s
+`ssh root@XX.XX.XX.XXX -p 22XXX -i ~/.ssh/align_runpod`
+
+Install ollama: `(curl -fsSL https://ollama.com/install.sh | sh && ollama serve > ollama.log 2>&1) &`
+Install: `ollama run llama3.1:70b`
+KeepAlive: `ollama run llama3.1:70b --keepalive 1000m`
