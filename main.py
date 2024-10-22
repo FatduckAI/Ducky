@@ -5,9 +5,10 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 
 from anthropic import AI_PROMPT, HUMAN_PROMPT
-from fastapi import Depends, FastAPI, Header, HTTPException, Request
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
+from psycopg2.extras import RealDictCursor
 from pydantic import BaseModel
 
 from db.db_postgres import (ensure_db_initialized, get_db_connection,
@@ -38,38 +39,30 @@ async def read_root():
     with open("static/index.html", "r") as f:
         return f.read()
 
-@app.get("/api/conversations")
-async def get_conversations(page: int = 1, limit: int = 1):
+@app.get("/conversations")
+async def get_conversations(
+    limit: int = Query(default=10, ge=1, le=100),
+    offset: int = Query(default=0, ge=0)
+):
     conn = get_db_connection()
-    cursor = conn.cursor()
-    offset = (page - 1) * limit
-    cursor.execute("SELECT * FROM hitchiker_conversations ORDER BY timestamp DESC LIMIT ? OFFSET ?", (limit, offset))
-    conversations = cursor.fetchall()
-    
-    # Get total count of conversations
-    cursor.execute("SELECT COUNT(*) FROM hitchiker_conversations")
-    total_count = cursor.fetchone()[0]
-    
-    conn.close()
-
-    conversation_list = [
-        {
-            'id': conv['id'],
-            'timestamp': conv['timestamp'],
-            'content': conv['content'],
-            'summary': conv['summary'],
-            'tweet_url': conv['tweet_url']
-        }
-        for conv in conversations
-    ]
-
-    next_conversation_time = datetime.now().replace(second=0, microsecond=0) + timedelta(minutes=60 - datetime.now().minute % 60)
-    return {
-        "conversations": conversation_list,
-        "next_conversation": next_conversation_time.isoformat(),
-        "total_count": total_count,
-        "current_page": page
-    }
+    if conn:
+        try:
+            cursor = conn.cursor(cursor_factory=RealDictCursor)
+            # PostgreSQL uses $1, $2, etc. for parameterized queries
+            cursor.execute("""
+                SELECT * FROM hitchiker_conversations 
+                ORDER BY timestamp DESC 
+                LIMIT $1 OFFSET $2
+            """, (limit, offset))
+            conversations = cursor.fetchall()
+            return {"conversations": conversations}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+        finally:
+            cursor.close()
+            conn.close()
+    else:
+        raise HTTPException(status_code=500, detail="Database connection failed")
   
 @app.get("/api/tweets")
 async def get_tweets():
