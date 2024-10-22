@@ -37,41 +37,59 @@
         class="text-blue-600 hover:underline"
         >Ducky Twitter</a
       >
+      <br />
+      <a href="https://glu.wtf" class="text-blue-600 hover:underline"
+        >Intro Blog Post</a
+      >
     </div>
 
-    <div class="mb-8 max-w-2xl mx-auto">
-      <div
-        id="chat-messages"
-        class="border border-ducky-border rounded p-4 h-96 overflow-y-auto mb-4"
-      ></div>
-      <form id="chat-form" class="flex gap-2">
-        <input
-          type="text"
-          id="user-input"
-          class="flex-grow border border-ducky-border p-2 disabled:opacity-50"
-          disabled
-          placeholder="Loading Ducky..."
-        />
-        <button
-          type="submit"
-          class="bg-ducky-text text-white px-4 py-2 opacity-50"
-          disabled
-        >
-          Send
-        </button>
-      </form>
+    <div class="mb-8 max-w-2xl mx-auto border border-ducky-border rounded p-4">
+      <button
+        id="toggle-chat"
+        class="w-full text-left text-ducky-text hover:underline mb-2 flex items-center"
+      >
+        <span id="toggle-icon" class="mr-2">▶</span>
+        <span>Chat</span>
+      </button>
+
+      <div id="chat-container" class="transition-all duration-300 hidden">
+        <div
+          id="chat-messages"
+          class="border border-ducky-border rounded p-4 h-96 overflow-y-auto mb-4"
+        ></div>
+        <form id="chat-form" class="flex gap-2">
+          <input
+            type="text"
+            id="user-input"
+            class="flex-grow border border-ducky-border p-2 disabled:opacity-50"
+            disabled
+            placeholder="Loading Ducky... chat will be back soon"
+          />
+          <button
+            type="submit"
+            class="bg-ducky-text text-white px-4 py-2 opacity-50"
+            disabled
+          >
+            Send
+          </button>
+        </form>
+      </div>
     </div>
 
     <div class="flex flex-col md:flex-row justify-between gap-5">
       <div id="tweets" class="w-full md:w-1/2">
-        <h1 class="text-center text-ducky-text text-2xl mb-5">Serious Ducky</h1>
+        <h1 class="text-center text-ducky-text text-2xl mb-5">
+          Serious Ducky (long term thoughts)
+        </h1>
         <div
           id="serious_countdown"
           class="text-center text-ducky-text text-sm font-bold mb-5"
         ></div>
       </div>
       <div id="tweets_oneoff" class="w-full md:w-1/2">
-        <h1 class="text-center text-ducky-text text-2xl mb-5">Braindump</h1>
+        <h1 class="text-center text-ducky-text text-2xl mb-5">
+          Braindump (short term thoughts)
+        </h1>
         <div
           id="oneoff_countdown"
           class="text-center text-ducky-text text-sm font-bold mb-5"
@@ -115,7 +133,16 @@
       const chatForm = document.getElementById("chat-form");
       const userInput = document.getElementById("user-input");
       const chatMessages = document.getElementById("chat-messages");
+      const toggleButton = document.getElementById("toggle-chat");
+      const chatContainer = document.getElementById("chat-container");
+      const toggleIcon = document.getElementById("toggle-icon");
 
+      toggleButton.addEventListener("click", () => {
+        chatContainer.classList.toggle("hidden");
+        toggleIcon.textContent = chatContainer.classList.contains("hidden")
+          ? "▶"
+          : "▼";
+      });
       chatForm.addEventListener("submit", async (e) => {
         e.preventDefault();
         const message = userInput.value.trim();

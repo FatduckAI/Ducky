@@ -2,23 +2,23 @@
 
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from urllib.parse import urlparse
 
 import psycopg2
 from dotenv import load_dotenv
 from psycopg2.extras import RealDictCursor
 
-from db.pg_schema import PG_SCHEMA
+from db.pg_schema import PG_SCHEMA, UPDATE_DUCKY_AI_POSTED
 
 load_dotenv()
 
 RAILWAY_ENVIRONMENT_NAME = os.environ.get('RAILWAY_ENVIRONMENT_NAME', 'local')
 if RAILWAY_ENVIRONMENT_NAME == 'production':
     # Railway provides the database URL in the DATABASE_URL environment variable
-    DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://localhost:5432/ducky')
+    DATABASE_URL = os.environ.get('DATABASE_URL')
 else:
-    DATABASE_URL = os.environ.get('DATABASE_PUBLIC_URL', 'postgresql://localhost:5432/ducky')
+    DATABASE_URL = os.environ.get('DATABASE_PUBLIC_URL')
 
 def get_db_connection():
     try:
@@ -96,6 +96,8 @@ def init_db():
             conn.close()
 
 def ensure_db_initialized():
+    #conn = get_db_connection()
+    #cursor = conn.cursor()
     """Ensure all required tables exist in the database"""
     print("Ensuring database is initialized")
     tables = [
@@ -105,7 +107,8 @@ def ensure_db_initialized():
         'hitchiker_conversations',
         'narratives',
         'price_data',
-        'rate_limit'
+        'rate_limit',
+        'ducky_ai'
     ]
     
     try:
@@ -122,6 +125,10 @@ def ensure_db_initialized():
             init_db()
         else:
             print("All required tables exist")
+            
+        #cursor.execute(UPDATE_DUCKY_AI_POSTED)
+        #conn.commit()
+        #conn.close()
     except Exception as e:
         print(f"Error during database initialization: {e}")
         raise
@@ -142,6 +149,53 @@ def save_edgelord_oneoff_tweet(content, tweet_id, timestamp):
     finally:
         cursor.close()
         conn.close()
+        
+def save_ducky_ai_tweet(content, tweet_id, posted=False, tweet_index=0):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    if posted:
+      timestamp = datetime.now().isoformat()
+    else:
+      # Calculate the base timestamp (bottom of current hour)
+      now = datetime.now()
+      base_timestamp = now.replace(minute=0, second=0, microsecond=0)
+      
+      # If we're past the 30 minute mark, use the next hour as base
+      if now.minute > 30:
+        base_timestamp = base_timestamp + timedelta(hours=1)
+    
+      # Add hours based on tweet index for scheduling
+      scheduled_timestamp = base_timestamp + timedelta(hours=tweet_index)
+      timestamp = scheduled_timestamp.isoformat()
+    
+    try:
+        cursor.execute("""
+            INSERT INTO ducky_ai (content, tweet_id, timestamp, posted) 
+            VALUES (%s, %s, %s, %s)
+        """, (content, tweet_id, timestamp, posted))
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        print(f"Error saving ducky ai tweet: {e}")
+        raise
+    finally:
+        cursor.close()
+        conn.close()
+
+
+
+def get_ducky_ai_tweets():
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    try:
+        cursor.execute("SELECT id, content, tweet_id, timestamp FROM ducky_ai ORDER BY timestamp DESC")
+        return cursor.fetchall()
+    finally:
+        cursor.close()
+        conn.close()
+
+
+
 
 def save_edgelord_tweet(content, tweet_id, timestamp):
     conn = get_db_connection()
@@ -169,6 +223,16 @@ def get_edgelord_tweets():
             FROM edgelord 
             ORDER BY timestamp DESC
         """)
+        return cursor.fetchall()
+    finally:
+        cursor.close()
+        conn.close()
+        
+def get_edgelord_oneoff_tweets():
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    try:
+        cursor.execute("SELECT id, content, tweet_id, timestamp FROM edgelord_oneoff ORDER BY timestamp DESC")
         return cursor.fetchall()
     finally:
         cursor.close()

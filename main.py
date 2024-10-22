@@ -15,11 +15,12 @@ from pydantic import BaseModel
 
 from db.db_postgres import (ensure_db_initialized, get_coin_info,
                             get_coin_info_by_id, get_coin_prices,
+                            get_ducky_ai_tweets, get_edgelord_oneoff_tweets,
                             get_edgelord_tweets, get_hitchiker_conversations,
                             get_narrative, insert_price_data,
-                            save_edgelord_oneoff_tweet, save_edgelord_tweet,
-                            save_hitchiker_conversation, save_narrative,
-                            upsert_coin_info)
+                            save_ducky_ai_tweet, save_edgelord_oneoff_tweet,
+                            save_edgelord_tweet, save_hitchiker_conversation,
+                            save_narrative, upsert_coin_info)
 from lib.anthropic import get_anthropic_client
 
 # Configuration
@@ -151,7 +152,7 @@ async def get_narrative_endpoint():
 @app.get("/api/tweets_oneoff")
 async def get_tweets_oneoff_endpoint():
     try:
-        tweets = get_edgelord_tweets()  # Using the same function as it's the same structure
+        tweets = get_edgelord_oneoff_tweets()  # Using the same function as it's the same structure
         next_tweet_time = datetime.now().replace(second=0, microsecond=0) + timedelta(minutes=20 - datetime.now().minute % 20)
         return {
             "tweets": tweets,
@@ -159,6 +160,27 @@ async def get_tweets_oneoff_endpoint():
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/ducky_ai_tweets")
+async def get_ducky_ai_tweets_endpoint():
+    try:
+        tweets = get_ducky_ai_tweets()
+        return {"tweets": tweets}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/save_ducky_ai_tweet")
+async def save_ducky_ai_tweet_endpoint(tweet: Tweet, api_key: str = Depends(verify_api_key)):
+    try:
+        timestamp = datetime.now().isoformat()
+        save_ducky_ai_tweet(tweet.tweet_url)
+        return {"status": "success", "message": "Tweet saved successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 
 # Protected API endpoints
 @app.post("/api/save_edgelord_oneoff_tweet")

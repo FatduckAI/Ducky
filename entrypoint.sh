@@ -6,19 +6,27 @@ if [ "$1" = "web" ]; then
 elif [ "$1" = "hitchiker" ]; then
     exec python -m agents.hitchiker.hitchiker
 elif [ "$1" = "edgelord" ]; then
-    exec python -m agents.edgelord.edgelord
+    #exec python -m agents.edgelord.edgelord
+    echo "edgelord is deprecated"
 elif [ "$1" = "dinner_with_andre" ]; then
     exec python -m agents.dinner_with_andre
 elif [ "$1" = "edgelord_oneoff" ]; then
-    exec python -m agents.edgelord_oneoff.edgelord_oneoff
+    #exec python -m agents.edgelord_oneoff.edgelord_oneoff
+    echo "edgelord_oneoff is deprecated"
+elif [ "$1" = "ducky" ]; then
+    exec python -m agents.ducky.ducky_ai
 elif [ "$1" = "narratives" ]; then
     exec python -m agents.narratives.narrative
 elif [ "$1" = "telegram" ]; then
     exec python -m telegram_bot
+elif [ "$1" = "tweet_poster" ]; then
+    exec python -m agents.ducky.tweet_poster
 elif [ "$1" = "studio" ]; then
     cd drizzlestudio
     source .env
     exec bun run db:studio
+elif [ "$1" = "discord" ]; then
+    exec python -m agents.ducky.discord_ducky_bot
 #elif [ "$1" = "migrate-to-postgres" ]; then
 #    echo "Starting database migration from SQLite to PostgreSQL..."
 #    if [ -z "$DATABASE_URL" ]; then
@@ -45,5 +53,7 @@ else
     echo "  telegram           - Start the Telegram bot"
     echo "  migrate-to-postgres - Migrate SQLite database to PostgreSQL"
     echo "  init-postgres      - Initialize PostgreSQL database"
+    echo "  ducky              - Start the Ducky agent"
+    echo "  discord            - Start the Discord bot"
     exit 1
 fi

@@ -20,6 +20,7 @@ Better Ollama CUDA12
 4 x A40s
 `ssh root@XX.XX.XX.XXX -p 22XXX -i ~/.ssh/align_runpod`
 
-Install ollama: `(curl -fsSL https://ollama.com/install.sh | sh && ollama serve > ollama.log 2>&1) &`
-Install: `ollama run llama3.1:70b`
+Install ollama: `(curl -fsSL https://ollama.com/install.sh | sh && OLLAMA_HOST=0.0.0.0 ollama serve > ollama.log 2>&1) &`
 KeepAlive: `ollama run llama3.1:70b --keepalive 1000m`
+
+DONT FORGET OLLAMA_HOST=0.0.0.0 in above command

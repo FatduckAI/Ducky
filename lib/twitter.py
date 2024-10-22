@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 
 import tweepy
 from dotenv import load_dotenv
@@ -23,9 +24,9 @@ def post_tweet(content):
     try:
         response = twitter_client.create_tweet(text=content)
         tweet_id = response.data['id']
-        tweet_url = f"https://twitter.com/user/status/{tweet_id}"
+        tweet_url = f"https://x.com/user/status/{tweet_id}"
         print(f"Tweet posted: {content}")
         return tweet_url
     except Exception as e:
         print(f"Error posting tweet: {e}")
-        return None
+        return f"Error posting tweet: {datetime.now().isoformat()}"

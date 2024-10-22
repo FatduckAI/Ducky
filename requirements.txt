@@ -12,3 +12,4 @@ sqlite-web
 gevent
 psycopg2
 asyncpg
+discord-py

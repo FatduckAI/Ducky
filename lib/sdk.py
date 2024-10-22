@@ -1,17 +1,20 @@
 import os
 
 import requests
+from dotenv import load_dotenv
 
-API_URL = os.environ.get('API_URL')
+load_dotenv()
 
-def save_edgelord_oneoff_to_db(content, tweet_id):
+API_URL = os.environ.get('API_URL','http://localhost:3000/api')
+
+def save_edgelord_oneoff_to_db(content, tweet_url):
     api_url = f"{API_URL}/save_edgelord_oneoff_tweet"
     headers = {
         "X-API-Key": os.environ.get('INTERNAL_API_KEY')
     }
     data = {
         "content": content,
-        "tweet_id": tweet_id
+        "tweet_id": tweet_url
     }
     try:
         response = requests.post(api_url, json=data, headers=headers)
@@ -20,15 +23,16 @@ def save_edgelord_oneoff_to_db(content, tweet_id):
     except requests.exceptions.RequestException as e:
         print(f"Error saving tweet to database: {e}")
 
-def save_edgelord_to_db(content, tweet_id):
+def save_edgelord_to_db(content, tweet_url):
     api_url = f"{API_URL}/save_edgelord_tweet"
     headers = {
         "X-API-Key": os.environ.get('INTERNAL_API_KEY')
     }
     data = {
         "content": content,
-        "tweet_id": tweet_id
+        "tweet_id": tweet_url
     }
+    print(data)
     try:
         response = requests.post(api_url, json=data, headers=headers)
         response.raise_for_status()
@@ -38,7 +42,7 @@ def save_edgelord_to_db(content, tweet_id):
         
         
 def get_edgelord_tweets():
-    api_url = f"{API_URL}/get_edgelord_tweets"
+    api_url = f"{API_URL}/tweets"
     headers = {
         "X-API-Key": os.environ.get('INTERNAL_API_KEY')
     }

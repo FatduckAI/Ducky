@@ -69,5 +69,21 @@ PG_SCHEMA = {
             request_count INTEGER,
             last_request_time TEXT
         )
+    ''',
+    'ducky_ai': '''
+        CREATE TABLE IF NOT EXISTS ducky_ai (
+            id SERIAL PRIMARY KEY,
+            content TEXT NOT NULL,
+            tweet_id TEXT UNIQUE,
+            postTime TEXT,
+            posted BOOLEAN DEFAULT FALSE,
+            timestamp TEXT NOT NULL
+        )
     '''
 }
+
+
+# add a new column to the ducky_ai table
+UPDATE_DUCKY_AI_POSTED = '''
+    ALTER TABLE ducky_ai ADD COLUMN postTime TEXT;
+'''
