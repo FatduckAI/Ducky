@@ -8,4 +8,5 @@ asyncio
 openai
 python-telegram-bot
 aiohttp
-
+sqlite-web
+gevent

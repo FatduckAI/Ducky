@@ -3,6 +3,8 @@ set -e
 
 if [ "$1" = "web" ]; then
     exec hypercorn main:app --bind 0.0.0.0:3000 --bind '[::]:4000' --worker-class asyncio
+elif [ "$1" = "sqlite-web" ]; then
+    exec python wsgi.py /data/database.db
 elif [ "$1" = "hitchiker" ]; then
     exec python -m agents.hitchiker.hitchiker
 elif [ "$1" = "edgelord" ]; then
