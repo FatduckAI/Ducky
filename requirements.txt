@@ -10,3 +10,4 @@ python-telegram-bot
 aiohttp
 sqlite-web
 gevent
+psycopg2
