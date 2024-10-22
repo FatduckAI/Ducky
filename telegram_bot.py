@@ -39,8 +39,8 @@ async def handle_channel_message(update: Update, context: ContextTypes.DEFAULT_T
         user_message = message.replace(BOT_TAG, "").strip()
         
         print(f"Responding to tagged message: {user_message}")
-      
-        async with aiohttp.ClientSession() as session:
+        await context.bot.send_message(chat_id=TARGET_CHANNEL_ID, text="Ducky's telegram functionality is under maintenance.")
+        """ async with aiohttp.ClientSession() as session:
               async with session.post(CHAT_API_ENDPOINT, json={"message": user_message}) as response:
                   if response.status == 200:
                       full_response = ""
@@ -58,7 +58,7 @@ async def handle_channel_message(update: Update, context: ContextTypes.DEFAULT_T
                       await context.bot.send_message(
                           chat_id=TARGET_CHANNEL_ID,
                           text="Sorry, I couldn't process your request at the moment."
-            )
+            ) """
     else: 
         print(f"Ignoring untagged message: {message}")
 
