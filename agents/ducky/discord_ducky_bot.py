@@ -43,11 +43,6 @@ async def on_message(message):
     if message.author == client.user:
         return
     
-    # If this is a reply to our own message, ignore it
-    if message.reference and message.reference.resolved:
-        if message.reference.resolved.author == client.user:
-            return
-
     # Check if our role ID is mentioned
     ducky_role_id = 1298357900825198705
     if ducky_role_id in message.raw_role_mentions or client.user in message.mentions:
