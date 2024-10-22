@@ -66,11 +66,13 @@ def get_cursor(commit=True):
 
 def table_exists(table_name):
     """Check if a table exists in the database"""
-    conn = get_db_connection()
-    if not conn:
-        return False
-    
+    conn = None
+    cursor = None
     try:
+        conn = get_db_connection()
+        if not conn:
+            return False
+        
         cursor = conn.cursor()
         cursor.execute("""
             SELECT EXISTS (
@@ -86,8 +88,10 @@ def table_exists(table_name):
         print(f"Error checking table existence: {e}")
         return False
     finally:
-        cursor.close()
-        conn.close()
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
 
 def init_db():
     with get_cursor() as c:
