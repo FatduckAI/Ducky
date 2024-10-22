@@ -10,8 +10,10 @@ from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from db import db_utils
-from db.db_utils import ensure_db_initialized, get_db_connection
+from db.db_postgres import (ensure_db_initialized, get_db_connection,
+                            get_narrative, insert_price_data,
+                            save_edgelord_oneoff_tweet, save_edgelord_tweet,
+                            upsert_coin_info)
 from lib.anthropic import get_anthropic_client
 
 # Rate limiting configuration
@@ -94,7 +96,7 @@ async def get_tweets():
 @app.get("/api/narrative")
 async def get_narrative():
     try:
-        narrative = db_utils.get_narrative()
+        narrative = get_narrative()
         return {"status": "success", "narrative": narrative}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -174,7 +176,7 @@ class CoinPrices(BaseModel):
 async def save_new_tweet(tweet: Tweet, api_key: str = Depends(verify_api_key)):
     try:
         timestamp = datetime.now().isoformat()
-        db_utils.save_edgelord_oneoff_tweet(tweet.content, tweet.tweet_id, timestamp)
+        save_edgelord_oneoff_tweet(tweet.content, tweet.tweet_id, timestamp)
         return {"status": "success", "message": "Tweet saved successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -182,7 +184,7 @@ async def save_new_tweet(tweet: Tweet, api_key: str = Depends(verify_api_key)):
 @app.get("/api/get_edgelord_tweets")
 async def get_edgelord_tweets(api_key: str = Depends(verify_api_key)):
     try:
-        tweets = db_utils.get_edgelord_tweets()
+        tweets = get_edgelord_tweets()
         return {"status": "success", "tweets": tweets}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -191,7 +193,7 @@ async def get_edgelord_tweets(api_key: str = Depends(verify_api_key)):
 async def save_new_tweet(tweet: Tweet, api_key: str = Depends(verify_api_key)):
     try:
         timestamp = datetime.now().isoformat()
-        db_utils.save_edgelord_tweet(tweet.content, tweet.tweet_id, timestamp)
+        save_edgelord_tweet(tweet.content, tweet.tweet_id, timestamp)
         return {"status": "success", "message": "Tweet saved successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -199,7 +201,7 @@ async def save_new_tweet(tweet: Tweet, api_key: str = Depends(verify_api_key)):
 @app.get("/api/get_hitchiker_conversations")
 async def get_hitchiker_conversations(api_key: str = Depends(verify_api_key)):
     try:
-        conversations = db_utils.get_hitchiker_conversations()
+        conversations = get_hitchiker_conversations()
         return {"status": "success", "conversations": conversations}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -208,7 +210,7 @@ async def get_hitchiker_conversations(api_key: str = Depends(verify_api_key)):
 async def save_hitchiker_conversation(conversation: Conversation, api_key: str = Depends(verify_api_key)):
     try:
         timestamp = datetime.now().isoformat()
-        db_utils.save_hitchiker_conversation(timestamp, conversation.content, conversation.summary, conversation.tweet_url)
+        save_hitchiker_conversation(timestamp, conversation.content, conversation.summary, conversation.tweet_url)
         return {"status": "success", "message": "Conversation saved successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -218,7 +220,7 @@ async def save_hitchiker_conversation(conversation: Conversation, api_key: str =
 async def save_narrative(narrative: Narrative, api_key: str = Depends(verify_api_key)):
     try:
         timestamp = datetime.now().isoformat()
-        db_utils.save_narrative(timestamp, narrative.content, narrative.summary)
+        save_narrative(timestamp, narrative.content, narrative.summary)
         return {"status": "success", "message": "Narrative saved successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -226,7 +228,7 @@ async def save_narrative(narrative: Narrative, api_key: str = Depends(verify_api
 @app.get("/api/get_coin_info")
 async def get_coin_info(api_key: str = Depends(verify_api_key)):
     try:
-        coin_info = db_utils.get_coin_info()
+        coin_info = get_coin_info()
         return {"status": "success", "coin_info": coin_info}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -234,7 +236,7 @@ async def get_coin_info(api_key: str = Depends(verify_api_key)):
 @app.get("/api/get_coin_prices")
 async def get_coin_prices(api_key: str = Depends(verify_api_key)):
     try:
-        coin_prices = db_utils.get_coin_prices()
+        coin_prices = get_coin_prices()
         return {"status": "success", "coin_prices": coin_prices}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -242,7 +244,7 @@ async def get_coin_prices(api_key: str = Depends(verify_api_key)):
 @app.get("/api/get_coin_info_by_id")
 async def get_coin_info_by_id(id: str, api_key: str = Depends(verify_api_key)):
     try:
-        coin_info = db_utils.get_coin_info_by_id(id)
+        coin_info = get_coin_info_by_id(id)
         return {"status": "success", "coin_info": coin_info}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -250,7 +252,7 @@ async def get_coin_info_by_id(id: str, api_key: str = Depends(verify_api_key)):
 @app.post("/api/save_coin_info")
 async def save_coin_info(coin: Coin, api_key: str = Depends(verify_api_key)):
     try:
-        db_utils.upsert_coin_info(coin)
+        upsert_coin_info(coin)
         return {"status": "success", "message": "Coin info saved successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -258,7 +260,7 @@ async def save_coin_info(coin: Coin, api_key: str = Depends(verify_api_key)):
 @app.post("/api/save_coin_prices")
 async def save_coin_prices(coin: CoinPrices, api_key: str = Depends(verify_api_key)):
     try:
-        db_utils.insert_price_data(coin)
+        insert_price_data(coin)
         return {"status": "success", "message": "Coin prices saved successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -278,7 +280,7 @@ async def rate_limit(request: Request):
     client_ip = get_client_ip(request)
     now = datetime.now()
     
-    conn = db_utils.get_db_connection()
+    conn = get_db_connection()
     cursor = conn.cursor()
     
     # Get the current rate limit info for this IP

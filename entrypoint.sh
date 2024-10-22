@@ -3,8 +3,6 @@ set -e
 
 if [ "$1" = "web" ]; then
     exec hypercorn main:app --bind 0.0.0.0:3000 --bind '[::]:4000' --worker-class asyncio
-elif [ "$1" = "sqlite-web" ]; then
-    exec python wsgi.py /data/database.db
 elif [ "$1" = "hitchiker" ]; then
     exec python -m agents.hitchiker.hitchiker
 elif [ "$1" = "edgelord" ]; then
@@ -17,19 +15,19 @@ elif [ "$1" = "narratives" ]; then
     exec python -m agents.narratives.narrative
 elif [ "$1" = "telegram" ]; then
     exec python -m telegram_bot
-elif [ "$1" = "migrate-to-postgres" ]; then
-    echo "Starting database migration from SQLite to PostgreSQL..."
-    if [ -z "$DATABASE_URL" ]; then
-        echo "Error: DATABASE_URL environment variable not set"
-        exit 1
-    fi
-    if [ -z "$SQLITE_DB_PATH" ]; then
-        echo "Warning: SQLITE_DB_PATH not set, using default: /data/ducky_new.db"
-        export SQLITE_DB_PATH="/data/ducky_new.db"
-    fi
-    exec python db/migrate.py
-elif [ "$1" = "init-postgres" ]; then
-    exec python db/init_postgres.py
+#elif [ "$1" = "migrate-to-postgres" ]; then
+#    echo "Starting database migration from SQLite to PostgreSQL..."
+#    if [ -z "$DATABASE_URL" ]; then
+#        echo "Error: DATABASE_URL environment variable not set"
+#        exit 1
+#    fi
+#    if [ -z "$SQLITE_DB_PATH" ]; then
+#        echo "Warning: SQLITE_DB_PATH not set, using default: /data/ducky_new.db"
+#        export SQLITE_DB_PATH="/data/ducky_new.db"
+#    fi
+#    exec python db/migrate.py
+#elif [ "$1" = "init-postgres" ]; then
+#    exec python db/init_postgres.py
 else
     echo "Unknown command"
     echo "Available commands:"
