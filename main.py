@@ -25,10 +25,18 @@ API_KEY = os.environ.get('INTERNAL_API_KEY')
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup: Initialize the database
-    ensure_db_initialized()
+    # Startup
+    print("Starting up...")
+    try:
+        await ensure_db_initialized()
+        print("Database initialized successfully")
+    except Exception as e:
+        print(f"Failed to initialize database: {e}")
+        raise
     yield
-    # Shutdown: Add any cleanup here if needed
+    # Shutdown
+    print("Shutting down...")
+
 
 app = FastAPI(lifespan=lifespan)
 

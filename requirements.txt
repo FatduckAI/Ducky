@@ -11,3 +11,4 @@ aiohttp
 sqlite-web
 gevent
 psycopg2
+asyncpg

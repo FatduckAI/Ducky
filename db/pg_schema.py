@@ -33,14 +33,6 @@ PG_SCHEMA = {
             summary TEXT
         )
     ''',
-    'coin_info': '''
-        CREATE TABLE IF NOT EXISTS coin_info (
-            id TEXT PRIMARY KEY,
-            symbol TEXT,
-            name TEXT,
-            image TEXT
-        )
-    ''',
     'price_data': '''
         CREATE TABLE IF NOT EXISTS price_data (
             id TEXT,
