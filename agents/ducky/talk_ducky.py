@@ -4,8 +4,9 @@ from datetime import datetime
 import requests
 from dotenv import load_dotenv
 
-from db.db_postgres import get_ducky_ai_tweets
+from db.db_postgres import get_ducky_ai_tweets, save_ducky_ai_tweet
 from lib.ollama import get_ollama_client
+from lib.twitter import post_tweet
 
 # Check if we're running locally (not in Railway)
 if not os.environ.get('RAILWAY_ENVIRONMENT'):
@@ -44,6 +45,10 @@ def generate_ducky_response(human_input):
 
     try:
         response = requests.post(ollama_url, json=payload)
+        tweet_id = f"id_1_{datetime.now().isoformat()}"
+        save_ducky_ai_tweet(human_input, tweet_id,posted=False, tweet_index=0)
+        tweet_id_2 = f"id_2_{datetime.now().isoformat()}"
+        save_ducky_ai_tweet(response.json().get('response', '').strip(), tweet_id_2,posted=False, tweet_index=0)
         response.raise_for_status()
         generated_text = response.json().get('response', '').strip()
         return generated_text
@@ -58,5 +63,8 @@ if __name__ == "__main__":
         if user_input.lower() == 'exit':
             break
         response = generate_ducky_response(user_input)
+        tweet_id = f"id_{1}_{datetime.now().isoformat()}"
+        save_ducky_ai_tweet(user_input, tweet_id,posted=False, tweet_index=0)
+        save_ducky_ai_tweet(response, tweet_id,posted=False, tweet_index=0)
         if response:
             print("\nDucky:", response)

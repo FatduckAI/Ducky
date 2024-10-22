@@ -7,6 +7,9 @@ from dotenv import load_dotenv
 # Import the generate function from your existing code
 from agents.ducky.talk_ducky import generate_ducky_response
 
+# Load environment variables
+load_dotenv()
+
 # Set up Discord client with minimal intents
 intents = Intents.default()
 intents.message_content = True
@@ -21,25 +24,38 @@ async def on_message(message):
     # Don't respond to ourselves
     if message.author == client.user:
         return
+    
+    # If this is a reply to our own message, ignore it
+    if message.reference and message.reference.resolved:
+        if message.reference.resolved.author == client.user:
+            return
 
-    # Respond if the bot is mentioned or if message starts with !ducky
-    if client.user.mentioned_in(message) or message.content.startswith('!ducky'):
-        # Get the actual message content
-        if client.user.mentioned_in(message):
-            user_input = message.content.replace(f'<@{client.user.id}>', '').strip()
-        else:
-            user_input = message.content.replace('!ducky', '').strip()
-
+    # Check if our role ID is mentioned
+    ducky_role_id = 1298357900825198705
+    if ducky_role_id in message.raw_role_mentions or client.user in message.mentions:
+        # Remove both user and role mentions
+        user_input = message.content
+        # Remove role mention
+        user_input = user_input.replace(f'<@&{ducky_role_id}>', '').strip()
+        # Remove potential user mentions
+        user_input = user_input.replace(f'<@{client.user.id}>', '').strip()
+        user_input = user_input.replace(f'<@!{client.user.id}>', '').strip()
+        
         if user_input:
             async with message.channel.typing():
                 response = generate_ducky_response(user_input)
                 await message.reply(response if response else "*Quacks in error* 🦆")
 
+
 # Run the bot
 if __name__ == "__main__":
-    token = os.environ.get('DISCORD_TOKEN')
-    print(token)
+    token = os.getenv('DISCORD_TOKEN')
     if not token:
         print("Error: No Discord token found! Make sure you have a .env file with DISCORD_TOKEN=your_token")
     else:
-        client.run(token)
+        try:
+            client.run(token)
+        except discord.errors.LoginFailure:
+            print("Failed to login. Please check if your token is correct.")
+        except Exception as e:
+            print(f"An error occurred: {e}")
