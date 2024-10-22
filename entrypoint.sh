@@ -15,6 +15,10 @@ elif [ "$1" = "narratives" ]; then
     exec python -m agents.narratives.narrative
 elif [ "$1" = "telegram" ]; then
     exec python -m telegram_bot
+elif [ "$1" = "studio" ]; then
+    cd drizzlestudio
+    source .env
+    exec bun run db:studio
 #elif [ "$1" = "migrate-to-postgres" ]; then
 #    echo "Starting database migration from SQLite to PostgreSQL..."
 #    if [ -z "$DATABASE_URL" ]; then
