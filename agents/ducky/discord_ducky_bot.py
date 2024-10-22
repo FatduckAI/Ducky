@@ -7,9 +7,6 @@ from dotenv import load_dotenv
 # Import the generate function from your existing code
 from agents.ducky.talk_ducky import generate_ducky_response
 
-# Load environment variables
-load_dotenv()
-
 # Set up Discord client with minimal intents
 intents = Intents.default()
 intents.message_content = True
