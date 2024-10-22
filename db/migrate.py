@@ -10,7 +10,7 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 
 # Configuration
-SQLITE_DB_PATH = os.environ.get('SQLITE_DB_PATH', '/data/ducky_new.db')
+SQLITE_DB_PATH = '/data/ducky_new.db'
 PG_DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://localhost:5432/ducky')
 
 def get_sqlite_connection():
