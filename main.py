@@ -5,6 +5,7 @@ import json
 import os
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
+from math import ceil
 
 from anthropic import AI_PROMPT, HUMAN_PROMPT
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
@@ -105,14 +106,25 @@ async def read_root():
     with open("static/index.html", "r") as f:
         return f.read()
 
-@app.get("/conversations")
+@app.get("/api/conversations")
 async def get_conversations_endpoint(
-    limit: int = Query(default=10, ge=1, le=100),
-    offset: int = Query(default=0, ge=0)
+    page: int = Query(default=1, ge=1),
+    limit: int = Query(default=10, ge=1, le=100)
 ):
     try:
-        conversations = get_hitchiker_conversations(limit, offset)
-        return {"conversations": conversations}
+        offset = (page - 1) * limit
+        conversations, total_count = get_hitchiker_conversations(limit, offset)
+        
+        next_conversation_time = datetime.now().replace(second=0, microsecond=0) + timedelta(minutes=30 - datetime.now().minute % 30)
+        
+        return {
+            "conversations": conversations,
+            "total_count": total_count,
+            "current_page": page,
+            "limit": limit,
+            "total_pages": ceil(total_count / limit),
+            "next_conversation": next_conversation_time.isoformat()
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

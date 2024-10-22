@@ -466,83 +466,65 @@
       }, 1000);
 
       let currentPage = 1;
-      let totalConversations = 0;
+      let totalPages = 0;
+      let pageSize = 10;
 
-      async function fetchConversation(page = 1) {
+      async function fetchConversations(page = 1, limit = pageSize) {
         try {
           const response = await fetch(
-            `/api/conversations?page=${page}&limit=1`
+            `/api/conversations?page=${page}&limit=${limit}`
           );
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
           const data = await response.json();
+
+          // Update global variables
+          totalPages = data.total_pages;
+          currentPage = data.current_page;
+
+          // Update UI elements
           updateCountdown(data.next_conversation);
-          totalConversations = data.total_count;
+          displayConversations(data.conversations);
+          updatePagination();
+
           return data;
         } catch (error) {
-          console.error("Error fetching conversation:", error);
+          console.error("Error fetching conversations:", error);
           return { conversations: [], total_count: 0 };
         }
       }
 
-      function displayConversation(conversation) {
-        const container = document.getElementById("conversation-container");
-        container.innerHTML = "";
-        if (conversation) {
-          const div = document.createElement("div");
-          div.className = "border border-ducky-border rounded p-3 mb-5";
-          div.innerHTML = `
-      <div class="text-sm text-ducky-text mb-2">Post: ${conversation.timestamp}</div>
-      <div class="p-3 bg-ducky-msg rounded">
-        <div class="font-bold text-ducky-text mb-2">Conversation</div>
-        <div>${conversation.content}</div>
-      </div>
-    `;
-          container.appendChild(div);
-        } else {
-          container.innerHTML = "<p>No conversation available.</p>";
-        }
-        updatePageIndicator();
-        updateButtonStates();
-      }
-
-      function updatePageIndicator() {
-        const indicator = document.getElementById("page-indicator");
-        indicator.textContent = `${currentPage} / ${totalConversations}`;
-      }
-
-      function updateButtonStates() {
+      function updatePagination() {
         const prevButton = document.getElementById("prev-conversation");
         const nextButton = document.getElementById("next-conversation");
+        const pageIndicator = document.getElementById("page-indicator");
 
+        // Update page indicator
+        pageIndicator.textContent = `Page ${currentPage} of ${totalPages}`;
+
+        // Update button states
         prevButton.disabled = currentPage <= 1;
-        nextButton.disabled = currentPage >= totalConversations;
+        nextButton.disabled = currentPage >= totalPages;
 
+        // Update button opacity
         prevButton.classList.toggle("opacity-50", prevButton.disabled);
         nextButton.classList.toggle("opacity-50", nextButton.disabled);
       }
 
-      async function loadConversation(page) {
-        const data = await fetchConversation(page);
-        if (data.conversations && data.conversations.length > 0) {
-          displayConversation(data.conversations[0]);
-        } else {
-          displayConversation(null);
-        }
-      }
-
       async function nextConversation() {
-        if (currentPage < totalConversations) {
-          currentPage++;
-          await loadConversation(currentPage);
+        if (currentPage < totalPages) {
+          await fetchConversations(currentPage + 1);
         }
       }
 
       async function prevConversation() {
         if (currentPage > 1) {
-          currentPage--;
-          await loadConversation(currentPage);
+          await fetchConversations(currentPage - 1);
         }
       }
 
+      // Event listeners
       document
         .getElementById("next-conversation")
         .addEventListener("click", nextConversation);
@@ -550,30 +532,71 @@
         .getElementById("prev-conversation")
         .addEventListener("click", prevConversation);
 
-      async function initConversations() {
-        await loadConversation(currentPage);
+      // Display conversations
+      function displayConversations(conversations) {
+        const container = document.getElementById("conversation-container");
+        container.innerHTML = "";
+
+        conversations.forEach((conv) => {
+          const div = document.createElement("div");
+          div.className = "border border-ducky-border rounded p-3 mb-5";
+
+          // Parse and format timestamp
+          const timestamp = new Date(conv.timestamp).toLocaleString();
+
+          // Format the content with proper styling for each speaker
+          const formattedContent = formatConversationContent(conv.content);
+
+          div.innerHTML = `
+            <div class="text-sm text-ducky-text mb-2">Posted: ${timestamp}</div>
+            <div class="conversation-content">
+                ${formattedContent}
+            </div>
+        `;
+          container.appendChild(div);
+        });
       }
 
-      initConversations();
+      function formatConversationContent(content) {
+        const messages = content.split("\n");
+        let formattedContent = "";
+        let currentSpeaker = null;
+        let currentMessage = "";
 
-      // Update the countdown interval
-      setInterval(() => {
-        const countdownElement = document.getElementById("countdown");
-        const [minutes, seconds] = countdownElement.innerText.match(/\d+/g) || [
-          0, 0,
-        ];
-        let totalSeconds = parseInt(minutes) * 60 + parseInt(seconds);
+        function addMessage() {
+          if (currentSpeaker && currentMessage) {
+            const bgColor =
+              currentSpeaker.toLowerCase() === "ducky"
+                ? "bg-ducky-msg"
+                : currentSpeaker.toLowerCase() === "cleo"
+                ? "bg-cleo-msg"
+                : "bg-moderator-msg";
 
-        if (totalSeconds > 0) {
-          totalSeconds--;
-          const newMinutes = Math.floor(totalSeconds / 60);
-          const newSeconds = totalSeconds % 60;
-          countdownElement.innerText = `${newMinutes}m ${newSeconds}s`;
-        } else {
-          currentPage = 1;
-          initConversations();
+            formattedContent += `
+                <div class="p-3 mb-3 rounded ${bgColor}">
+                    <div class="font-bold text-ducky-text mb-2">${currentSpeaker}</div>
+                    <div>${currentMessage.trim()}</div>
+                </div>
+            `;
+          }
         }
-      }, 1000);
+
+        messages.forEach((line) => {
+          const speakerMatch = line.match(/^(\w+):\s*(.*)$/);
+          if (speakerMatch) {
+            addMessage();
+            [, currentSpeaker, currentMessage] = speakerMatch;
+          } else {
+            currentMessage += "\n" + line;
+          }
+        });
+
+        addMessage(); // Add the last message
+        return formattedContent;
+      }
+
+      // Initialize the conversations
+      fetchConversations(1);
     </script>
   </body>
 </html>

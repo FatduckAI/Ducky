@@ -185,16 +185,27 @@ def save_hitchiker_conversation(timestamp, content, summary, tweet_url):
         conn.close()
 
 def get_hitchiker_conversations(limit=10, offset=0):
+    """Get paginated hitchiker conversations with total count"""
     conn = get_db_connection()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
     try:
+        # Get total count first
+        cursor.execute("SELECT COUNT(*) FROM hitchiker_conversations")
+        total_count = cursor.fetchone()['count']
+        
+        # Get paginated data
         cursor.execute("""
             SELECT id, timestamp, content, summary, tweet_url
             FROM hitchiker_conversations 
             ORDER BY timestamp DESC
             LIMIT %s OFFSET %s
         """, (limit, offset))
-        return cursor.fetchall()
+        conversations = cursor.fetchall()
+        
+        return conversations, total_count
+    except Exception as e:
+        print(f"Error fetching conversations: {e}")
+        raise
     finally:
         cursor.close()
         conn.close()
