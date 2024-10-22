@@ -1,3 +1,5 @@
+# main.py
+
 import asyncio
 import json
 import os
@@ -8,129 +10,23 @@ from anthropic import AI_PROMPT, HUMAN_PROMPT
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
-from psycopg2.extras import RealDictCursor
 from pydantic import BaseModel
 
-from db.db_postgres import (ensure_db_initialized, get_db_connection,
+from db.db_postgres import (ensure_db_initialized, get_coin_info,
+                            get_coin_info_by_id, get_coin_prices,
+                            get_edgelord_tweets, get_hitchiker_conversations,
                             get_narrative, insert_price_data,
                             save_edgelord_oneoff_tweet, save_edgelord_tweet,
+                            save_hitchiker_conversation, save_narrative,
                             upsert_coin_info)
 from lib.anthropic import get_anthropic_client
 
-# Rate limiting configuration
+# Configuration
 RATE_LIMIT = 5  # Number of requests allowed
 RATE_LIMIT_DURATION = timedelta(minutes=1)  # Time window for rate limit
 API_KEY = os.environ.get('INTERNAL_API_KEY')
 
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Startup
-    print("Starting up...")
-    try:
-        # Even though ensure_db_initialized is sync, FastAPI can handle it
-        ensure_db_initialized()
-        print("Database initialized successfully")
-    except Exception as e:
-        print(f"Failed to initialize database: {e}")
-        raise
-    yield
-    # Shutdown
-    print("Shutting down...")
-
-
-app = FastAPI(lifespan=lifespan)
-
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
-@app.get("/", response_class=HTMLResponse)
-async def read_root():
-    with open("static/index.html", "r") as f:
-        return f.read()
-
-@app.get("/conversations")
-async def get_conversations(
-    limit: int = Query(default=10, ge=1, le=100),
-    offset: int = Query(default=0, ge=0)
-):
-    conn = get_db_connection()
-    if conn:
-        try:
-            cursor = conn.cursor(cursor_factory=RealDictCursor)
-            # PostgreSQL uses $1, $2, etc. for parameterized queries
-            cursor.execute("""
-                SELECT * FROM hitchiker_conversations 
-                ORDER BY timestamp DESC 
-                LIMIT $1 OFFSET $2
-            """, (limit, offset))
-            conversations = cursor.fetchall()
-            return {"conversations": conversations}
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
-        finally:
-            cursor.close()
-            conn.close()
-    else:
-        raise HTTPException(status_code=500, detail="Database connection failed")
-  
-@app.get("/api/tweets")
-async def get_tweets():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM edgelord ORDER BY timestamp DESC LIMIT 10")
-    tweets = cursor.fetchall()
-    conn.close()
-
-    tweet_list = [
-        {
-            'id': tweet['id'],
-            'content': tweet['content'],
-            'tweet_id': tweet['tweet_id'],
-            'timestamp': tweet['timestamp']
-        }
-        for tweet in tweets
-    ]
-    
-    next_tweet_time = datetime.now().replace(second=0, microsecond=0) + timedelta(minutes=30 - datetime.now().minute % 30)
-    return {"tweets": tweet_list, "next_tweet": next_tweet_time.isoformat()}
-
-# Get the latest narrative
-@app.get("/api/narrative")
-async def get_narrative():
-    try:
-        narrative = get_narrative()
-        return {"status": "success", "narrative": narrative}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.get("/api/tweets_oneoff")
-async def get_tweets_oneoff():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM edgelord_oneoff ORDER BY timestamp DESC LIMIT 10")
-    tweets = cursor.fetchall()
-    conn.close()
-
-    tweet_list = [
-        {
-            'id': tweet['id'],
-            'content': tweet['content'],
-            'tweet_id': tweet['tweet_id'],
-            'timestamp': tweet['timestamp']
-        }
-        for tweet in tweets
-    ]
-
-    next_tweet_time = datetime.now().replace(second=0, microsecond=0) + timedelta(minutes=20 - datetime.now().minute % 20)
-    return {"tweets": tweet_list, "next_tweet": next_tweet_time.isoformat()}
-
-def verify_api_key(x_api_key: str = Header(...)):
-    if x_api_key != API_KEY:
-        raise HTTPException(status_code=403, detail="Invalid API Key")
-    return x_api_key
-
-
-# INTERNAL API
+# Models
 class Tweet(BaseModel):
     content: str
     tweet_id: str
@@ -174,103 +70,28 @@ class CoinPrices(BaseModel):
     atl_date: str
     roi: str
     last_updated: str
-@app.post("/api/save_edgelord_oneoff_tweet")
-async def save_new_tweet(tweet: Tweet, api_key: str = Depends(verify_api_key)):
-    try:
-        timestamp = datetime.now().isoformat()
-        save_edgelord_oneoff_tweet(tweet.content, tweet.tweet_id, timestamp)
-        return {"status": "success", "message": "Tweet saved successfully"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-      
-@app.get("/api/get_edgelord_tweets")
-async def get_edgelord_tweets(api_key: str = Depends(verify_api_key)):
-    try:
-        tweets = get_edgelord_tweets()
-        return {"status": "success", "tweets": tweets}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-      
-@app.post("/api/save_edgelord_tweet")
-async def save_new_tweet(tweet: Tweet, api_key: str = Depends(verify_api_key)):
-    try:
-        timestamp = datetime.now().isoformat()
-        save_edgelord_tweet(tweet.content, tweet.tweet_id, timestamp)
-        return {"status": "success", "message": "Tweet saved successfully"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-      
-@app.get("/api/get_hitchiker_conversations")
-async def get_hitchiker_conversations(api_key: str = Depends(verify_api_key)):
-    try:
-        conversations = get_hitchiker_conversations()
-        return {"status": "success", "conversations": conversations}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/api/save_hitchiker_conversation")
-async def save_hitchiker_conversation(conversation: Conversation, api_key: str = Depends(verify_api_key)):
+# FastAPI setup
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print("Starting up...")
     try:
-        timestamp = datetime.now().isoformat()
-        save_hitchiker_conversation(timestamp, conversation.content, conversation.summary, conversation.tweet_url)
-        return {"status": "success", "message": "Conversation saved successfully"}
+        ensure_db_initialized()
+        print("Database initialized successfully")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-      
-            
-@app.post("/api/save_narrative")
-async def save_narrative(narrative: Narrative, api_key: str = Depends(verify_api_key)):
-    try:
-        timestamp = datetime.now().isoformat()
-        save_narrative(timestamp, narrative.content, narrative.summary)
-        return {"status": "success", "message": "Narrative saved successfully"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-      
-@app.get("/api/get_coin_info")
-async def get_coin_info(api_key: str = Depends(verify_api_key)):
-    try:
-        coin_info = get_coin_info()
-        return {"status": "success", "coin_info": coin_info}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        print(f"Failed to initialize database: {e}")
+        raise
+    yield
+    print("Shutting down...")
 
-@app.get("/api/get_coin_prices")
-async def get_coin_prices(api_key: str = Depends(verify_api_key)):
-    try:
-        coin_prices = get_coin_prices()
-        return {"status": "success", "coin_prices": coin_prices}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+app = FastAPI(lifespan=lifespan)
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
-@app.get("/api/get_coin_info_by_id")
-async def get_coin_info_by_id(id: str, api_key: str = Depends(verify_api_key)):
-    try:
-        coin_info = get_coin_info_by_id(id)
-        return {"status": "success", "coin_info": coin_info}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-      
-@app.post("/api/save_coin_info")
-async def save_coin_info(coin: Coin, api_key: str = Depends(verify_api_key)):
-    try:
-        upsert_coin_info(coin)
-        return {"status": "success", "message": "Coin info saved successfully"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-      
-@app.post("/api/save_coin_prices")
-async def save_coin_prices(coin: CoinPrices, api_key: str = Depends(verify_api_key)):
-    try:
-        insert_price_data(coin)
-        return {"status": "success", "message": "Coin prices saved successfully"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-      
-
-@app.get("/api/health")
-async def healthcheck():
-    return {"status": "ok"}
+# Helper functions
+def verify_api_key(x_api_key: str = Header(...)):
+    if x_api_key != API_KEY:
+        raise HTTPException(status_code=403, detail="Invalid API Key")
+    return x_api_key
 
 def get_client_ip(request: Request):
     forwarded_for = request.headers.get("X-Forwarded-For")
@@ -278,48 +99,136 @@ def get_client_ip(request: Request):
         return forwarded_for.split(",")[0]
     return request.client.host
 
-async def rate_limit(request: Request):
-    client_ip = get_client_ip(request)
-    now = datetime.now()
-    
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    # Get the current rate limit info for this IP
-    cursor.execute("SELECT request_count, last_request_time FROM rate_limit WHERE ip_address = ?", (client_ip,))
-    result = cursor.fetchone()
-    
-    if result:
-        count, last_time = result
-        last_time = datetime.fromisoformat(last_time)
-        
-        # Reset count if it's been longer than the rate limit duration
-        if now - last_time > RATE_LIMIT_DURATION:
-            count = 0
-        
-        if count >= RATE_LIMIT:
-            conn.close()
-            reset_time = last_time + RATE_LIMIT_DURATION
-            time_left = reset_time - now
-            minutes, seconds = divmod(time_left.seconds, 60)
-            raise HTTPException(
-                status_code=429, 
-                detail=f"Rate limit exceeded. Please try again in {minutes} minutes and {seconds} seconds."
-            )
-        
-        # Increment the count
-        cursor.execute("UPDATE rate_limit SET request_count = ?, last_request_time = ? WHERE ip_address = ?",
-                       (count + 1, now.isoformat(), client_ip))
-    else:
-        # First request from this IP
-        cursor.execute("INSERT INTO rate_limit (ip_address, request_count, last_request_time) VALUES (?, ?, ?)",
-                       (client_ip, 1, now.isoformat()))
-    
-    conn.commit()
-    conn.close()
+# Public endpoints
+@app.get("/", response_class=HTMLResponse)
+async def read_root():
+    with open("static/index.html", "r") as f:
+        return f.read()
 
+@app.get("/conversations")
+async def get_conversations_endpoint(
+    limit: int = Query(default=10, ge=1, le=100),
+    offset: int = Query(default=0, ge=0)
+):
+    try:
+        conversations = get_hitchiker_conversations(limit, offset)
+        return {"conversations": conversations}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/tweets")
+async def get_tweets_endpoint():
+    try:
+        tweets = get_edgelord_tweets()
+        next_tweet_time = datetime.now().replace(second=0, microsecond=0) + timedelta(minutes=30 - datetime.now().minute % 30)
+        return {
+            "tweets": tweets,
+            "next_tweet": next_tweet_time.isoformat()
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/narrative")
+async def get_narrative_endpoint():
+    try:
+        narrative = get_narrative()
+        return {"status": "success", "narrative": narrative}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/tweets_oneoff")
+async def get_tweets_oneoff_endpoint():
+    try:
+        tweets = get_edgelord_tweets()  # Using the same function as it's the same structure
+        next_tweet_time = datetime.now().replace(second=0, microsecond=0) + timedelta(minutes=20 - datetime.now().minute % 20)
+        return {
+            "tweets": tweets,
+            "next_tweet": next_tweet_time.isoformat()
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Protected API endpoints
+@app.post("/api/save_edgelord_oneoff_tweet")
+async def save_edgelord_oneoff_tweet_endpoint(tweet: Tweet, api_key: str = Depends(verify_api_key)):
+    try:
+        timestamp = datetime.now().isoformat()
+        save_edgelord_oneoff_tweet(tweet.content, tweet.tweet_id, timestamp)
+        return {"status": "success", "message": "Tweet saved successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/save_edgelord_tweet")
+async def save_edgelord_tweet_endpoint(tweet: Tweet, api_key: str = Depends(verify_api_key)):
+    try:
+        timestamp = datetime.now().isoformat()
+        save_edgelord_tweet(tweet.content, tweet.tweet_id, timestamp)
+        return {"status": "success", "message": "Tweet saved successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/save_hitchiker_conversation")
+async def save_hitchiker_conversation_endpoint(conversation: Conversation, api_key: str = Depends(verify_api_key)):
+    try:
+        timestamp = datetime.now().isoformat()
+        save_hitchiker_conversation(timestamp, conversation.content, conversation.summary, conversation.tweet_url)
+        return {"status": "success", "message": "Conversation saved successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/save_narrative")
+async def save_narrative_endpoint(narrative: Narrative, api_key: str = Depends(verify_api_key)):
+    try:
+        timestamp = datetime.now().isoformat()
+        save_narrative(timestamp, narrative.content, narrative.summary)
+        return {"status": "success", "message": "Narrative saved successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Coin related endpoints
+@app.post("/api/save_coin_info")
+async def save_coin_info_endpoint(coin: Coin, api_key: str = Depends(verify_api_key)):
+    try:
+        upsert_coin_info(coin.dict())
+        return {"status": "success", "message": "Coin info saved successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/save_coin_prices")
+async def save_coin_prices_endpoint(coin: CoinPrices, api_key: str = Depends(verify_api_key)):
+    try:
+        insert_price_data(coin.dict())
+        return {"status": "success", "message": "Coin prices saved successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/coin_info")
+async def get_coin_info_endpoint(api_key: str = Depends(verify_api_key)):
+    try:
+        coin_info = get_coin_info()
+        return {"status": "success", "coin_info": coin_info}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/coin_prices")
+async def get_coin_prices_endpoint(api_key: str = Depends(verify_api_key)):
+    try:
+        coin_prices = get_coin_prices()
+        return {"status": "success", "coin_prices": coin_prices}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/coin_info/{coin_id}")
+async def get_coin_info_by_id_endpoint(coin_id: str, api_key: str = Depends(verify_api_key)):
+    try:
+        coin_info = get_coin_info_by_id(coin_id)
+        return {"status": "success", "coin_info": coin_info}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Chat endpoint
 @app.post("/api/chat")
-async def chat(request: Request, _: None = Depends(rate_limit)):
+async def chat(request: Request):
     try:
         data = await request.json()
         user_message = data["message"]
@@ -329,36 +238,32 @@ async def chat(request: Request, _: None = Depends(rate_limit)):
             client = get_anthropic_client()
             stream = client.messages.create(
                 max_tokens=1000,
-                messages=[
-                    {
-                        "role": "user",
-                        "content": user_message,
-                    }
-                ],
+                messages=[{"role": "user", "content": user_message}],
                 model="claude-3-opus-20240229",
                 stream=True
             )
             for chunk in stream:
                 if chunk.type == "content_block_delta":
                     yield f"data: {json.dumps({'text': chunk.delta.text, 'role': 'Ducky'})}\n\n"
-                await asyncio.sleep(0)  # Yield control to the event loop
+                await asyncio.sleep(0)
             yield "data: [DONE]\n\n"
 
         return StreamingResponse(generate(), media_type="text/event-stream")
-    except HTTPException as e:
-        if e.status_code == 429:
-            return JSONResponse(status_code=429, content={"error": "Rate limit exceeded", "message": str(e.detail)})
-        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
-
+@app.get("/api/health")
+async def healthcheck():
+    return {"status": "ok"}
 
 if __name__ == "__main__":
-    import asyncio
-
     import hypercorn.asyncio
     
     config = hypercorn.Config()
-    config.bind = [f"0.0.0.0:{int(os.environ.get('PORT', 3000))}", f"[::]:{int(os.environ.get('PORT', 4000))}"]
+    config.bind = [
+        f"0.0.0.0:{int(os.environ.get('PORT', 3000))}",
+        f"[::]:{int(os.environ.get('PORT', 4000))}"
+    ]
     config.loglevel = "info"
     
     asyncio.run(hypercorn.asyncio.serve(app, config))

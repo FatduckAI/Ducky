@@ -119,49 +119,53 @@ def ensure_db_initialized():
         print(f"Error during database initialization: {e}")
         raise
 
-# Keep all your existing synchronous methods as they are...
 def save_edgelord_oneoff_tweet(content, tweet_id, timestamp):
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("INSERT INTO edgelord_oneoff (content, tweet_id, timestamp) VALUES (%s, %s, %s)",
-                   (content, tweet_id, timestamp))
-    conn.commit()
-    cursor.close()
-    conn.close()
+    try:
+        cursor.execute("""
+            INSERT INTO edgelord_oneoff (content, tweet_id, timestamp) 
+            VALUES (%s, %s, %s)
+        """, (content, tweet_id, timestamp))
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        print(f"Error saving edgelord oneoff tweet: {e}")
+        raise
+    finally:
+        cursor.close()
+        conn.close()
 
 def save_edgelord_tweet(content, tweet_id, timestamp):
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("INSERT INTO edgelord (content, tweet_id, timestamp) VALUES (%s, %s, %s)",
-                   (content, tweet_id, timestamp))
-    conn.commit()
-    cursor.close()
-    conn.close()
-
-
+    try:
+        cursor.execute("""
+            INSERT INTO edgelord (content, tweet_id, timestamp) 
+            VALUES (%s, %s, %s)
+        """, (content, tweet_id, timestamp))
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        print(f"Error saving edgelord tweet: {e}")
+        raise
+    finally:
+        cursor.close()
+        conn.close()
 
 def get_edgelord_tweets():
     conn = get_db_connection()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
     try:
-        cursor.execute("SELECT content FROM edgelord ORDER BY timestamp DESC")
-        tweets = [row['content'] for row in cursor.fetchall()]
-        return tweets
+        cursor.execute("""
+            SELECT id, content, tweet_id, timestamp
+            FROM edgelord 
+            ORDER BY timestamp DESC
+        """)
+        return cursor.fetchall()
     finally:
         cursor.close()
         conn.close()
-        
-def get_edgelord_oneoff_tweets():
-    conn = get_db_connection()
-    cursor = conn.cursor(cursor_factory=RealDictCursor)
-    try:
-        cursor.execute("SELECT content FROM edgelord_oneoff ORDER BY timestamp DESC")
-        tweets = [row['content'] for row in cursor.fetchall()]
-        return tweets
-    finally:
-        cursor.close()
-        conn.close()
-
 
 def save_hitchiker_conversation(timestamp, content, summary, tweet_url):
     conn = get_db_connection()
@@ -172,6 +176,10 @@ def save_hitchiker_conversation(timestamp, content, summary, tweet_url):
             VALUES (%s, %s, %s, %s)
         """, (timestamp, content, summary, tweet_url))
         conn.commit()
+    except Exception as e:
+        conn.rollback()
+        print(f"Error saving hitchiker conversation: {e}")
+        raise
     finally:
         cursor.close()
         conn.close()
@@ -181,13 +189,12 @@ def get_hitchiker_conversations(limit=10, offset=0):
     cursor = conn.cursor(cursor_factory=RealDictCursor)
     try:
         cursor.execute("""
-            SELECT content, summary, tweet_url 
+            SELECT id, timestamp, content, summary, tweet_url
             FROM hitchiker_conversations 
             ORDER BY timestamp DESC
             LIMIT %s OFFSET %s
         """, (limit, offset))
-        conversations = cursor.fetchall()
-        return conversations
+        return cursor.fetchall()
     finally:
         cursor.close()
         conn.close()
@@ -201,6 +208,10 @@ def save_narrative(timestamp, content, summary):
             VALUES (%s, %s, %s)
         """, (timestamp, content, summary))
         conn.commit()
+    except Exception as e:
+        conn.rollback()
+        print(f"Error saving narrative: {e}")
+        raise
     finally:
         cursor.close()
         conn.close()
@@ -210,13 +221,12 @@ def get_narrative():
     cursor = conn.cursor(cursor_factory=RealDictCursor)
     try:
         cursor.execute("""
-            SELECT content, summary 
+            SELECT id, timestamp, content, summary
             FROM narratives 
             ORDER BY timestamp DESC 
             LIMIT 1
         """)
-        narratives = cursor.fetchall()
-        return narratives
+        return cursor.fetchall()
     finally:
         cursor.close()
         conn.close()
@@ -249,6 +259,10 @@ def insert_price_data(coin):
         )
         cursor.execute(sql, values)
         conn.commit()
+    except Exception as e:
+        conn.rollback()
+        print(f"Error inserting price data: {e}")
+        raise
     finally:
         cursor.close()
         conn.close()
@@ -267,6 +281,10 @@ def upsert_coin_info(coin):
         '''
         cursor.execute(sql, (coin['id'], coin['symbol'], coin['name'], coin['image']))
         conn.commit()
+    except Exception as e:
+        conn.rollback()
+        print(f"Error upserting coin info: {e}")
+        raise
     finally:
         cursor.close()
         conn.close()
@@ -276,8 +294,7 @@ def get_coin_info():
     cursor = conn.cursor(cursor_factory=RealDictCursor)
     try:
         cursor.execute("SELECT * FROM coin_info")
-        coin_info = cursor.fetchall()
-        return coin_info
+        return cursor.fetchall()
     finally:
         cursor.close()
         conn.close()
@@ -287,8 +304,7 @@ def get_coin_prices():
     cursor = conn.cursor(cursor_factory=RealDictCursor)
     try:
         cursor.execute("SELECT * FROM price_data")
-        coin_prices = cursor.fetchall()
-        return coin_prices
+        return cursor.fetchall()
     finally:
         cursor.close()
         conn.close()
@@ -298,8 +314,7 @@ def get_coin_info_by_id(id):
     cursor = conn.cursor(cursor_factory=RealDictCursor)
     try:
         cursor.execute("SELECT * FROM coin_info WHERE id = %s", (id,))
-        coin_info = cursor.fetchone()
-        return coin_info
+        return cursor.fetchone()
     finally:
         cursor.close()
         conn.close()
