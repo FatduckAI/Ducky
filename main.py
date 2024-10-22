@@ -28,7 +28,8 @@ async def lifespan(app: FastAPI):
     # Startup
     print("Starting up...")
     try:
-        await ensure_db_initialized()
+        # Even though ensure_db_initialized is sync, FastAPI can handle it
+        ensure_db_initialized()
         print("Database initialized successfully")
     except Exception as e:
         print(f"Failed to initialize database: {e}")
