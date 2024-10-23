@@ -22,7 +22,7 @@
       };
     </script>
   </head>
-  <body class="bg-ducky-bg font-sans">
+  <body class="bg-ducky-bg font-mono">
     <div id="navbar"></div>
 
     <div class="mb-8 mx-auto px-4 md:p-0">
@@ -75,16 +75,20 @@
       ) {
         return `
           <div class="flex gap-6 items-start pl-2">
-            <div class="w-10 h-10 flex-shrink-0">
-              <img src="${getAvatarUrl(
-                speaker
-              )}" alt="${speaker}" class="rounded-full w-full h-full object-cover">
-            </div>
-            <div class="min-w-0 max-w-6xlflex-1">
-              <div class="rounded p-4 ${speakerStyle}">
-                <div class="font-bold mb-2">${speaker}</div>
-                <div class="pl-2">
-                  <span class="message-content">${displayContent}</span>
+            ${
+              timestamp
+                ? `
+                  <div class="text-xs text-ducky-text mt-2">${timestamp}</div>
+                `
+                : ""
+            }
+            <div class="min-w-0 max-w-6xl flex-1">
+              <div class="rounded p-1 ${speakerStyle}">
+                <div class="pl-2 flex flex-row gap-4">
+                  <div class="font-bold text-sm mb-2 flex-1">[${speaker}]</div>
+                  <span class="message-content text-gray-600">
+                    ${displayContent}
+                  </span>
                   ${
                     shouldTruncate
                       ? `
@@ -93,13 +97,7 @@
                       : ""
                   }
                 </div>
-                ${
-                  timestamp
-                    ? `
-                  <div class="text-xs text-ducky-text mt-2">${timestamp}</div>
-                `
-                    : ""
-                }
+                
               </div>
             </div>
           </div>
@@ -145,14 +143,14 @@
 
           data.messages.forEach((message) => {
             const messageDiv = document.createElement("div");
-            messageDiv.className = "mb-6";
+            messageDiv.className = "mb-2";
 
             const speakerStyle =
               message.speaker.toLowerCase() === "ducky"
-                ? "text-ducky-text bg-ducky-msg"
+                ? "text-orange-950"
                 : message.speaker.toLowerCase() === "cleo"
-                ? "text-ducky-text bg-cleo-msg"
-                : "text-ducky-text bg-system-msg";
+                ? "text-green-950"
+                : "text-blue-950 bg-blue-50";
 
             const shouldTruncate = message.content.length > CHARACTER_LIMIT;
             const displayContent = shouldTruncate
@@ -200,7 +198,7 @@
 
       function addMessage(speaker, content, isError = false) {
         const messageDiv = document.createElement("div");
-        messageDiv.className = "mb-6";
+        messageDiv.className = "mb-2";
 
         const speakerStyle =
           speaker.toLowerCase() === "ducky"
@@ -245,182 +243,7 @@
         chatMessages.scrollTop = chatMessages.scrollHeight;
       }
 
-      function updateAssistantMessage(content, role = "Ducky") {
-        let assistantMessageDiv = chatMessages.lastElementChild;
-        const shouldTruncate = content.length > CHARACTER_LIMIT;
-        const displayContent = shouldTruncate
-          ? content.slice(0, CHARACTER_LIMIT)
-          : content;
-
-        if (
-          !assistantMessageDiv ||
-          assistantMessageDiv.querySelector(".font-bold").textContent !==
-            `${role}`
-        ) {
-          assistantMessageDiv = document.createElement("div");
-          assistantMessageDiv.className = "mb-6";
-          const bgColor =
-            role.toLowerCase() === "ducky"
-              ? "bg-ducky-msg"
-              : role.toLowerCase() === "cleo"
-              ? "bg-cleo-msg"
-              : "bg-system-msg";
-
-          assistantMessageDiv.innerHTML = createMessageHTML(
-            role,
-            content,
-            shouldTruncate,
-            displayContent,
-            `text-ducky-text ${bgColor}`
-          );
-
-          if (shouldTruncate) {
-            const loadMoreBtn = assistantMessageDiv.querySelector(".load-more");
-            let isExpanded = false;
-
-            loadMoreBtn.addEventListener("click", () => {
-              const contentDiv =
-                assistantMessageDiv.querySelector(".message-content");
-              if (isExpanded) {
-                contentDiv.textContent = content.slice(0, CHARACTER_LIMIT);
-                loadMoreBtn.textContent = "...";
-              } else {
-                contentDiv.textContent = content;
-                loadMoreBtn.textContent = " (show less)";
-              }
-              isExpanded = !isExpanded;
-            });
-          }
-
-          chatMessages.appendChild(assistantMessageDiv);
-        } else {
-          const contentDiv =
-            assistantMessageDiv.querySelector(".message-content");
-          contentDiv.textContent = displayContent;
-
-          const existingBtn = assistantMessageDiv.querySelector(".load-more");
-          if (shouldTruncate && !existingBtn) {
-            const loadMoreBtn = document.createElement("button");
-            loadMoreBtn.className = "text-ducky-text hover:underline load-more";
-            loadMoreBtn.textContent = "...";
-
-            let isExpanded = false;
-            loadMoreBtn.addEventListener("click", () => {
-              if (isExpanded) {
-                contentDiv.textContent = content.slice(0, CHARACTER_LIMIT);
-                loadMoreBtn.textContent = "...";
-              } else {
-                contentDiv.textContent = content;
-                loadMoreBtn.textContent = " (show less)";
-              }
-              isExpanded = !isExpanded;
-            });
-
-            contentDiv.parentNode.insertBefore(
-              loadMoreBtn,
-              contentDiv.nextSibling
-            );
-          }
-        }
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-      }
-
-      function updateAssistantMessage(content, role = "Ducky") {
-        let assistantMessageDiv = chatMessages.lastElementChild;
-        const shouldTruncate = content.length > CHARACTER_LIMIT;
-        const displayContent = shouldTruncate
-          ? content.slice(0, CHARACTER_LIMIT)
-          : content;
-
-        if (
-          !assistantMessageDiv ||
-          assistantMessageDiv.querySelector(".font-bold").textContent !==
-            `${role}:`
-        ) {
-          assistantMessageDiv = document.createElement("div");
-          assistantMessageDiv.className = "mb-6 flex gap-3";
-          const bgColor =
-            role.toLowerCase() === "ducky"
-              ? "bg-ducky-msg"
-              : role.toLowerCase() === "cleo"
-              ? "bg-cleo-msg"
-              : "bg-system-msg";
-
-          assistantMessageDiv.innerHTML = `
-            <div class="avatar-container w-10 h-10">
-              <img src="${getAvatarUrl(
-                role
-              )}" alt="${role}" class="rounded-full w-full h-full object-cover">
-            </div>
-            <div class="flex-grow">
-              <div class="rounded p-3 ${bgColor}">
-                <div class="font-bold text-ducky-text mb-1">${role}</div>
-                <div class="pl-2">
-                  <span class="message-content">${displayContent}</span>
-                  ${
-                    shouldTruncate
-                      ? `
-                    <button class="text-ducky-text hover:underline load-more">...</button>
-                  `
-                      : ""
-                  }
-                </div>
-              </div>
-            </div>
-          `;
-
-          if (shouldTruncate) {
-            const loadMoreBtn = assistantMessageDiv.querySelector(".load-more");
-            let isExpanded = false;
-
-            loadMoreBtn.addEventListener("click", () => {
-              const contentDiv =
-                assistantMessageDiv.querySelector(".message-content");
-              if (isExpanded) {
-                contentDiv.textContent = content.slice(0, CHARACTER_LIMIT);
-                loadMoreBtn.textContent = "...";
-              } else {
-                contentDiv.textContent = content;
-                loadMoreBtn.textContent = " (show less)";
-              }
-              isExpanded = !isExpanded;
-            });
-          }
-
-          chatMessages.appendChild(assistantMessageDiv);
-        } else {
-          const contentDiv =
-            assistantMessageDiv.querySelector(".message-content");
-          contentDiv.textContent = displayContent;
-
-          const existingBtn = assistantMessageDiv.querySelector(".load-more");
-          if (shouldTruncate && !existingBtn) {
-            const loadMoreBtn = document.createElement("button");
-            loadMoreBtn.className = "text-ducky-text hover:underline load-more";
-            loadMoreBtn.textContent = "...";
-
-            let isExpanded = false;
-            loadMoreBtn.addEventListener("click", () => {
-              if (isExpanded) {
-                contentDiv.textContent = content.slice(0, CHARACTER_LIMIT);
-                loadMoreBtn.textContent = "...";
-              } else {
-                contentDiv.textContent = content;
-                loadMoreBtn.textContent = " (show less)";
-              }
-              isExpanded = !isExpanded;
-            });
-
-            contentDiv.parentNode.insertBefore(
-              loadMoreBtn,
-              contentDiv.nextSibling
-            );
-          }
-        }
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-      }
-
-      async function streamResponse(message) {
+      /*  async function streamResponse(message) {
         try {
           const response = await fetch("/api/chat", {
             method: "POST",
@@ -477,120 +300,11 @@
           console.error("Error:", error);
           addMessage("Error", "An unexpected error occurred", true);
         }
-      }
-
-      function updateAssistantMessage(content, role = "Ducky") {
-        let assistantMessageDiv = chatMessages.lastElementChild;
-        const shouldTruncate = content.length > CHARACTER_LIMIT;
-        const displayContent = shouldTruncate
-          ? content.slice(0, CHARACTER_LIMIT) + "..."
-          : content;
-
-        if (
-          !assistantMessageDiv ||
-          assistantMessageDiv.querySelector(".font-bold").textContent !==
-            `${role}:`
-        ) {
-          assistantMessageDiv = document.createElement("div");
-          assistantMessageDiv.className = "mb-4";
-          const bgColor =
-            role.toLowerCase() === "ducky"
-              ? "bg-ducky-msg"
-              : role.toLowerCase() === "cleo"
-              ? "bg-cleo-msg"
-              : "bg-system-msg";
-
-          assistantMessageDiv.innerHTML = `
-            <div class="rounded p-3 ${bgColor}">
-              <div class="font-bold text-ducky-text mb-1">${role}:</div>
-              <div class="pl-2 message-content">${displayContent}</div>
-              ${
-                shouldTruncate
-                  ? `
-                <button class="text-sm text-ducky-text hover:underline mt-2 load-more">
-                  Load More
-                </button>
-              `
-                  : ""
-              }
-            </div>
-          `;
-
-          if (shouldTruncate) {
-            const loadMoreBtn = assistantMessageDiv.querySelector(".load-more");
-            let isExpanded = false;
-
-            loadMoreBtn.addEventListener("click", () => {
-              const contentDiv =
-                assistantMessageDiv.querySelector(".message-content");
-              if (isExpanded) {
-                contentDiv.textContent =
-                  content.slice(0, CHARACTER_LIMIT) + "...";
-                loadMoreBtn.textContent = "Load More";
-              } else {
-                contentDiv.textContent = content;
-                loadMoreBtn.textContent = "Show Less";
-              }
-              isExpanded = !isExpanded;
-            });
-          }
-
-          chatMessages.appendChild(assistantMessageDiv);
-        } else {
-          const contentDiv =
-            assistantMessageDiv.querySelector(".message-content");
-          contentDiv.textContent = displayContent;
-
-          const existingBtn = assistantMessageDiv.querySelector(".load-more");
-          if (shouldTruncate && !existingBtn) {
-            const loadMoreBtn = document.createElement("button");
-            loadMoreBtn.className =
-              "text-sm text-ducky-text hover:underline mt-2 load-more";
-            loadMoreBtn.textContent = "Load More";
-
-            let isExpanded = false;
-            loadMoreBtn.addEventListener("click", () => {
-              if (isExpanded) {
-                contentDiv.textContent =
-                  content.slice(0, CHARACTER_LIMIT) + "...";
-                loadMoreBtn.textContent = "Load More";
-              } else {
-                contentDiv.textContent = content;
-                loadMoreBtn.textContent = "Show Less";
-              }
-              isExpanded = !isExpanded;
-            });
-
-            assistantMessageDiv
-              .querySelector(".rounded")
-              .appendChild(loadMoreBtn);
-          }
-        }
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-      }
-
-      function displayTweets(tweets) {
-        const container = document.getElementById("tweets");
-        const title = container.querySelector("h1");
-        const countdown = container.querySelector("#serious_countdown");
-        container.innerHTML = "";
-        container.appendChild(title);
-        container.appendChild(countdown);
-        tweets.forEach((tweet) => {
-          const div = document.createElement("div");
-          div.className = "border border-ducky-border rounded p-3 mb-5";
-          div.innerHTML = `
-            <div class="text-sm text-ducky-text mb-2">Tweet: ${tweet.timestamp}</div>
-            <div class="p-3 bg-ducky-msg rounded">
-              <div class="font-bold text-ducky-text mb-2">@mrfatducky</div>
-              <div>${tweet.content}</div>
-            </div>
-          `;
-          container.appendChild(div);
-        });
-      }
+      } */
 
       loadChatHistory();
+
+      setInterval(loadChatHistory, 10000);
     </script>
   </body>
 </html>
