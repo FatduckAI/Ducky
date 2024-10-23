@@ -90,16 +90,10 @@ async def on_message(message):
         
         # Handle tweet management commands - restricted to admin channel
         if command_parts[0] == "tweets":
-            if message.channel.id != ADMIN_CHANNEL_ID:
-                await message.reply("❌ Tweet management commands can only be used in the admin channel!")
-                return
             await handle_tweet_commands(message, command_parts, logger)
             return
         
         if command_parts[0] == "help":
-            if message.channel.id != ADMIN_CHANNEL_ID:
-                await message.reply("❌ Help commands can only be used in the admin channel!")
-                return
             help_message = (
                 "🦆 Ducky Bot Commands:\n"
                 "- `@Ducky help`: Show this help message\n"

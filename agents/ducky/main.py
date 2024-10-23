@@ -35,7 +35,7 @@ def ducky_ai_prompt(human_input=None):
     4. Keep your token ($DUCKAI) mentions very sparse and natural
     5. Respond directly to the input while maintaining your unique personality
     6. Keep responses concise but insightful (200-600 characters)
-    7. If responding to a human, keep your responses short and to the point
+    7. Keep your responses short and to the point
 
     Previous Memory Bank:
     {cached_tweets}"""
