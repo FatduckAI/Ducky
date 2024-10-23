@@ -19,7 +19,8 @@ if not os.environ.get('RAILWAY_ENVIRONMENT'):
     load_dotenv()
 
 DISCORD_SIMULATION_CHANNEL_ID = os.environ.get('DISCORD_SIMULATION_CHANNEL_ID')
-
+MAX_RETRIES = 3
+RETRY_DELAY = 2  # seconds
 # Set up Discord client
 intents = discord.Intents.default()
 intents.message_content = True
@@ -39,89 +40,87 @@ async def send_discord_message(content, speaker, channel):
             if len(content) > 1900:
                 content = content[:1900]
             await channel.send(f"{prefix} {content}")
-
-async def simulate_conversation_with_ducky(client,conversation_count,channel):
-    conversations = []
-    try:
-        for i in range(conversation_count):
-            # Start conversation
-            conversation_id = generate_conversation_id()
-            print(f"Conversation {i+1} (ID: {conversation_id}) Start")
-            if channel:
-              print(f"Conversation {i+1} (ID: {conversation_id}) Start")
-              await channel.send(f"```diff\n------------- Conversation {i+1} (ID: {conversation_id}) Start ----------```")
             
-            try:
-                if i == 0:
-                    initial_prompt = "What's a deep topic you'd like to explore?"
-                    save_message_to_db(initial_prompt, "Cleo",  i, conversation_id)
-                    await send_discord_message(initial_prompt, "Cleo",channel)
-                    ducky_thought = await generate_ducky_response(initial_prompt)
-                else:
-                    new_topic_prompt = "What's another fascinating topic on your mind?"
-                    save_message_to_db(new_topic_prompt, "Cleo", i, conversation_id)
-                    await send_discord_message(new_topic_prompt, "Cleo",channel)
-                    ducky_thought = await generate_ducky_response(new_topic_prompt)
-                
-                # Save and send Ducky's initial thought
-                save_message_to_db(ducky_thought, "Ducky", i, conversation_id)
-                await send_discord_message(ducky_thought, "Ducky",channel)
-                conversation = [("Cleo", initial_prompt if i == 0 else new_topic_prompt),
-                            ("Ducky", ducky_thought)]
-                
-                # Have 6-8 exchanges
-                for j in range(6):
-                    # Get Claude's response
-                    cleo_response = respond_as_cleo(conversation)
-                    save_message_to_db(cleo_response, "Cleo", i, conversation_id)
-                    await send_discord_message(cleo_response, "Cleo",channel)
-                    conversation.append(("Cleo", cleo_response))
-                    
-                    # Get Ducky's response
-                    ducky_response = await generate_ducky_response(cleo_response)
-                    save_message_to_db(ducky_response, "Ducky", i, conversation_id)
-                    await send_discord_message(ducky_response, "Ducky",channel)
-                    conversation.append(("Ducky", ducky_response))
-                
-                # Ask Ducky to reflect and create a tweet
-                reflection_prompt = "That was a fascinating discussion! Could you reflect on what you learned and share it in a tweet format? just send me the tweet, no other text or commentary. Ensure the tweet encapsulates what youve learned, and stay in character as Ducky, do not pander to twitter. do not use hashtags or quotes."
-                save_message_to_db(reflection_prompt, "Cleo", i, conversation_id)
-                await send_discord_message(reflection_prompt, "Cleo",channel)
-                tweet = await generate_ducky_response(reflection_prompt)
-                
-                posttime = save_tweet_to_db(tweet, conversation_id, i)
-                if channel:
-                    await channel.send(f"```diff\n-------------- Tweet Saved:\n\n{tweet}\n\n {posttime.strftime('%Y-%m-%d %H:%M:%S')} ---------------------```")
-                
-                conversations.append((conversation, tweet, datetime.now(timezone.utc)))
-                
-                if channel:
-                    await channel.send(f"```diff\n------------- Conversation {i+1} (ID: {conversation_id}) End ----------```")
-                
-                await asyncio.sleep(5)  # Brief pause between conversations
+async def retry_ducky_response(prompt, channel=None):
+    """Retry getting Ducky's response with exponential backoff"""
+    for attempt in range(MAX_RETRIES):
+        try:
+            return await generate_ducky_response(prompt)
+        except aiohttp.ClientResponseError as e:
+            if attempt == MAX_RETRIES - 1:
+                raise  # Re-raise on last attempt
+            
+            wait_time = RETRY_DELAY * (2 ** attempt)  # Exponential backoff
+            if channel:
+                await channel.send(f"⚠️ Ollama connection attempt {attempt + 1} failed. Retrying in {wait_time} seconds...")
+            
+            await asyncio.sleep(wait_time)
+            continue
 
-            except aiohttp.ClientResponseError as e:
-                if channel:
-                    await channel.send(f"⚠️ Error connecting to Ollama service: {e.message}")
-                    await channel.send(f"```diff\n- Error: Conversation {i+1} Failed -```")
 
-                raise
-                
-            except Exception as e:
-                if channel:
-                    await channel.send(f"⚠️ Unexpected error in conversation {i}: {str(e)}")
-                    await channel.send(f"```diff\n- Error: Conversation {i+1} Failed -```")
-                raise
-
-    except Exception as e:
-        if channel:
-            await channel.send(f"❌ Critical error in conversation: {e.message}")
-            await channel.send("⚠️ Stopping conversation...")
-        raise  # Re-raise the error for logging purposes
+async def simulate_conversation_with_ducky(conversation_count, channel):
+    conversations = []
+    
+    for i in range(conversation_count):
+        conversation_id = generate_conversation_id()
+        print(f"Conversation {i+1} (ID: {conversation_id}) Start")
         
-    finally:
         if channel:
-            await channel.send("✅ Conversation complete.")
+            await channel.send(f"```diff\n------------- Conversation {i+1} (ID: {conversation_id}) Start ----------```")
+        
+        try:
+            # Initialize conversation
+            initial_prompt = "What's a deep topic you'd like to explore?" if i == 0 else "What's another fascinating topic on your mind?"
+            save_message_to_db(initial_prompt, "Cleo", i, conversation_id)
+            await send_discord_message(initial_prompt, "Cleo", channel)
+            
+            # Get Ducky's initial response with retry logic
+            ducky_thought = await retry_ducky_response(initial_prompt, channel)
+            save_message_to_db(ducky_thought, "Ducky", i, conversation_id)
+            await send_discord_message(ducky_thought, "Ducky", channel)
+            
+            conversation = [("Cleo", initial_prompt), ("Ducky", ducky_thought)]
+            
+            # Have 6-8 exchanges
+            for j in range(6):
+                # Get Claude's response
+                cleo_response = respond_as_cleo(conversation)
+                save_message_to_db(cleo_response, "Cleo", i, conversation_id)
+                await send_discord_message(cleo_response, "Cleo", channel)
+                conversation.append(("Cleo", cleo_response))
+                
+                # Get Ducky's response with retry logic
+                ducky_response = await retry_ducky_response(cleo_response, channel)
+                save_message_to_db(ducky_response, "Ducky", i, conversation_id)
+                await send_discord_message(ducky_response, "Ducky", channel)
+                conversation.append(("Ducky", ducky_response))
+            
+            # Get reflection tweet
+            reflection_prompt = "That was a fascinating discussion! Could you reflect on what you learned and share it in a tweet format? just send me the tweet, no other text or commentary. Ensure the tweet encapsulates what youve learned, and stay in character as Ducky, do not pander to twitter. do not use hashtags or quotes."
+            save_message_to_db(reflection_prompt, "Cleo", i, conversation_id)
+            await send_discord_message(reflection_prompt, "Cleo", channel)
+            
+            tweet = await retry_ducky_response(reflection_prompt, channel)
+            posttime = save_tweet_to_db(tweet, conversation_id, i)
+            
+            if channel:
+                await channel.send(f"```diff\n-------------- Tweet Saved:\n\n{tweet}\n\n {posttime.strftime('%Y-%m-%d %H:%M:%S')} ---------------------```")
+            
+            conversations.append((conversation, tweet, datetime.now(timezone.utc)))
+            
+            if channel:
+                await channel.send(f"```diff\n------------- Conversation {i+1} (ID: {conversation_id}) End ----------```")
+            
+            await asyncio.sleep(5)  # Brief pause between conversations
+            
+        except Exception as e:
+            if channel:
+                await channel.send(f"❌ Critical error in conversation {i+1}: {str(e)}")
+                await channel.send(f"```diff\n- Error: Conversation {i+1} Failed -```")
+            raise
+    
+    if channel:
+        await channel.send("✅ All conversations complete.")
     
     return conversations
 

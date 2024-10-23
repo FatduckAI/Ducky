@@ -63,7 +63,7 @@ async def handle_start_command(message, command_parts,channel):
         
         # Start the simulation
         logger.info(f"Starting {num_conversations} conversations...")
-        await simulate_conversation_with_ducky(client,num_conversations,channel)
+        await simulate_conversation_with_ducky(num_conversations,channel)
         
     except Exception as e:
         logger.error(f"Error in conversation simulation: {e}", exc_info=True)
