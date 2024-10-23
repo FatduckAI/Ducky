@@ -29,7 +29,7 @@ def generate_conversation_id():
 
 async def send_discord_message(content, speaker):
     """Send a message to Discord with appropriate formatting"""
-    channel = client.get_channel(int(os.getenv('DISCORD_CHANNEL_ID')))
+    channel = client.get_channel(int(os.getenv('DISCORD_SIMULATION_CHANNEL_ID')))
     if channel:
         async with channel.typing():
             await asyncio.sleep(2)  # Simulate typing
@@ -39,7 +39,7 @@ async def send_discord_message(content, speaker):
 async def simulate_conversation_with_ducky(conversation_count):
     conversations = []
     base_time = datetime.now(EST)
-    channel = client.get_channel(int(os.getenv('DISCORD_CHANNEL_ID')))
+    channel = client.get_channel(int(os.getenv('DISCORD_SIMULATION_CHANNEL_ID')))
     
     try:
         for i in range(conversation_count):
@@ -191,7 +191,7 @@ def save_tweet_to_db(tweet_content, posttime, conversation_id):
 async def on_ready():
     print(f'Bot is ready! Logged in as {client.user}')
     # Start the simulation once the bot is ready
-    await simulate_conversation_with_ducky()
+    await simulate_conversation_with_ducky(1)
     # Exit after simulation is complete
     await client.close()
 
