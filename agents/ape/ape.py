@@ -1,13 +1,10 @@
 import os
 
-import anthropic
-import requests
 from dotenv import load_dotenv
 
+from agents.ape.ape_db import ensure_db_initialized, save_ape_tweet_to_db
+from agents.ape.ape_twitter import post_tweet
 from lib.anthropic import get_anthropic_client
-from lib.ollama import get_ollama_client
-from lib.sdk import get_edgelord_tweets, save_edgelord_oneoff_to_db
-from lib.twitter import post_tweet
 
 # Check if we're running locally (not in Railway)
 if not os.environ.get('RAILWAY_ENVIRONMENT'):
@@ -16,7 +13,7 @@ if not os.environ.get('RAILWAY_ENVIRONMENT'):
 
 def generate_tweet_claude():
     response = get_anthropic_client().messages.create(
-        model="claude-3-5-sonnet-20240620",
+        model="claude-3-5-sonnet-20241022",
         max_tokens=1024,
         system=[
             {
@@ -48,8 +45,9 @@ def generate_tweet_claude():
 
 def tweet_job():
     content = generate_tweet_claude()
-    tweet_url = post_tweet(content, dev=False)
-    save_edgelord_oneoff_to_db(content, tweet_url)
+    tweet_url = post_tweet(content)
+    save_ape_tweet_to_db(content, tweet_url)
 
 if __name__ == "__main__":
+    ensure_db_initialized()
     tweet_job()
