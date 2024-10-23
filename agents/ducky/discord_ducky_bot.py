@@ -42,7 +42,7 @@ async def on_ready():
     for guild in client.guilds:
         logger.info(f'- {guild.name} (id: {guild.id})')
 
-async def handle_start_command(message, command_parts):
+async def handle_start_command(message, command_parts,channel):
     """Handle the start conversation command"""
     try:
         # Parse number of conversations from command
@@ -62,7 +62,7 @@ async def handle_start_command(message, command_parts):
         
         # Start the simulation
         logger.info(f"Starting {num_conversations} conversations...")
-        await simulate_conversation_with_ducky(client,num_conversations)
+        await simulate_conversation_with_ducky(client,num_conversations,channel)
         
     except Exception as e:
         logger.error(f"Error in conversation simulation: {e}", exc_info=True)
@@ -113,7 +113,7 @@ async def on_message(message):
             
         # Handle simulation command - restricted to simulation channel
         if command_parts[0] == "start":
-            if message.channel.id != SIMULATION_CHANNEL_ID:
+            if message.channel.id == SIMULATION_CHANNEL_ID or message.channel.id == ADMIN_CHANNEL_ID:
                 await message.reply("❌ Simulation can only be started in the designated simulation channel!")
                 return
             await handle_start_command(message, command_parts)
