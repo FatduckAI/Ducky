@@ -211,23 +211,27 @@ def get_next_due_tweet():
     Get the next unposted tweet that is due for posting based on UTC time.
     Includes a small buffer time to account for cron job delay.
     """
-    conn = get_db_connection()
-    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    conn = None
+    cursor = None
     try:
+        conn = get_db_connection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        
         # Get current UTC time with 5-minute buffer
         current_utc = datetime.now(timezone.utc)
-        buffer_time = current_utc + timedelta(minutes=5)
+        buffer_time = current_utc + timedelta(minutes=10)
         
         cursor.execute("""
             SELECT id, content, tweet_id, posttime 
             FROM ducky_ai 
             WHERE posted = FALSE 
+            AND posttime IS NOT NULL
             AND posttime <= %s
             AND speaker = 'Ducky'
             AND tweet_id LIKE 'ducky_reflection_%'
             ORDER BY posttime ASC 
             LIMIT 1
-        """, (buffer_time,))  # psycopg2 automatically handles timezone-aware datetime
+        """, (buffer_time,))
         
         tweet = cursor.fetchone()
         if tweet:
@@ -237,16 +241,20 @@ def get_next_due_tweet():
         print(f"Error fetching next due tweet: {e}")
         return None
     finally:
-        cursor.close()
-        conn.close()
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
 
 def update_tweet_status(tweet_id, tweet_url):
     """
     Update the tweet as posted and store its URL with UTC timestamp
     """
-    conn = get_db_connection()
-    cursor = conn.cursor()
+    conn = None
+    cursor = None
     try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
         posted_at = datetime.now(timezone.utc)
         cursor.execute("""
             UPDATE ducky_ai 
@@ -254,16 +262,25 @@ def update_tweet_status(tweet_id, tweet_url):
                 tweet_url = %s,
                 posted_at = %s
             WHERE id = %s
+            RETURNING id
         """, (tweet_url, posted_at, tweet_id))
+        
+        updated_row = cursor.fetchone()
+        if not updated_row:
+            raise Exception(f"No tweet found with ID {tweet_id}")
+            
         conn.commit()
         print(f"Updated tweet {tweet_id} status - posted at {posted_at} UTC")
     except Exception as e:
-        conn.rollback()
+        if conn:
+            conn.rollback()
         print(f"Error updating tweet status: {e}")
         raise
     finally:
-        cursor.close()
-        conn.close()
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
 
 def handle_hourly_tweet():
     """
@@ -273,11 +290,11 @@ def handle_hourly_tweet():
     current_utc = datetime.now(timezone.utc)
     print(f"Running tweet check at {current_utc} UTC")
     
-    # Get the next tweet due for posting
-    next_tweet = get_next_due_tweet()
-    
-    if next_tweet:
-        try:
+    try:
+        # Get the next tweet due for posting
+        next_tweet = get_next_due_tweet()
+        
+        if next_tweet:
             print(f"Posting tweet scheduled for {next_tweet['posttime']} UTC")
             print(f"Tweet content: {next_tweet['content'][:50]}...")
             
@@ -288,10 +305,10 @@ def handle_hourly_tweet():
             update_tweet_status(next_tweet['id'], tweet_url)
             
             print(f"Successfully posted tweet {next_tweet['id']} at {datetime.now(timezone.utc)} UTC")
-        except Exception as e:
-            print(f"Error posting tweet: {e}")
-    else:
-        print(f"No tweets due for posting at {current_utc} UTC")
+        else:
+            print(f"No tweets due for posting at {current_utc} UTC")
+    except Exception as e:
+        print(f"Error in handle_hourly_tweet: {e}")
 
 if __name__ == "__main__":
     handle_hourly_tweet()
