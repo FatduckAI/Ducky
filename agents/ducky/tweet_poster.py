@@ -219,14 +219,14 @@ def get_next_due_tweet():
         
         # Get current UTC time with 5-minute buffer
         current_utc = datetime.now(timezone.utc)
-        buffer_time = current_utc + timedelta(minutes=10)
-        
+        buffer_time = current_utc - timedelta(minutes=15)
+        print(f"buffer_time: {buffer_time}")
         cursor.execute("""
             SELECT id, content, tweet_id, posttime 
             FROM ducky_ai 
             WHERE posted = FALSE 
             AND posttime IS NOT NULL
-            AND posttime <= %s
+            AND CAST(posttime AS timestamp with time zone) <= %s
             AND speaker = 'Ducky'
             ORDER BY posttime ASC 
             LIMIT 1
@@ -254,22 +254,20 @@ def update_tweet_status(tweet_id, tweet_url):
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        posted_at = datetime.now(timezone.utc)
         cursor.execute("""
             UPDATE ducky_ai 
             SET posted = TRUE, 
-                tweet_url = %s,
-                posted_at = %s
+                tweet_id = %s,
             WHERE id = %s
             RETURNING id
-        """, (tweet_url, posted_at, tweet_id))
+        """, (tweet_url, tweet_id))
         
         updated_row = cursor.fetchone()
         if not updated_row:
             raise Exception(f"No tweet found with ID {tweet_id}")
             
-        conn.commit()
-        print(f"Updated tweet {tweet_id} status - posted at {posted_at} UTC")
+        conn.commit()   
+        print(f"Updated tweet {tweet_id} status")
     except Exception as e:
         if conn:
             conn.rollback()
