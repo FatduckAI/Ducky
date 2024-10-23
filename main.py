@@ -106,6 +106,11 @@ def get_client_ip(request: Request):
 async def read_root():
     with open("static/index.html", "r") as f:
         return f.read()
+      
+@app.get("/archive.html", response_class=HTMLResponse)
+async def read_archive():
+    with open("static/archive.html", "r") as f:
+        return f.read()
 
 @app.get("/api/conversations")
 async def get_conversations_endpoint(
