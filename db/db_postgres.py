@@ -196,7 +196,7 @@ def get_ducky_ai_tweets():
     conn = get_db_connection()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
     try:
-        cursor.execute("SELECT id, content, tweet_id, timestamp FROM ducky_ai ORDER BY timestamp DESC")
+        cursor.execute("SELECT id, content, tweet_id, timestamp FROM ducky_ai ORDER BY timestamp DESC LIMIT 50")
         return cursor.fetchall()
     finally:
         cursor.close()
