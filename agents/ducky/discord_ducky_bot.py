@@ -49,7 +49,7 @@ async def handle_start_command(message, command_parts,channel):
         # Parse number of conversations from command
         #num_conversations = 1  # default
         print(f"command_parts: {command_parts}")
-        num_conversations = command_parts[1]
+        num_conversations = int(command_parts[1])
         if len(command_parts) >= 3 and command_parts[1].isdigit():
             num_conversations = int(command_parts[1])
             if num_conversations < 1:
