@@ -62,7 +62,7 @@ async def handle_start_command(message, command_parts):
         
         # Start the simulation
         logger.info(f"Starting {num_conversations} conversations...")
-        await simulate_conversation_with_ducky(num_conversations)
+        await simulate_conversation_with_ducky(client,num_conversations)
         
     except Exception as e:
         logger.error(f"Error in conversation simulation: {e}", exc_info=True)
@@ -124,7 +124,7 @@ async def on_message(message):
             try:
                 async with message.channel.typing():
                     logger.info(f'Generating response for: {user_input}')
-                    response = generate_ducky_response(user_input)
+                    response = await generate_ducky_response(user_input)
                     logger.info(f'Generated response: {response}')
                     await message.reply(response if response else "*Quacks in error* 🦆")
             except Exception as e:

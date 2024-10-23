@@ -1,6 +1,7 @@
 import os
 from datetime import datetime
 
+import aiohttp
 import requests
 from dotenv import load_dotenv
 
@@ -14,7 +15,7 @@ from lib.twitter import post_tweet
 if not os.environ.get('RAILWAY_ENVIRONMENT'):
     load_dotenv()
 
-def generate_ducky_response(human_input):
+async def generate_ducky_response(human_input):
     prompt = ducky_ai_prompt(human_input)
     ollama_url = f"{get_ollama_client()}/api/generate"
     payload = {
@@ -28,12 +29,14 @@ def generate_ducky_response(human_input):
     }
 
     try:
-        response = requests.post(ollama_url, json=payload)
-        save_ducky_ai_message(human_input, 'Human',0)
-        save_ducky_ai_message(response.json().get('response', '').strip(), 'Ducky',0)
-        response.raise_for_status()
-        generated_text = response.json().get('response', '').strip()
-        return generated_text
+        async with aiohttp.ClientSession() as session:
+            async with session.post(ollama_url, json=payload) as response:
+                response.raise_for_status()
+                response_json = await response.json()
+                save_ducky_ai_message(human_input, 'Human',0)
+                save_ducky_ai_message(response_json.get('response', '').strip(), 'Ducky',0)
+                generated_text = response_json.get('response', '').strip()
+                return generated_text
     except requests.exceptions.RequestException as e:
         print(f"Error generating response: {e}")
         return None

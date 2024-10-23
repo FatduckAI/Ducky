@@ -18,51 +18,53 @@ EST = pytz.timezone('US/Eastern')
 if not os.environ.get('RAILWAY_ENVIRONMENT'):
     load_dotenv()
 
+DISCORD_SIMULATION_CHANNEL_ID = os.environ.get('DISCORD_SIMULATION_CHANNEL_ID')
+
 # Set up Discord client
 intents = discord.Intents.default()
 intents.message_content = True
-client = discord.Client(intents=intents)
 
 def generate_conversation_id():
     """Generate a unique conversation ID"""
     return f"conv_{datetime.now(EST).strftime('%Y%m%d_%H%M%S')}_{str(uuid.uuid4())[:8]}"
 
-async def send_discord_message(content, speaker):
+async def send_discord_message(client,content, speaker):
     """Send a message to Discord with appropriate formatting"""
-    channel = client.get_channel(int(os.getenv('DISCORD_SIMULATION_CHANNEL_ID')))
+    channel = client.get_channel(int(DISCORD_SIMULATION_CHANNEL_ID))
     if channel:
         async with channel.typing():
             await asyncio.sleep(2)  # Simulate typing
             prefix = "🤖 Cleo:\n" if speaker == "Cleo" else "🦆 Ducky:\n"
             await channel.send(f"{prefix} {content}")
 
-async def simulate_conversation_with_ducky(conversation_count):
+async def simulate_conversation_with_ducky(client,conversation_count):
     conversations = []
     base_time = datetime.now(EST)
-    channel = client.get_channel(int(os.getenv('DISCORD_SIMULATION_CHANNEL_ID')))
-    
+    channel = client.get_channel(int(DISCORD_SIMULATION_CHANNEL_ID))
     try:
         for i in range(conversation_count):
             # Start conversation
             conversation_id = generate_conversation_id()
+            print(f"Conversation {i+1} (ID: {conversation_id}) Start")
             if channel:
+              print(f"Conversation {i+1} (ID: {conversation_id}) Start")
               await channel.send(f"```diff\n------------- Conversation {i+1} (ID: {conversation_id}) Start ----------```")
             
             try:
                 if i == 0:
                     initial_prompt = "What's a deep topic you'd like to explore?"
                     save_message_to_db(initial_prompt, "Cleo",  i, conversation_id)
-                    await send_discord_message(initial_prompt, "Cleo")
+                    await send_discord_message(client,initial_prompt, "Cleo")
                     ducky_thought = await generate_ducky_response(initial_prompt)
                 else:
                     new_topic_prompt = "What's another fascinating topic on your mind?"
                     save_message_to_db(new_topic_prompt, "Cleo", i, conversation_id)
-                    await send_discord_message(new_topic_prompt, "Cleo")
+                    await send_discord_message(client,new_topic_prompt, "Cleo")
                     ducky_thought = await generate_ducky_response(new_topic_prompt)
                 
                 # Save and send Ducky's initial thought
                 save_message_to_db(ducky_thought, "Ducky", i, conversation_id)
-                await send_discord_message(ducky_thought, "Ducky")
+                await send_discord_message(client,ducky_thought, "Ducky")
                 conversation = [("Cleo", initial_prompt if i == 0 else new_topic_prompt),
                             ("Ducky", ducky_thought)]
                 
@@ -71,13 +73,13 @@ async def simulate_conversation_with_ducky(conversation_count):
                     # Get Claude's response
                     cleo_response = respond_as_cleo(conversation)
                     save_message_to_db(cleo_response, "Cleo", i, conversation_id)
-                    await send_discord_message(cleo_response, "Cleo")
+                    await send_discord_message(client,cleo_response, "Cleo")
                     conversation.append(("Cleo", cleo_response))
                     
                     # Get Ducky's response
                     ducky_response = await generate_ducky_response(cleo_response)
                     save_message_to_db(ducky_response, "Ducky", i, conversation_id)
-                    await send_discord_message(ducky_response, "Ducky")
+                    await send_discord_message(client,ducky_response, "Ducky")
                     conversation.append(("Ducky", ducky_response))
                 
                 # Ask Ducky to reflect and create a tweet
@@ -202,7 +204,7 @@ def save_tweet_to_db(tweet_content, conversation_id, conversation_index):
     conn.close()
     
     return scheduled_time
-
+""" 
 @client.event
 async def on_ready():
     print(f'Bot is ready! Logged in as {client.user}')
@@ -223,4 +225,4 @@ def main():
         print(f"An error occurred: {e}")
 
 if __name__ == "__main__":
-    main()
+    main() """
