@@ -28,7 +28,7 @@ elif [ "$1" = "discord" ]; then
 elif [ "$1" = "interview" ]; then
     exec python -m agents.ducky.interviewer
 elif [ "$1" = "ape" ]; then
-    exec python -m agents.ape.ape
+    exec python -m agents.ape.main
 #elif [ "$1" = "migrate-to-postgres" ]; then
 #    echo "Starting database migration from SQLite to PostgreSQL..."
 #    if [ -z "$DATABASE_URL" ]; then

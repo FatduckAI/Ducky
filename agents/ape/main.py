@@ -6,6 +6,8 @@ from agents.ape.ape_db import ensure_db_initialized, save_ape_tweet_to_db
 from agents.ape.ape_twitter import post_tweet
 from lib.anthropic import get_anthropic_client
 
+print("Starting Ape tweet job")
+
 # Check if we're running locally (not in Railway)
 if not os.environ.get('RAILWAY_ENVIRONMENT'):
     # Load environment variables from .env file for local development
