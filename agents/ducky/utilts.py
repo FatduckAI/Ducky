@@ -26,7 +26,8 @@ def save_message_to_db(content, speaker, conversation_index,conversation_id):
     cursor.close()
     conn.close()
 
-def save_tweet_to_db(tweet_content, conversation_id, conversation_index):
+# For Interviewer
+def save_tweet_to_db_scheduled(tweet_content, conversation_id, conversation_index):
     """
     Save the reflection tweet to the database with incremental hourly scheduling.
     Each conversation's tweet is scheduled one hour after the previous one.
@@ -81,3 +82,13 @@ def get_ducky_ai_tweets():
     finally:
         cursor.close()
         conn.close()
+
+
+def save_tweet_to_db_posted(content,tweet_url):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    timestamp = datetime.now(EST).isoformat()
+    cursor.execute("INSERT INTO ducky_ai (content, posted, timestamp, tweet_url) VALUES (%s, TRUE, %s, %s)", (content, timestamp, tweet_url))
+    conn.commit()
+    cursor.close()
+    conn.close()

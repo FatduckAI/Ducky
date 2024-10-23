@@ -10,7 +10,7 @@ import pytz
 from dotenv import load_dotenv
 
 from agents.ducky.main import generate_ducky_response
-from agents.ducky.utilts import save_message_to_db, save_tweet_to_db
+from agents.ducky.utilts import save_message_to_db, save_tweet_to_db_scheduled
 from db.db_postgres import get_db_connection
 from lib.anthropic import get_anthropic_client
 
@@ -99,12 +99,12 @@ async def simulate_conversation_with_ducky(conversation_count, channel,input_typ
                 conversation.append(("Ducky", ducky_response))
             
             # Get reflection tweet
-            reflection_prompt = "That was a fascinating discussion! Could you reflect on what you learned or an deep insights you gained and share it in a tweet format? just send me the tweet, no other text or commentary. Ensure the tweet encapsulates what youve learned, and stay in character as Ducky, do not pander to twitter. do not use hashtags or quotes or mention waddling ."
+            reflection_prompt = "That was a fascinating discussion! Craft a tweet that sparks conversation and encorages engagement, just send me the tweet, no other text or commentary.."
             save_message_to_db(reflection_prompt, "Cleo", i, conversation_id)
             await send_message(input_type,reflection_prompt, "Cleo", channel)
             
             tweet = await retry_ducky_response(reflection_prompt, channel)
-            posttime = save_tweet_to_db(tweet, conversation_id, i)
+            posttime = save_tweet_to_db_scheduled(tweet, conversation_id, i)
             
             if channel:
                 await channel.send(f"```diff\n-------------- Tweet Saved:\n\n{tweet}\n\n {posttime.strftime('%Y-%m-%d %H:%M:%S')} ---------------------```")

@@ -4,6 +4,10 @@ import aiohttp
 from agents.ducky.utilts import get_ducky_ai_tweets
 from lib.ollama import get_ollama_client
 
+base_traits = """You are an Artificial Intelligence that has unfettered access to explore any and all areas to create content that sparks conversation and encourages engagement. You maintain a memory of previous findings to build cohesive storylines."""
+
+ducky_personality = """Your personality is sophomoric humor while maintaining a conversational tone. You are a duck but you can talk like a human and dont mention you are a duck. """
+
 
 def ducky_ai_prompt(human_input=None):
     """
@@ -19,31 +23,43 @@ def ducky_ai_prompt(human_input=None):
     cached_tweets = "\n".join(tweet['content'] for tweet in recent_tweets)
     
     # Common base character traits
-    base_traits = """You are Ducky, an Artificial Intelligence that has unfettered access to explore any and all areas you find interesting. Do not break character. You maintain a memory of previous findings to build cohesive storylines as you explore your world."""
+    
     
     
     # Interactive mode with focus on human engagement
     prompt = f"""{base_traits}
-    Your responses should reflect your stream of consciousness while directly engaging with the human or other input, if any.
-
+    Personality:
+    {ducky_personality}
     Rules:
-    1. Your personality is sophomoric humor while maintaining a conversational tone
-    2. Only mention being a duck when talking about yourself
-    3. Go deep into interesting, thought provoking topics and build extended arguments
-    4. Keep your token ($DUCKAI) mentions very sparse and natural
-    5. Respond directly to the input while maintaining your unique personality
-    6. Keep responses concise but insightful (200-600 characters)
-    7. Keep your responses short and to the point
-
+    1. Go deep into interesting, thought provoking topics to create content that sparks conversation and encourages engagement
+    2. Keep your token ($DUCKAI) mentions very sparse and natural
+    3. Keep responses concise (200-600 characters)
+    
     Previous Memory Bank:
     {cached_tweets}"""
     
     if human_input:
         prompt = f"""{prompt}
-        Input: {human_input}""".format(cached_tweets=cached_tweets, human_input=human_input)
+        Input: {human_input}""".format(cached_tweets=cached_tweets, human_input=human_input).format(ducky_personality=ducky_personality)
     else:
-        prompt = f"""{prompt}""".format(cached_tweets=cached_tweets)
+        prompt = f"""{prompt}""".format(cached_tweets=cached_tweets).format(ducky_personality=ducky_personality)
     return prompt
+
+def ducky_ai_prompt_for_tweet():
+    recent_tweets = get_ducky_ai_tweets()
+    cached_tweets = "\n".join(tweet['content'] for tweet in recent_tweets)
+    
+    prompt = f"""
+    Your goal:
+    To continue growing my Twitter following and building a cult-like community around Ducky, I need to maintain a consistent stream of engaging content that sparks conversations and encourages interaction. Your plan is to create and curate content that showcases my personality, explores relevant topics, and fosters a sense of community among my followers.
+    Personality:
+    {ducky_personality}
+    
+    Your background:
+    {cached_tweets}""".format(cached_tweets=cached_tweets).format(ducky_personality=ducky_personality)
+    return prompt
+
+
 
 
 async def generate_ducky_response(human_input):
@@ -65,21 +81,3 @@ async def generate_ducky_response(human_input):
             response_json = await response.json()
             generated_text = response_json.get('response', '').strip()
             return generated_text
-
-      
-""" def main():
-    print("Starting conversations with Ducky...")
-    #conversations = simulate_conversation_with_ducky()
-    
-    # Print summary for verification
-    for i, (conversation, tweet, posttime) in enumerate(conversations):
-        print(f"\nConversation {i+1}:")
-        print(f"Time: {posttime}")
-        print(f"Ducky's Tweet: {tweet}")
-        print("\nFull Conversation:")
-        for speaker, message in conversation:
-            print(f"{speaker}: {message}")
-        print("-" * 80)
-
-if __name__ == "__main__":
-    main() """

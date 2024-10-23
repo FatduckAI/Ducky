@@ -6,7 +6,7 @@ import requests
 from dotenv import load_dotenv
 
 from agents.ducky.main import ducky_ai_prompt
-from agents.ducky.utilts import save_ducky_ai_message
+from db.db_postgres import save_ducky_ai_message
 from lib.ollama import get_ollama_client
 
 # Check if we're running locally (not in Railway)
