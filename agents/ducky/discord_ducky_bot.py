@@ -115,9 +115,6 @@ async def on_message(message):
         # Handle simulation command - restricted to simulation channel
         logger.info(f"message.channel.id: {message.channel.id}")
         if command_parts[0] == "start":
-            if message.channel.id != SIMULATION_CHANNEL_ID or message.channel.id != ADMIN_CHANNEL_ID:
-                await message.reply("❌ Simulation can only be started in the designated simulation channel!")
-                return
             await handle_start_command(message, command_parts,message.channel)
             return
             
