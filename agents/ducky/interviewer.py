@@ -190,6 +190,9 @@ def save_tweet_to_db(tweet_content, conversation_id, conversation_index):
     scheduled_time = base_hour + timedelta(hours=conversation_index)
     
     tweet_id = f"ducky_reflection_{scheduled_time.strftime('%Y%m%d_%H%M%S')}"
+    ## if tweet_content has quotes around it, remove them
+    if tweet_content.startswith('"') and tweet_content.endswith('"'):
+        tweet_content = tweet_content[1:-1]
     
     cursor.execute(
         """
