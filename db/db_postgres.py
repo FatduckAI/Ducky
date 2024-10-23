@@ -2,16 +2,18 @@
 
 import json
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from urllib.parse import urlparse
 
 import psycopg2
+import pytz
 from dotenv import load_dotenv
 from psycopg2.extras import RealDictCursor
 
 from db.pg_schema import PG_SCHEMA, UPDATE_DUCKY_AI_POSTED
 
 load_dotenv()
+EST = pytz.timezone('US/Eastern')
 
 RAILWAY_ENVIRONMENT_NAME = os.environ.get('RAILWAY_ENVIRONMENT_NAME', 'local')
 if RAILWAY_ENVIRONMENT_NAME == 'production':
@@ -96,8 +98,8 @@ def init_db():
             conn.close()
 
 def ensure_db_initialized():
-    #conn = get_db_connection()
-    #cursor = conn.cursor()
+    conn = get_db_connection()
+    cursor = conn.cursor()
     """Ensure all required tables exist in the database"""
     print("Ensuring database is initialized")
     tables = [
@@ -126,9 +128,9 @@ def ensure_db_initialized():
         else:
             print("All required tables exist")
             
-        #cursor.execute(UPDATE_DUCKY_AI_POSTED)
-        #conn.commit()
-        #conn.close()
+        cursor.execute(UPDATE_DUCKY_AI_POSTED)
+        conn.commit()
+        conn.close()
     except Exception as e:
         print(f"Error during database initialization: {e}")
         raise
@@ -150,37 +152,43 @@ def save_edgelord_oneoff_tweet(content, tweet_id, timestamp):
         cursor.close()
         conn.close()
         
-def save_ducky_ai_tweet(content, tweet_id, posted=False, tweet_index=0):
+def save_ducky_ai_tweet(tweet_content, posttime, conversation_id):
+    """Save the reflection tweet to the database"""
     conn = get_db_connection()
     cursor = conn.cursor()
-    if posted:
-      timestamp = datetime.now().isoformat()
-    else:
-      # Calculate the base timestamp (bottom of current hour)
-      now = datetime.now()
-      base_timestamp = now.replace(minute=0, second=0, microsecond=0)
-      
-      # If we're past the 30 minute mark, use the next hour as base
-      if now.minute > 30:
-        base_timestamp = base_timestamp + timedelta(hours=1)
+    timestamp = datetime.now(timezone.utc).isoformat()
+    tweet_id = f"ducky_reflection_{posttime.strftime('%Y%m%d_%H%M%S')}"
     
-      # Add hours based on tweet index for scheduling
-      scheduled_timestamp = base_timestamp + timedelta(hours=tweet_index)
-      timestamp = scheduled_timestamp.isoformat()
+    cursor.execute(
+        """
+        INSERT INTO ducky_ai (content, tweet_id, timestamp, posted, posttime, speaker, conversation_id)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """,
+        (tweet_content, tweet_id, timestamp, False, posttime, 'Ducky', conversation_id)
+    )
     
-    try:
-        cursor.execute("""
-            INSERT INTO ducky_ai (content, tweet_id, timestamp, posted) 
-            VALUES (%s, %s, %s, %s)
-        """, (content, tweet_id, timestamp, posted))
-        conn.commit()
-    except Exception as e:
-        conn.rollback()
-        print(f"Error saving ducky ai tweet: {e}")
-        raise
-    finally:
-        cursor.close()
-        conn.close()
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+def save_ducky_ai_message(content, speaker, conversation_index):
+    """Save individual messages to the database"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    timestamp = datetime.now(timezone.utc).isoformat()
+    message_id = f"{speaker.lower()}_{timestamp}_{conversation_index}"
+    
+    cursor.execute(
+        """
+        INSERT INTO ducky_ai (content, tweet_id, timestamp, posted, speaker)
+        VALUES (%s, %s, %s, %s, %s)
+        """,
+        (content, message_id, timestamp, False, speaker)
+    )
+    
+    conn.commit()
+    cursor.close()
+    conn.close()
 
 
 

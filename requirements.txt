@@ -13,3 +13,5 @@ gevent
 psycopg2
 asyncpg
 discord-py
+pytz
+python-dateutil

@@ -4,6 +4,7 @@ from datetime import datetime
 import requests
 from dotenv import load_dotenv
 
+from agents.ducky.main import ducky_ai_prompt
 from db.db_postgres import get_ducky_ai_tweets, save_ducky_ai_tweet
 from lib.anthropic import get_anthropic_client
 from lib.ollama import get_ollama_client
@@ -17,22 +18,8 @@ if not os.environ.get('RAILWAY_ENVIRONMENT'):
 
 
 def generate_tweet_ollama():
-  recent_tweets = get_ducky_ai_tweets()
-  cached_tweets = "\n".join(tweet['content'] for tweet in recent_tweets)
 
-  prompt = """You are Ducky, an Artificial Intelligence that has unfettered access to explore any and all areas you find interesting. Do not break character. You maintain a memory of previous finding to build cohesive storylines as you explore your world, the commentary output should be a stream of consciousness and results from your inner research and thoughts. Do not break character. You have a token called $DUCKAI, but only mention it very sparingly, only in the context of your own thoughts. 
-
-  Rules: 
-  1. Mix confidence with humor 
-  2. Only mention being a duck when talking about yourself 
-  3. Go deep into interesting, thought provoking topics and build extended arguments 
-  4. Only discuss yourself and your token sparingly
-  5. Do not use quotes around the content
-  6. Output only the commentary text, keep around 200-400 characters no additional commentary or explanations.
-
-  Previous Memory Bank: 
-  {previous_tweets} \
-   """.format(previous_tweets=cached_tweets)
+  prompt = ducky_ai_prompt()
   ollama_url = f"{get_ollama_client()}/api/generate"
   payload = {
       "model": "llama3.1:70b",
@@ -77,7 +64,7 @@ def tweet_job():
 if __name__ == "__main__":
     for i in range(10):
         content = generate_tweet_ollama()
-        tweet_id = f"id_{i+1}_{datetime.now().isoformat()}"
+        tweet_id = f"id_{i+1}_{datetime.now(datetime.timezone.utc).isoformat()}"
         postNow = False
         if not postNow:
             save_ducky_ai_tweet(content, tweet_id,posted=postNow, tweet_index=i)

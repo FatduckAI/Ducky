@@ -1,13 +1,15 @@
 import logging
 import os
 import sys
+from datetime import datetime, timedelta, timezone
 
 import discord
 from discord import Intents
 from dotenv import load_dotenv
 
-# Import the generate function from your existing code
+from agents.ducky.interviewer import simulate_conversation_with_ducky
 from agents.ducky.talk_ducky import generate_ducky_response
+from agents.ducky.tweet_poster import handle_tweet_commands
 
 # Set up logging
 logging.basicConfig(
@@ -20,10 +22,13 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-
-
 # Load environment variables
 load_dotenv()
+
+# Define allowed channels
+ADMIN_CHANNEL_ID = int(os.getenv('DISCORD_ADMIN_CHANNEL_ID'))  # For tweet management
+SIMULATION_CHANNEL_ID = int(os.getenv('DISCORD_SIMULATION_CHANNEL_ID'))   # For running simulations
+    
 
 # Set up Discord client with minimal intents
 intents = Intents.default()
@@ -37,24 +42,84 @@ async def on_ready():
     for guild in client.guilds:
         logger.info(f'- {guild.name} (id: {guild.id})')
 
+async def handle_start_command(message, command_parts):
+    """Handle the start conversation command"""
+    try:
+        # Parse number of conversations from command
+        num_conversations = 1  # default
+        if len(command_parts) >= 3 and command_parts[1].isdigit():
+            num_conversations = int(command_parts[1])
+            if num_conversations < 1:
+                await message.reply("Please specify a positive number of conversations!")
+                return
+            if num_conversations > 5:  # limit to reasonable number
+                await message.reply("Please limit to 5 conversations at a time!")
+                return
+        
+        
+        # Acknowledge the command
+        await message.reply(f"Starting {num_conversations} new conversation(s)! 🎭")
+        
+        # Start the simulation
+        logger.info(f"Starting {num_conversations} conversations...")
+        await simulate_conversation_with_ducky()
+        
+    except Exception as e:
+        logger.error(f"Error in conversation simulation: {e}", exc_info=True)
+        await message.reply("❌ An error occurred while running the conversations.")
+
 @client.event
 async def on_message(message):
     # Don't respond to ourselves
     if message.author == client.user:
         return
     
-    # Check if our role ID is mentioned
     ducky_role_id = 1298357900825198705
     if ducky_role_id in message.raw_role_mentions or client.user in message.mentions:
         logger.info(f'Received message from {message.author}: {message.content}')
-        # Remove both user and role mentions
         user_input = message.content
-        # Remove role mention
         user_input = user_input.replace(f'<@&{ducky_role_id}>', '').strip()
-        # Remove potential user mentions
         user_input = user_input.replace(f'<@{client.user.id}>', '').strip()
         user_input = user_input.replace(f'<@!{client.user.id}>', '').strip()
         
+        command_parts = user_input.lower().split()
+        
+        if not command_parts:
+            return
+        
+        # Handle tweet management commands - restricted to admin channel
+        if command_parts[0] == "tweets":
+            if message.channel.id != ADMIN_CHANNEL_ID:
+                await message.reply("❌ Tweet management commands can only be used in the admin channel!")
+                return
+            await handle_tweet_commands(message, command_parts, logger)
+            return
+        
+        if command_parts[0] == "help":
+            if message.channel.id != ADMIN_CHANNEL_ID:
+                await message.reply("❌ Help commands can only be used in the admin channel!")
+                return
+            help_message = (
+                "🦆 Ducky Bot Commands:\n"
+                "- `@Ducky help`: Show this help message\n"
+                "- `@Ducky start [number]`: Start a new conversation (optional: specify number of conversations, max 5)\n"
+                "- `@Ducky [message]`: Chat with Ducky\n"
+                "- `@Ducky tweets [command]`: Manage scheduled tweets (admin only)\n"
+                "  - `list`: List all scheduled tweets\n"
+                "  - `cancel [database_id]`: Cancel a scheduled tweet\n"
+            )
+            await message.reply(help_message)
+            return
+            
+        # Handle simulation command - restricted to simulation channel
+        if command_parts[0] == "start":
+            if message.channel.id != SIMULATION_CHANNEL_ID:
+                await message.reply("❌ Simulation can only be started in the designated simulation channel!")
+                return
+            await handle_start_command(message, command_parts)
+            return
+            
+        # Regular chat responses - allowed in any channel
         if user_input:
             try:
                 async with message.channel.typing():
@@ -65,6 +130,7 @@ async def on_message(message):
             except Exception as e:
                 logger.error(f'Error processing message: {e}', exc_info=True)
                 await message.reply("*Quacks in error* 🦆")
+
 
 def main():
     logger.info("Starting Discord bot...")

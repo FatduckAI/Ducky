@@ -77,7 +77,9 @@ PG_SCHEMA = {
             tweet_id TEXT UNIQUE,
             postTime TEXT,
             posted BOOLEAN DEFAULT FALSE,
-            timestamp TEXT NOT NULL
+            timestamp TEXT NOT NULL,
+            conversation_id VARCHAR(255),
+            speaker TEXT
         )
     '''
 }
@@ -85,5 +87,5 @@ PG_SCHEMA = {
 
 # add a new column to the ducky_ai table
 UPDATE_DUCKY_AI_POSTED = '''
-    ALTER TABLE ducky_ai ADD COLUMN postTime TEXT;
+    ALTER TABLE ducky_ai ADD COLUMN conversation_id VARCHAR(255);
 '''
