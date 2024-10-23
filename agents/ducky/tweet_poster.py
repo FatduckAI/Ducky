@@ -228,7 +228,6 @@ def get_next_due_tweet():
             AND posttime IS NOT NULL
             AND posttime <= %s
             AND speaker = 'Ducky'
-            AND tweet_id LIKE 'ducky_reflection_%'
             ORDER BY posttime ASC 
             LIMIT 1
         """, (buffer_time,))
