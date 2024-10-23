@@ -13,8 +13,6 @@ elif [ "$1" = "dinner_with_andre" ]; then
 elif [ "$1" = "edgelord_oneoff" ]; then
     #exec python -m agents.edgelord_oneoff.edgelord_oneoff
     echo "edgelord_oneoff is deprecated"
-elif [ "$1" = "ducky" ]; then
-    exec python -m agents.ducky.ducky_ai
 elif [ "$1" = "narratives" ]; then
     exec python -m agents.narratives.narrative
 elif [ "$1" = "telegram" ]; then
