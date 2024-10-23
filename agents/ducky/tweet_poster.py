@@ -257,7 +257,7 @@ def update_tweet_status(tweet_id, tweet_url):
         cursor.execute("""
             UPDATE ducky_ai 
             SET posted = TRUE, 
-            tweet_id = %s,
+            tweet_id = %s
             WHERE id = %s
             RETURNING id
         """, (tweet_url, tweet_id))
