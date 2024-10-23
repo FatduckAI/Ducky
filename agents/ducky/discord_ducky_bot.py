@@ -118,7 +118,7 @@ async def on_message(message):
             if message.channel.id != SIMULATION_CHANNEL_ID or message.channel.id != ADMIN_CHANNEL_ID:
                 await message.reply("❌ Simulation can only be started in the designated simulation channel!")
                 return
-            await handle_start_command(message, command_parts)
+            await handle_start_command(message, command_parts,message.channel)
             return
             
         # Regular chat responses - allowed in any channel

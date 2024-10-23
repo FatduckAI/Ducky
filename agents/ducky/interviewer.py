@@ -54,17 +54,17 @@ async def simulate_conversation_with_ducky(client,conversation_count,channel):
                 if i == 0:
                     initial_prompt = "What's a deep topic you'd like to explore?"
                     save_message_to_db(initial_prompt, "Cleo",  i, conversation_id)
-                    await send_discord_message(client,initial_prompt, "Cleo",channel)
+                    await send_discord_message(initial_prompt, "Cleo",channel)
                     ducky_thought = await generate_ducky_response(initial_prompt)
                 else:
                     new_topic_prompt = "What's another fascinating topic on your mind?"
                     save_message_to_db(new_topic_prompt, "Cleo", i, conversation_id)
-                    await send_discord_message(client,new_topic_prompt, "Cleo",channel)
+                    await send_discord_message(new_topic_prompt, "Cleo",channel)
                     ducky_thought = await generate_ducky_response(new_topic_prompt)
                 
                 # Save and send Ducky's initial thought
                 save_message_to_db(ducky_thought, "Ducky", i, conversation_id)
-                await send_discord_message(client,ducky_thought, "Ducky",channel)
+                await send_discord_message(ducky_thought, "Ducky",channel)
                 conversation = [("Cleo", initial_prompt if i == 0 else new_topic_prompt),
                             ("Ducky", ducky_thought)]
                 
@@ -73,7 +73,7 @@ async def simulate_conversation_with_ducky(client,conversation_count,channel):
                     # Get Claude's response
                     cleo_response = respond_as_cleo(conversation)
                     save_message_to_db(cleo_response, "Cleo", i, conversation_id)
-                    await send_discord_message(client,cleo_response, "Cleo",channel)
+                    await send_discord_message(cleo_response, "Cleo",channel)
                     conversation.append(("Cleo", cleo_response))
                     
                     # Get Ducky's response
@@ -85,7 +85,7 @@ async def simulate_conversation_with_ducky(client,conversation_count,channel):
                 # Ask Ducky to reflect and create a tweet
                 reflection_prompt = "That was a fascinating discussion! Could you reflect on what you learned and share it in a tweet format? just send me the tweet, no other text or commentary. Ensure the tweet encapsulates what youve learned, and stay in character as Ducky, do not pander to twitter. do not use hashtags or quotes."
                 save_message_to_db(reflection_prompt, "Cleo", i, conversation_id)
-                await send_discord_message(client,reflection_prompt, "Cleo",channel)
+                await send_discord_message(reflection_prompt, "Cleo",channel)
                 tweet = await generate_ducky_response(reflection_prompt)
                 
                 posttime = save_tweet_to_db(tweet, conversation_id, i)
