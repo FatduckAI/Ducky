@@ -36,13 +36,13 @@ async def send_discord_message(content, speaker):
             prefix = "🤖 Cleo:\n" if speaker == "Cleo" else "🦆 Ducky:\n"
             await channel.send(f"{prefix} {content}")
 
-async def simulate_conversation_with_ducky():
+async def simulate_conversation_with_ducky(conversation_count):
     conversations = []
     base_time = datetime.now(EST)
     channel = client.get_channel(int(os.getenv('DISCORD_CHANNEL_ID')))
     
     try:
-        for i in range(1):
+        for i in range(conversation_count):
             # Start conversation
             conversation_id = generate_conversation_id()
             if channel:

@@ -52,8 +52,8 @@ async def handle_start_command(message, command_parts):
             if num_conversations < 1:
                 await message.reply("Please specify a positive number of conversations!")
                 return
-            if num_conversations > 5:  # limit to reasonable number
-                await message.reply("Please limit to 5 conversations at a time!")
+            if num_conversations > 8:  # limit to reasonable number
+                await message.reply("Please limit to 8 conversations at a time!")
                 return
         
         
@@ -62,7 +62,7 @@ async def handle_start_command(message, command_parts):
         
         # Start the simulation
         logger.info(f"Starting {num_conversations} conversations...")
-        await simulate_conversation_with_ducky()
+        await simulate_conversation_with_ducky(num_conversations)
         
     except Exception as e:
         logger.error(f"Error in conversation simulation: {e}", exc_info=True)
