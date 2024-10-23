@@ -85,7 +85,7 @@ async def simulate_conversation_with_ducky(conversation_count, channel,input_typ
             conversation = [("Cleo", initial_prompt), ("Ducky", ducky_thought)]
             
             # Have 6-8 exchanges
-            for j in range(6):
+            for j in range(3):
                 # Get Claude's response
                 cleo_response = respond_as_cleo(conversation)
                 save_message_to_db(cleo_response, "Cleo", i, conversation_id)
