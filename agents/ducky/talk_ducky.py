@@ -6,9 +6,8 @@ import requests
 from dotenv import load_dotenv
 
 from agents.ducky.main import ducky_ai_prompt
-from db.db_postgres import get_ducky_ai_tweets, save_ducky_ai_message
+from agents.ducky.utilts import save_ducky_ai_message
 from lib.ollama import get_ollama_client
-from lib.twitter import post_tweet
 
 # Check if we're running locally (not in Railway)
 if not os.environ.get('RAILWAY_ENVIRONMENT'):
