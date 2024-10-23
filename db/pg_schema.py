@@ -74,7 +74,7 @@ PG_SCHEMA = {
         CREATE TABLE IF NOT EXISTS ducky_ai (
             id SERIAL PRIMARY KEY,
             content TEXT NOT NULL,
-            tweet_id TEXT UNIQUE,
+            tweet_id TEXT,
             postTime TEXT,
             posted BOOLEAN DEFAULT FALSE,
             timestamp TEXT NOT NULL,
@@ -87,5 +87,6 @@ PG_SCHEMA = {
 
 # add a new column to the ducky_ai table
 UPDATE_DUCKY_AI_POSTED = '''
-    ALTER TABLE ducky_ai ADD COLUMN conversation_id VARCHAR(255);
+    ALTER TABLE ducky_ai 
+DROP CONSTRAINT IF EXISTS ducky_ai_tweet_id_key;
 '''
