@@ -29,7 +29,8 @@ load_dotenv()
 ADMIN_CHANNEL_ID = os.environ.get('DISCORD_ADMIN_CHANNEL_ID')  # For tweet management
 SIMULATION_CHANNEL_ID = os.environ.get('DISCORD_SIMULATION_CHANNEL_ID')   # For running simulations
     
-
+print(f"ADMIN_CHANNEL_ID: {ADMIN_CHANNEL_ID}")
+print(f"SIMULATION_CHANNEL_ID: {SIMULATION_CHANNEL_ID}")
 # Set up Discord client with minimal intents
 intents = Intents.default()
 intents.message_content = True
