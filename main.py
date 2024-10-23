@@ -18,9 +18,9 @@ from db.db_postgres import (ensure_db_initialized, get_coin_info,
                             get_ducky_ai_tweets, get_edgelord_oneoff_tweets,
                             get_edgelord_tweets, get_hitchiker_conversations,
                             get_narrative, insert_price_data,
-                            save_ducky_ai_tweet, save_edgelord_oneoff_tweet,
-                            save_edgelord_tweet, save_hitchiker_conversation,
-                            save_narrative, upsert_coin_info)
+                            save_edgelord_oneoff_tweet, save_edgelord_tweet,
+                            save_hitchiker_conversation, save_narrative,
+                            upsert_coin_info)
 from lib.anthropic import get_anthropic_client
 
 # Configuration
