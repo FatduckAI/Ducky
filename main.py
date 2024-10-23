@@ -15,12 +15,12 @@ from pydantic import BaseModel
 
 from db.db_postgres import (ensure_db_initialized, get_coin_info,
                             get_coin_info_by_id, get_coin_prices,
-                            get_ducky_ai_tweets, get_edgelord_oneoff_tweets,
-                            get_edgelord_tweets, get_hitchiker_conversations,
-                            get_narrative, insert_price_data,
-                            save_edgelord_oneoff_tweet, save_edgelord_tweet,
-                            save_hitchiker_conversation, save_narrative,
-                            upsert_coin_info)
+                            get_db_connection, get_ducky_ai_tweets,
+                            get_edgelord_oneoff_tweets, get_edgelord_tweets,
+                            get_hitchiker_conversations, get_narrative,
+                            insert_price_data, save_edgelord_oneoff_tweet,
+                            save_edgelord_tweet, save_hitchiker_conversation,
+                            save_narrative, upsert_coin_info)
 from lib.anthropic import get_anthropic_client
 
 # Configuration
@@ -170,7 +170,75 @@ async def get_ducky_ai_tweets_endpoint():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/chat_history")
+async def get_chat_history():
+    try:
+        # Get the database connection
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        # Query the ducky_ai table for chat messages
+        cur.execute("""
+            SELECT content, speaker, timestamp, conversation_id 
+            FROM ducky_ai 
+            ORDER BY timestamp DESC 
+            LIMIT 50
+        """)
+        
+        messages = []
+        rows = cur.fetchall()
+        
+        for row in rows:
+            messages.append({
+                "content": row[0],
+                "speaker": row[1],
+                "timestamp": row[2],
+                "conversation_id": row[3]
+            })
+        
+        cur.close()
+        conn.close()
+        
+        # Return messages in reverse chronological order (oldest first)
+        return {"messages": messages[::-1]}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
+
+async def get_chat_history():
+    try:
+        # Get the database connection
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        # Query the ducky_ai table for chat messages
+        cur.execute("""
+            SELECT content, speaker, timestamp, conversation_id 
+            FROM ducky_ai 
+            ORDER BY timestamp DESC 
+            LIMIT 50
+        """)
+        
+        messages = []
+        rows = cur.fetchall()
+        
+        for row in rows:
+            messages.append({
+                "content": row[0],
+                "speaker": row[1],
+                "timestamp": row[2],
+                "conversation_id": row[3]
+            })
+        
+        cur.close()
+        conn.close()
+        
+        # Return messages in reverse chronological order (oldest first)
+        return {"messages": messages[::-1]}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 # Protected API endpoints
 @app.post("/api/save_edgelord_oneoff_tweet")

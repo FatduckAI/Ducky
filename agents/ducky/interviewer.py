@@ -96,7 +96,7 @@ async def simulate_conversation_with_ducky(conversation_count, channel):
                 conversation.append(("Ducky", ducky_response))
             
             # Get reflection tweet
-            reflection_prompt = "That was a fascinating discussion! Could you reflect on what you learned and share it in a tweet format? just send me the tweet, no other text or commentary. Ensure the tweet encapsulates what youve learned, and stay in character as Ducky, do not pander to twitter. do not use hashtags or quotes or mention waddling ."
+            reflection_prompt = "That was a fascinating discussion! Could you reflect on what you learned or an deep insights you gained and share it in a tweet format? just send me the tweet, no other text or commentary. Ensure the tweet encapsulates what youve learned, and stay in character as Ducky, do not pander to twitter. do not use hashtags or quotes or mention waddling ."
             save_message_to_db(reflection_prompt, "Cleo", i, conversation_id)
             await send_discord_message(reflection_prompt, "Cleo", channel)
             

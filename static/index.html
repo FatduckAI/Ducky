@@ -41,18 +41,23 @@
       <a href="https://glu.wtf" class="text-blue-600 hover:underline"
         >Intro Blog Post</a
       >
+      <br />
+      <a
+        href="https://discord.gg/3T8syuZv5g"
+        class="text-blue-600 hover:underline"
+        >Discord with full training conversations</a
+      >
     </div>
 
-    <div class="mb-8 max-w-2xl mx-auto border border-ducky-border rounded p-4">
+    <div class="mb-8 max-w-4xl mx-auto border border-ducky-border rounded p-4">
       <button
         id="toggle-chat"
         class="w-full text-left text-ducky-text hover:underline mb-2 flex items-center"
       >
-        <span id="toggle-icon" class="mr-2">▶</span>
         <span>Chat</span>
       </button>
 
-      <div id="chat-container" class="transition-all duration-300 hidden">
+      <div id="chat-container" class="transition-all duration-300">
         <div
           id="chat-messages"
           class="border border-ducky-border rounded p-4 h-96 overflow-y-auto mb-4"
@@ -61,9 +66,9 @@
           <input
             type="text"
             id="user-input"
-            class="flex-grow border border-ducky-border p-2 disabled:opacity-50"
+            class="flex-grow border border-ducky-border p-2"
             disabled
-            placeholder="Loading Ducky... chat will be back soon"
+            placeholder="Chats are generated in Discord, will be generally available soon"
           />
           <button
             type="submit"
@@ -79,7 +84,7 @@
     <div class="flex flex-col md:flex-row justify-between gap-5">
       <div id="tweets" class="w-full md:w-1/2">
         <h1 class="text-center text-ducky-text text-2xl mb-5">
-          Serious Ducky (long term thoughts)
+          Serious Ducky (long term thoughts archived)
         </h1>
         <div
           id="serious_countdown"
@@ -88,7 +93,7 @@
       </div>
       <div id="tweets_oneoff" class="w-full md:w-1/2">
         <h1 class="text-center text-ducky-text text-2xl mb-5">
-          Braindump (short term thoughts)
+          Braindump (short term thoughts archived)
         </h1>
         <div
           id="oneoff_countdown"
@@ -104,7 +109,7 @@
     </div>
     <div id="conversations" class="w-full mt-8">
       <h1 class="text-center text-ducky-text text-2xl mb-5">
-        Chat's with Cleo
+        Chat's with Cleo (archived)
       </h1>
       <div
         id="countdown"
@@ -133,16 +138,52 @@
       const chatForm = document.getElementById("chat-form");
       const userInput = document.getElementById("user-input");
       const chatMessages = document.getElementById("chat-messages");
-      const toggleButton = document.getElementById("toggle-chat");
       const chatContainer = document.getElementById("chat-container");
-      const toggleIcon = document.getElementById("toggle-icon");
 
-      toggleButton.addEventListener("click", () => {
-        chatContainer.classList.toggle("hidden");
-        toggleIcon.textContent = chatContainer.classList.contains("hidden")
-          ? "▶"
-          : "▼";
-      });
+      // Load chat history
+      async function loadChatHistory() {
+        try {
+          const response = await fetch("/api/chat_history");
+          const data = await response.json();
+
+          // Clear existing messages
+          chatMessages.innerHTML = "";
+
+          // Add each message to the chat
+          data.messages.forEach((message) => {
+            const messageDiv = document.createElement("div");
+            messageDiv.className = "mb-4";
+
+            // Determine the appropriate styling based on the speaker
+            const speakerStyle =
+              message.speaker.toLowerCase() === "ducky"
+                ? "text-ducky-text bg-ducky-msg"
+                : message.speaker.toLowerCase() === "cleo"
+                ? "text-ducky-text bg-cleo-msg"
+                : "text-ducky-text bg-moderator-msg";
+
+            messageDiv.innerHTML = `
+              <div class="rounded p-3 ${speakerStyle}">
+                <div class="font-bold mb-1">${message.speaker}:</div>
+                <div class="pl-2">${message.content}</div>
+                <div class="text-xs text-ducky-text mt-1">${new Date(
+                  message.timestamp
+                ).toLocaleString()}</div>
+              </div>
+            `;
+
+            chatMessages.appendChild(messageDiv);
+          });
+
+          // Scroll to bottom of chat
+          chatMessages.scrollTop = chatMessages.scrollHeight;
+        } catch (error) {
+          console.error("Error loading chat history:", error);
+          addMessage("Error", "Failed to load chat history", true);
+        }
+      }
+
+      // Handle message submission
       chatForm.addEventListener("submit", async (e) => {
         e.preventDefault();
         const message = userInput.value.trim();
@@ -153,6 +194,32 @@
         }
       });
 
+      // Add message to chat
+      function addMessage(speaker, content, isError = false) {
+        const messageDiv = document.createElement("div");
+        messageDiv.className = "mb-4";
+
+        const speakerStyle =
+          speaker.toLowerCase() === "ducky"
+            ? "text-ducky-text bg-ducky-msg"
+            : speaker.toLowerCase() === "cleo"
+            ? "text-ducky-text bg-cleo-msg"
+            : isError
+            ? "text-red-600 bg-red-50"
+            : "text-blue-600 bg-blue-50";
+
+        messageDiv.innerHTML = `
+          <div class="rounded p-3 ${speakerStyle}">
+            <div class="font-bold mb-1">${speaker}:</div>
+            <div class="pl-2">${content}</div>
+          </div>
+        `;
+
+        chatMessages.appendChild(messageDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+
+      // Handle streaming response
       async function streamResponse(message) {
         try {
           const response = await fetch("/api/chat", {
@@ -167,7 +234,6 @@
             let errorMessage;
             if (response.status === 429) {
               const errorData = await response.json();
-              console.log(errorData);
               errorMessage =
                 errorData.detail ||
                 "Rate limit exceeded. Please try again later.";
@@ -213,6 +279,7 @@
         }
       }
 
+      // Update assistant message in chat
       function updateAssistantMessage(content, role = "Ducky") {
         let assistantMessageDiv = chatMessages.lastElementChild;
         if (
@@ -222,33 +289,23 @@
         ) {
           assistantMessageDiv = document.createElement("div");
           assistantMessageDiv.className = "mb-4";
+          const bgColor =
+            role.toLowerCase() === "ducky"
+              ? "bg-ducky-msg"
+              : role.toLowerCase() === "cleo"
+              ? "bg-cleo-msg"
+              : "bg-moderator-msg";
+
           assistantMessageDiv.innerHTML = `
-      <div class="font-bold ${
-        role === "Error" ? "text-red-600" : "text-ducky-text"
-      }">${role}:</div>
-      <div class="pl-4"></div>
-    `;
+            <div class="rounded p-3 ${bgColor}">
+              <div class="font-bold text-ducky-text mb-1">${role}:</div>
+              <div class="pl-2"></div>
+            </div>
+          `;
           chatMessages.appendChild(assistantMessageDiv);
         }
-        const contentDiv = assistantMessageDiv.querySelector(".pl-4");
+        const contentDiv = assistantMessageDiv.querySelector(".pl-2");
         contentDiv.textContent = content;
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-      }
-
-      function addMessage(sender, content, isError = false) {
-        const messageDiv = document.createElement("div");
-        messageDiv.className = "mb-4";
-        messageDiv.innerHTML = `
-    <div class="font-bold ${
-      isError
-        ? "text-red-600"
-        : sender === "User"
-        ? "text-blue-600"
-        : "text-ducky-text"
-    }">${sender}:</div>
-    <div class="pl-4">${content}</div>
-  `;
-        chatMessages.appendChild(messageDiv);
         chatMessages.scrollTop = chatMessages.scrollHeight;
       }
 
@@ -386,7 +443,7 @@
         );
 
         div.innerHTML = `
-            <div class="font-bold text-ducky-text mb-3">Narrative: ${new Date().toLocaleString(
+            <div class="font-bold text-ducky-text mb-3">${new Date().toLocaleString(
               "en-US",
               {
                 month: "long",
@@ -445,6 +502,7 @@
       fetchTweets();
       fetchTweetsOneoff();
       fetchNarrative();
+      loadChatHistory();
       // Update countdown every second
       setInterval(() => {
         const countdownElement = document.getElementById("countdown");
