@@ -24,7 +24,7 @@ def post_tweet(content):
     try:
         response = twitter_client.create_tweet(text=content)
         tweet_id = response.data['id']
-        tweet_url = f"https://x.com/user/status/{tweet_id}"
+        tweet_url = f"https://x.com/boredculture/status/{tweet_id}"
         print(f"Tweet posted: {content}")
         return tweet_url
     except Exception as e:
