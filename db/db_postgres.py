@@ -98,8 +98,8 @@ def init_db():
             conn.close()
 
 def ensure_db_initialized():
-    conn = get_db_connection()
-    cursor = conn.cursor()
+    #conn = get_db_connection()
+    #cursor = conn.cursor()
     """Ensure all required tables exist in the database"""
     print("Ensuring database is initialized")
     tables = [
@@ -128,9 +128,9 @@ def ensure_db_initialized():
         else:
             print("All required tables exist")
             
-        cursor.execute(UPDATE_DUCKY_AI_POSTED)
-        conn.commit()
-        conn.close()
+        #cursor.execute(UPDATE_DUCKY_AI_POSTED)
+        #conn.commit()
+        #conn.close()
     except Exception as e:
         print(f"Error during database initialization: {e}")
         raise
