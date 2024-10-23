@@ -35,6 +35,7 @@ async def send_discord_message(content, speaker, channel):
             await asyncio.sleep(2)  # Simulate typing
             prefix = "🤖 *Cleo:*\n" if speaker == "Cleo" else "🦆 *Ducky:*\n"
             # if the content is greater than 2000 chacters cut it off
+            print(f"content length: {len(content)}")
             if len(content) > 1900:
                 content = content[:1900]
             await channel.send(f"{prefix} {content}")
