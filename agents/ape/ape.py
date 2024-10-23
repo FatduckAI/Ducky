@@ -44,10 +44,15 @@ def generate_tweet_claude():
     return response.content[0].text.strip()
 
 def tweet_job():
+    print("Generating tweet")
     content = generate_tweet_claude()
+    print("Posting tweet")
     tweet_url = post_tweet(content)
+    print("Saving tweet to database")
     save_ape_tweet_to_db(content, tweet_url)
 
 if __name__ == "__main__":
+    print("Starting Ape tweet job")
     ensure_db_initialized()
+    print("Ensured database is initialized")
     tweet_job()
