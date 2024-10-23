@@ -1,28 +1,8 @@
-from datetime import datetime
 
 import aiohttp
-import requests
-from psycopg2.extras import RealDictCursor
 
-from db.db_postgres import get_db_connection
+from agents.ducky.utilts import get_ducky_ai_tweets
 from lib.ollama import get_ollama_client
-
-
-def get_ducky_ai_tweets():
-    conn = get_db_connection()
-    cursor = conn.cursor(cursor_factory=RealDictCursor)
-    try:
-        cursor.execute("""
-                       SELECT id, content, tweet_id, timestamp,speaker
-                       FROM ducky_ai 
-                       WHERE speaker = 'Ducky'
-                       ORDER BY timestamp DESC 
-                       LIMIT 50
-                       """)
-        return cursor.fetchall()
-    finally:
-        cursor.close()
-        conn.close()
 
 
 def ducky_ai_prompt(human_input=None):

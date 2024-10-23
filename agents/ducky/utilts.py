@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone
 
 import pytz
+from psycopg2.extras import RealDictCursor
 
 from db.db_postgres import get_db_connection
 
@@ -64,3 +65,19 @@ def save_tweet_to_db(tweet_content, conversation_id, conversation_index):
     conn.close()
     
     return scheduled_time
+  
+def get_ducky_ai_tweets():
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    try:
+        cursor.execute("""
+                       SELECT id, content, tweet_id, timestamp,speaker
+                       FROM ducky_ai 
+                       WHERE speaker = 'Ducky'
+                       ORDER BY timestamp DESC 
+                       LIMIT 50
+                       """)
+        return cursor.fetchall()
+    finally:
+        cursor.close()
+        conn.close()
