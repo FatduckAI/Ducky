@@ -219,7 +219,7 @@ def get_next_due_tweet():
         
         # Get current UTC time with 5-minute buffer
         current_utc = datetime.now(timezone.utc)
-        buffer_time = current_utc - timedelta(minutes=15)
+        buffer_time = current_utc
         print(f"buffer_time: {buffer_time}")
         cursor.execute("""
             SELECT id, content, tweet_id, posttime 
