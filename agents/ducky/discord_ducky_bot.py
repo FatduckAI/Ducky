@@ -26,8 +26,8 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 # Define allowed channels
-ADMIN_CHANNEL_ID = int(os.getenv('DISCORD_ADMIN_CHANNEL_ID'))  # For tweet management
-SIMULATION_CHANNEL_ID = int(os.getenv('DISCORD_SIMULATION_CHANNEL_ID'))   # For running simulations
+ADMIN_CHANNEL_ID = os.environ.get('DISCORD_ADMIN_CHANNEL_ID')  # For tweet management
+SIMULATION_CHANNEL_ID = os.environ.get('DISCORD_SIMULATION_CHANNEL_ID')   # For running simulations
     
 
 # Set up Discord client with minimal intents
