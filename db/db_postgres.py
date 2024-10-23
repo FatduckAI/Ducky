@@ -152,30 +152,11 @@ def save_edgelord_oneoff_tweet(content, tweet_id, timestamp):
         cursor.close()
         conn.close()
         
-def save_ducky_ai_tweet(tweet_content, posttime, conversation_id):
-    """Save the reflection tweet to the database"""
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    timestamp = datetime.now(timezone.utc).isoformat()
-    tweet_id = f"ducky_reflection_{posttime.strftime('%Y%m%d_%H%M%S')}"
-    
-    cursor.execute(
-        """
-        INSERT INTO ducky_ai (content, tweet_id, timestamp, posted, posttime, speaker, conversation_id)
-        VALUES (%s, %s, %s, %s, %s, %s, %s)
-        """,
-        (tweet_content, tweet_id, timestamp, False, posttime, 'Ducky', conversation_id)
-    )
-    
-    conn.commit()
-    cursor.close()
-    conn.close()
-
 def save_ducky_ai_message(content, speaker, conversation_index):
     """Save individual messages to the database"""
     conn = get_db_connection()
     cursor = conn.cursor()
-    timestamp = datetime.now(timezone.utc).isoformat()
+    timestamp = datetime.now(EST).isoformat()
     message_id = f"{speaker.lower()}_{timestamp}_{conversation_index}"
     
     cursor.execute(

@@ -171,16 +171,6 @@ async def get_ducky_ai_tweets_endpoint():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/api/save_ducky_ai_tweet")
-async def save_ducky_ai_tweet_endpoint(tweet: Tweet, api_key: str = Depends(verify_api_key)):
-    try:
-        timestamp = datetime.now().isoformat()
-        save_ducky_ai_tweet(tweet.tweet_url)
-        return {"status": "success", "message": "Tweet saved successfully"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
 
 # Protected API endpoints
 @app.post("/api/save_edgelord_oneoff_tweet")
