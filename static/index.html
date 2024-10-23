@@ -15,7 +15,7 @@
               "ducky-border": "#d9bfb7",
               "ducky-msg": "#f0e0d6",
               "cleo-msg": "#d7ecdd",
-              "moderator-msg": "#d6e0f0",
+              "system-msg": "#d6e0f0",
             },
           },
         },
@@ -62,7 +62,7 @@
         cleo: "/static/avatars/ducky.jpg",
         user: "/static/avatars/ducky.jpg",
         error: "/static/avatars/ducky.jpg",
-        moderator: "/static/avatars/ducky.jpg",
+        system: "/static/avatars/ducky.jpg",
       };
 
       function createMessageHTML(
@@ -152,7 +152,7 @@
                 ? "text-ducky-text bg-ducky-msg"
                 : message.speaker.toLowerCase() === "cleo"
                 ? "text-ducky-text bg-cleo-msg"
-                : "text-ducky-text bg-moderator-msg";
+                : "text-ducky-text bg-system-msg";
 
             const shouldTruncate = message.content.length > CHARACTER_LIMIT;
             const displayContent = shouldTruncate
@@ -264,7 +264,7 @@
               ? "bg-ducky-msg"
               : role.toLowerCase() === "cleo"
               ? "bg-cleo-msg"
-              : "bg-moderator-msg";
+              : "bg-system-msg";
 
           assistantMessageDiv.innerHTML = createMessageHTML(
             role,
@@ -344,7 +344,7 @@
               ? "bg-ducky-msg"
               : role.toLowerCase() === "cleo"
               ? "bg-cleo-msg"
-              : "bg-moderator-msg";
+              : "bg-system-msg";
 
           assistantMessageDiv.innerHTML = `
             <div class="avatar-container w-10 h-10">
@@ -498,7 +498,7 @@
               ? "bg-ducky-msg"
               : role.toLowerCase() === "cleo"
               ? "bg-cleo-msg"
-              : "bg-moderator-msg";
+              : "bg-system-msg";
 
           assistantMessageDiv.innerHTML = `
             <div class="rounded p-3 ${bgColor}">

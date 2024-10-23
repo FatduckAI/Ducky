@@ -5,6 +5,7 @@ from dateutil import parser
 from discord import Embed
 from psycopg2.extras import RealDictCursor
 
+from agents.ducky.utilts import save_message_to_db
 from db.db_postgres import get_db_connection
 from lib.twitter import post_tweet
 
@@ -297,7 +298,7 @@ def handle_hourly_tweet():
             
             # Post the tweet
             tweet_url = post_tweet(next_tweet['content'])
-            
+            save_message_to_db(f"```diff\n-------------- Tweet Posted:\n\n{tweet_url}\n\n ---------------------```","System", 0)
             # Update the status after successful posting
             update_tweet_status(next_tweet['id'], tweet_url)
             
