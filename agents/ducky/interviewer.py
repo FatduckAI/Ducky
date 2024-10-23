@@ -86,9 +86,7 @@ async def simulate_conversation_with_ducky(conversation_count):
                 await send_discord_message(reflection_prompt, "Cleo")
                 tweet = await generate_ducky_response(reflection_prompt)
                 
-                # Save tweet and send special tweet message
-                posttime = base_time + timedelta(hours=i+1)
-                save_tweet_to_db(tweet, posttime, conversation_id)
+                posttime = save_tweet_to_db(tweet, conversation_id, i)
                 if channel:
                     await channel.send(f"```diff\n-------------- Tweet Saved:\n\n{tweet}\n\n {posttime.strftime('%Y-%m-%d %H:%M:%S')} ---------------------```")
                 
@@ -168,24 +166,42 @@ def save_message_to_db(content, speaker, conversation_index,conversation_id):
     cursor.close()
     conn.close()
 
-def save_tweet_to_db(tweet_content, posttime, conversation_id):
-    """Save the reflection tweet to the database"""
+def save_tweet_to_db(tweet_content, conversation_id, conversation_index):
+    """
+    Save the reflection tweet to the database with incremental hourly scheduling.
+    Each conversation's tweet is scheduled one hour after the previous one.
+    
+    Args:
+        tweet_content (str): The content of the tweet
+        conversation_id (str): The unique conversation identifier
+        conversation_index (int): The index of the conversation (0-based)
+    """
     conn = get_db_connection()
     cursor = conn.cursor()
     timestamp = datetime.now(EST).isoformat()
-    tweet_id = f"ducky_reflection_{posttime.strftime('%Y%m%d_%H%M%S')}"
+    
+    # Round up to the next hour
+    current_time = datetime.now(EST)
+    base_hour = current_time.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
+    
+    # Add additional hours based on conversation index
+    scheduled_time = base_hour + timedelta(hours=conversation_index)
+    
+    tweet_id = f"ducky_reflection_{scheduled_time.strftime('%Y%m%d_%H%M%S')}"
     
     cursor.execute(
         """
         INSERT INTO ducky_ai (content, tweet_id, timestamp, posted, posttime, speaker, conversation_id)
         VALUES (%s, %s, %s, %s, %s, %s, %s)
         """,
-        (tweet_content, tweet_id, timestamp, False, posttime, 'Ducky', conversation_id)
+        (tweet_content, tweet_id, timestamp, False, scheduled_time, 'Ducky', conversation_id)
     )
     
     conn.commit()
     cursor.close()
     conn.close()
+    
+    return scheduled_time
 
 @client.event
 async def on_ready():
