@@ -78,7 +78,7 @@
             ${
               timestamp
                 ? `
-                  <div class="text-xs text-ducky-text mt-2">${timestamp}</div>
+                  <div class="text-xs text-ducky-text mt-2 hidden md:block">${timestamp}</div>
                 `
                 : ""
             }
@@ -88,7 +88,15 @@
                   <div class="font-bold text-sm mb-2 flex-1">[${speaker}]</div>
                   <span class="message-content text-gray-600">
                     ${displayContent}
+                    ${
+                      timestamp
+                        ? `
+                  <div class="text-xs text-ducky-text mt-2 block md:hidden">${timestamp}</div>
+                `
+                        : ""
+                    }
                   </span>
+                   
                   ${
                     shouldTruncate
                       ? `
