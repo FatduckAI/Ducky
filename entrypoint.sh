@@ -29,6 +29,11 @@ elif [ "$1" = "interview" ]; then
     exec python -m agents.ducky.interviewer
 elif [ "$1" = "ape" ]; then
     exec python -m agents.ape.main
+elif [ "$1" = "sync-followers" ]; then
+    echo "Requires Twitter Pro account"
+elif [ "$1" = "ducky-tweet" ]; then
+    exec python -m agents.ducky.tweet_generator
+    #exec python -m agents.twitter.syncFollowers
 #elif [ "$1" = "migrate-to-postgres" ]; then
 #    echo "Starting database migration from SQLite to PostgreSQL..."
 #    if [ -z "$DATABASE_URL" ]; then

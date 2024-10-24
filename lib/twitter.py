@@ -25,77 +25,35 @@ def initialize_twitter_clients():
             consumer_key=twitter_consumer_key,
             consumer_secret=twitter_consumer_secret,
             access_token=twitter_access_token,
-            access_token_secret=twitter_access_token_secret
+            access_token_secret=twitter_access_token_secret,
+            bearer_token=twitter_bearer_token
         )
+        api = tweepy.API(oauth1_client)
 
-       
-        return oauth1_client
+        return oauth1_client, api
 
     except Exception as e:
         print(f"Error initializing Twitter clients: {e}")
         return None, None
 
-# Initialize both clients
-twitter_client = initialize_twitter_clients()
-
-
-def check_rate_limits_v2():
-    """
-    Simple function to check Twitter API v2 rate limits from response headers
-    """
-    try:
-        # Initialize client
-        client = tweepy.Client(
-            consumer_key=os.environ.get('TWITTER_CONSUMER_KEY'),
-            consumer_secret=os.environ.get('TWITTER_CONSUMER_SECRET'),
-            access_token=os.environ.get('TWITTER_ACCESS_TOKEN'),
-            access_token_secret=os.environ.get('TWITTER_ACCESS_TOKEN_SECRET')
-        )
-        
-        # Make a simple API call to check headers
-        response = client.get_me()
-        
-        # Get rate limit headers
-        headers = response.includes
-        
-        print("\nRate Limit Information:")
-        print("-" * 50)
-        print(f"Rate Limit Headers: {json.dumps(headers, indent=2)}")
-        
-        # Check if we got rate limited
-        if hasattr(response, 'errors') and response.errors:
-            for error in response.errors:
-                if error['type'] == 'about:blank' and 'Rate limit exceeded' in error.get('detail', ''):
-                    print("Currently Rate Limited!")
-                    return True
-        
-        return False
-        
-    except tweepy.TooManyRequests as e:
-        print(f"Rate Limited: {e}")
-        return True
-    except Exception as e:
-        print(f"Error checking rate limits: {e}")
-        return None
 
 def verify_credentials():
     """
     Verify Twitter API credentials and print debug information.
     """
+    twitter_client, api = initialize_twitter_clients()
     try:
         # Check OAuth 1.0a credentials
         if twitter_client:
-            me = twitter_client.get_tweet(id=1849239730837413946)
+            me = twitter_client.get_me()
             print(f"OAuth 1.0a Authentication successful - User: @{me.data.username}")
         else:
             print("OAuth 1.0a client initialization failed")
-
-       
-
     except Exception as e:
         print(f"Error verifying credentials: {e}")
 
 def post_tweet(content):
+    twitter_client, api = initialize_twitter_clients()
     """Post a tweet with enhanced error handling"""
     if not twitter_client:
         return "Error: Twitter client not initialized"
@@ -112,6 +70,7 @@ def post_tweet(content):
         return error_msg
 
 def get_follower_count():
+    twitter_client, api = initialize_twitter_clients()
     """Get follower count with enhanced error handling"""
     if not twitter_client:
         return "Error: Twitter client not initialized"
@@ -138,6 +97,64 @@ def get_follower_count():
         print(error_msg)
         return error_msg
 
+def get_tweet_replies(
+    tweet_id: str,
+    tweet_author_username: str,
+    max_replies: int = 100
+):
+    """
+    Fetch replies to a specific tweet using Tweepy.
+    
+    Args:
+        api: Authenticated Tweepy API instance
+        tweet_id: ID of the tweet to fetch replies for
+        tweet_author_username: Username of the tweet author
+        max_replies: Maximum number of replies to fetch (default: 100)
+    
+    Returns:
+        List of dictionaries containing reply data
+    """
+    replies = []
+    
+    try:
+        # Use the v2 API to search for replies
+        query = f"conversation_id:{tweet_id} to:{tweet_author_username}"
+        twitter_client, api = initialize_twitter_clients()
+        # Get tweets with necessary fields
+        response = twitter_client.search_recent_tweets(
+            query=query,
+            max_results=max_replies,
+            tweet_fields=['created_at', 'public_metrics', 'author_id'],
+            user_fields=['username', 'public_metrics', 'verified'],
+            expansions=['author_id']
+        )
+        
+        if not response.data:
+            return replies
+
+        # Create a user dictionary for quick lookup
+        users = {user.id: user for user in response.includes['users']} if response.includes.get('users') else {}
+        
+        for tweet in response.data:
+            author = users.get(tweet.author_id)
+            if author:
+                reply_data = {
+                    'id': tweet.id,
+                    'author': author.username,
+                    'text': tweet.text,
+                    'created_at': tweet.created_at.isoformat(),
+                    'likes': tweet.public_metrics['like_count'],
+                    'retweets': tweet.public_metrics['retweet_count'],
+                    'author_followers': author.public_metrics['followers_count'],
+                    'author_verified': author.verified
+                }
+                replies.append(reply_data)
+    
+    except Exception as e:
+        print(f"Error fetching replies: {str(e)}")
+        return []
+    
+    return replies
 
 # Function to test the setup
 def test_twitter_connection():
@@ -151,7 +168,11 @@ def test_twitter_connection():
     followers = get_follower_count()
     print(f"Follower count: {followers}")
     
+    print("\nGetting replies...")
+    replies = get_tweet_replies("1849453012173066278", "duckunfiltered")
+    print(replies)
+    
     return "Test complete"
 
-""" if __name__ == "__main__":
-    test_twitter_connection() """
+if __name__ == "__main__":
+    test_twitter_connection()

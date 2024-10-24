@@ -3,8 +3,8 @@ import sys
 
 from dotenv import load_dotenv
 
-from agents.ducky.main import ducky_ai_prompt_for_tweet
-from agents.ducky.utilts import save_message_to_db, save_tweet_to_db_posted
+from agents.ducky.main import ducky_ai_prompt_for_reply
+from agents.ducky.tweet_poster import update_tweet_status
 from lib.anthropic import get_anthropic_client
 from lib.twitter import get_follower_count, post_tweet
 
@@ -15,8 +15,8 @@ if not os.environ.get('RAILWAY_ENVIRONMENT'):
     # Load environment variables from .env file for local development
     load_dotenv()
 
-def generate_tweet_claude():
-    prompt = ducky_ai_prompt_for_tweet()
+def generate_tweet_claude(tweet):
+    prompt = ducky_ai_prompt_for_reply(tweet)
     response = get_anthropic_client().messages.create(
         model="claude-3-5-sonnet-20241022",
         max_tokens=1024,
@@ -35,22 +35,18 @@ def generate_tweet_claude():
     )
     return response.content[0].text.strip()
 
-def tweet_job():
-    print("Goal: Generate a tweet to grow my follower count")
-    save_message_to_db("Goal: Generate a tweet to grow my follower count","System",0)
+def tweet_job(tweet):
+    print("Generating tweet")
     # Get follower count
-    follower_count = get_follower_count()
-    print(f"Current follower count: {follower_count}")
-    save_message_to_db(f"Current follower count: {follower_count}","System",0)
-    content = generate_tweet_claude()
+    content = generate_tweet_claude(tweet)
     print(content)
-    save_message_to_db(f"Ducky's tweet: {content}","System",0)
     print("Posting tweet")
-    tweet_url = post_tweet(content)
-    save_message_to_db(f"\n-------------- Tweet Posted:\n\n{tweet_url}\n\n ---------------------","System", 0)
+    #tweet_url = post_tweet(content)
+    #save_message_to_db(f"```diff\n-------------- Tweet Posted:\n\n{tweet_url}\n\n ---------------------```","System", 0)
     # Update the status after successful posting
-    save_tweet_to_db_posted(content, tweet_url)
+    #save_tweet_to_db_posted(content, tweet_url)
 
 if __name__ == "__main__":
     print("Starting Ducky tweet job")
-    tweet_job()
+    # include a command line argument to specify the tweet to reply to
+    tweet_job(sys.argv[1])

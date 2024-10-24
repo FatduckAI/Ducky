@@ -10,7 +10,7 @@ import pytz
 from dotenv import load_dotenv
 from psycopg2.extras import RealDictCursor
 
-from db.pg_schema import PG_SCHEMA, UPDATE_DUCKY_AI_POSTED
+from db.pg_schema import FOLLOWER_INDICES, PG_SCHEMA, UPDATE_DUCKY_AI_POSTED
 
 load_dotenv()
 EST = pytz.timezone('US/Eastern')
@@ -83,7 +83,13 @@ def init_db():
             except Exception as e:
                 print(f"Error creating table {table_name}: {e}")
                 raise
-
+        # Create indices
+        try:
+            cursor.execute(FOLLOWER_INDICES)
+            print("Created follower indices if they didn't exist")
+        except Exception as e:
+            print(f"Error creating follower indices: {e}")
+            raise
         conn.commit()
         print("Database initialization completed successfully")
     except Exception as e:

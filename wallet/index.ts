@@ -35,7 +35,7 @@ export class AISafeService {
     this.publicClient = createPublicClient({
       chain: baseSepolia,
       transport: http(`https://rpc.ankr.com/base_sepolia`),
-    });
+    }) as PublicClient;
 
     // Initialize Ethers provider
     this.provider = new ethers.JsonRpcProvider(

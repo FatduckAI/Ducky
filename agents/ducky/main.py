@@ -59,7 +59,15 @@ def ducky_ai_prompt_for_tweet():
     {cached_tweets}""".format(cached_tweets=cached_tweets).format(ducky_personality=ducky_personality)
     return prompt
 
-
+def ducky_ai_prompt_for_reply(tweet):
+    prompt = f"""
+    {base_traits}
+    Provide a witty reply to the following tweet that shows my superiority complex, just give the reply and nothing else, no hashtags, and no quotes.
+    {tweet}
+    Personality:
+    {ducky_personality}
+    """.format(tweet=tweet).format(ducky_personality=ducky_personality).format(base_traits=base_traits)
+    return prompt
 
 
 async def generate_ducky_response(human_input):

@@ -81,8 +81,61 @@ PG_SCHEMA = {
             conversation_id VARCHAR(255),
             speaker TEXT
         )
+    ''',
+        'followers': '''
+        CREATE TABLE IF NOT EXISTS followers (
+            id BIGINT PRIMARY KEY,
+            username VARCHAR(255) NOT NULL,
+            name VARCHAR(255),
+            created_at TEXT NOT NULL,
+            verified BOOLEAN DEFAULT FALSE,
+            followers_count INTEGER DEFAULT 0,
+            following_count INTEGER DEFAULT 0,
+            tweet_count INTEGER DEFAULT 0,
+            description TEXT,
+            location VARCHAR(255),
+            profile_image_url TEXT,
+            last_updated TEXT NOT NULL,
+            is_active BOOLEAN DEFAULT TRUE
+        )
+    ''',
+    'followers_history': '''
+        CREATE TABLE IF NOT EXISTS followers_history (
+            id SERIAL PRIMARY KEY,
+            follower_id BIGINT,
+            followers_count INTEGER,
+            following_count INTEGER,
+            tweet_count INTEGER,
+            snapshot_date TEXT NOT NULL,
+            FOREIGN KEY (follower_id) REFERENCES followers(id)
+        )
+    ''',
+    'follower_sync_runs': '''
+        CREATE TABLE IF NOT EXISTS follower_sync_runs (
+            id SERIAL PRIMARY KEY,
+            run_timestamp TEXT NOT NULL,
+            total_followers BIGINT,
+            new_followers BIGINT,
+            updated_followers BIGINT,
+            run_status TEXT,
+            error_message TEXT
+        )
     '''
 }
+
+
+# Add indices for the follower tables
+FOLLOWER_INDICES = '''
+    CREATE INDEX IF NOT EXISTS idx_followers_username ON followers(username);
+    CREATE INDEX IF NOT EXISTS idx_followers_created_at ON followers(created_at);
+    CREATE INDEX IF NOT EXISTS idx_followers_last_updated ON followers(last_updated);
+    CREATE INDEX IF NOT EXISTS idx_followers_is_active ON followers(is_active);
+    CREATE INDEX IF NOT EXISTS idx_followers_history_follower_id ON followers_history(follower_id);
+    CREATE INDEX IF NOT EXISTS idx_followers_history_date ON followers_history(snapshot_date);
+    CREATE INDEX IF NOT EXISTS idx_sync_runs_timestamp ON follower_sync_runs(run_timestamp);
+    CREATE INDEX IF NOT EXISTS idx_sync_runs_status ON follower_sync_runs(run_status);
+'''
+
 
 
 # add a new column to the ducky_ai table
