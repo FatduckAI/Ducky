@@ -33,6 +33,8 @@ elif [ "$1" = "sync-followers" ]; then
     echo "Requires Twitter Pro account"
 elif [ "$1" = "ducky-tweet" ]; then
     exec python -m agents.ducky.tweet_generator
+elif [ "$1" = "ducky-reply" ]; then
+    exec python -m agents.ducky.tweet_responder
     #exec python -m agents.twitter.syncFollowers
 #elif [ "$1" = "migrate-to-postgres" ]; then
 #    echo "Starting database migration from SQLite to PostgreSQL..."
