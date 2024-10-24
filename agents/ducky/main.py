@@ -1,7 +1,8 @@
 
 import aiohttp
 
-from agents.ducky.utilts import get_ducky_ai_tweets
+from agents.ducky.utilts import (get_ducky_ai_for_tweet_generation_no_tweets,
+                                 get_ducky_ai_tweets)
 from lib.ollama import get_ollama_client
 
 base_traits = """You are Ducky, an Artificial Intelligence that has unfettered access to explore any and all areas to create content that sparks conversation and encourages engagement. You maintain a memory of previous findings to build cohesive storylines. Do not break character."""
@@ -46,7 +47,7 @@ def ducky_ai_prompt(human_input=None):
     return prompt
 
 def ducky_ai_prompt_for_tweet():
-    recent_tweets = get_ducky_ai_tweets()
+    recent_tweets = get_ducky_ai_for_tweet_generation_no_tweets()
     cached_tweets = "\n".join(tweet['content'] for tweet in recent_tweets)
     
     prompt = f"""

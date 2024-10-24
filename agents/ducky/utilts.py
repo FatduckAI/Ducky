@@ -82,6 +82,23 @@ def get_ducky_ai_tweets():
     finally:
         cursor.close()
         conn.close()
+        
+def get_ducky_ai_for_tweet_generation_no_tweets():
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    try:
+        cursor.execute("""
+                       SELECT id, content, tweet_id, timestamp,speaker
+                       FROM ducky_ai 
+                       WHERE speaker = 'Ducky'
+                       AND posted = FALSE
+                       ORDER BY timestamp DESC 
+                       LIMIT 50
+                       """)
+        return cursor.fetchall()
+    finally:
+        cursor.close()
+        conn.close()
 
 
 def save_tweet_to_db_posted(content,tweet_url):
