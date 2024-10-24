@@ -44,7 +44,7 @@ def tweet_job():
     save_message_to_db(f"Current follower count: {follower_count}","System",0)
     content = generate_tweet_claude()
     print(content)
-    save_message_to_db(f"Ducky's tweet: {content}","System",0)
+    save_message_to_db(f"{content}","Ducky",0)
     print("Posting tweet")
     tweet_url = post_tweet(content)
     save_message_to_db(f"\n-------------- Tweet Posted:\n\n{tweet_url}\n\n ---------------------","System", 0)
