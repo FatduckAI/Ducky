@@ -120,6 +120,21 @@ PG_SCHEMA = {
             run_status TEXT,
             error_message TEXT
         )
+    ''',
+    'tweet_replies': '''
+        CREATE TABLE IF NOT EXISTS tweet_replies (
+            id TEXT PRIMARY KEY,
+            author TEXT,
+            text TEXT,
+            created_at TEXT,
+            likes INTEGER,
+            retweets INTEGER,
+            author_followers INTEGER,
+            author_verified BOOLEAN,
+            processed BOOLEAN DEFAULT FALSE,
+            response_tweet_id TEXT,
+            processed_at TEXT
+        )
     '''
 }
 

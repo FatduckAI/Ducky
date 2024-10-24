@@ -116,7 +116,8 @@ def ensure_db_initialized():
         'narratives',
         'price_data',
         'rate_limit',
-        'ducky_ai'
+        'ducky_ai',
+        'tweet_replies'
     ]
     
     try:
