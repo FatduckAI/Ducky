@@ -88,7 +88,7 @@ def save_tweet_to_db_posted(content,tweet_url):
     conn = get_db_connection()
     cursor = conn.cursor()
     timestamp = datetime.now(EST).isoformat()
-    cursor.execute("INSERT INTO ducky_ai (content, posted, timestamp, tweet_url) VALUES (%s, TRUE, %s, %s)", (content, timestamp, tweet_url))
+    cursor.execute("INSERT INTO ducky_ai (content, posted, timestamp, tweet_id) VALUES (%s, TRUE, %s, %s)", (content, timestamp, tweet_url))
     conn.commit()
     cursor.close()
     conn.close()
