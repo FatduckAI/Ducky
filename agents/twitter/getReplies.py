@@ -1,14 +1,9 @@
-import json
-import os
 import re
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
-import psycopg2
-
-from agents.ducky.tweet_responder import generate_tweet_claude_responder
 from db.db_postgres import get_db_connection
-from lib.twitter import initialize_twitter_clients, post_tweet
+from lib.twitter import initialize_twitter_clients
 
 
 def save_tweet_replies(replies: List[Dict[Any, Any]], parent_tweet_id: str) -> None:
@@ -239,87 +234,3 @@ def get_recent_tweets(conn) -> list:
     
     return cursor.fetchall()
 
-def process_tweet_replies():
-    """Main function to process replies for recent tweets"""
-    conn = get_db_connection()
-    
-    try:
-        # Get recent tweets
-        recent_tweets = get_recent_tweets(conn)
-        
-        for tweet_url, timestamp in recent_tweets:
-            # Extract tweet ID from URL
-            tweet_id = extract_tweet_id(tweet_url)
-            if not tweet_id:
-                print(f"Could not extract tweet ID from URL: {tweet_url}")
-                continue
-                
-            print(f"Processing replies for tweet {tweet_id} posted at {timestamp}")
-            
-            # Get replies for this tweet
-            replies = get_tweet_replies(
-                tweet_id=tweet_id,
-                tweet_author_username="duckunfiltered",
-                max_replies=100
-            )
-            
-            print(f"Found {len(replies)} replies")
-            # Process each reply
-            for reply in replies:
-                try:
-                    # Generate response using Claude
-                    print(f"Replying to {reply['author']}: {reply['text']}")
-                    response_content = generate_tweet_claude_responder(reply)
-                    print(f"Response: {response_content}")
-                    # Post the response
-                    if response_content:
-                        #response_url = post_tweet(response_content)
-                        response_url = "https://x.com/duckunfiltered/status/1234567890"
-                        print(f"Posted response to {reply['author']}:")
-                        response_id = extract_tweet_id(response_url)
-                        
-                        # Update database to mark this reply as processed
-                        cursor = conn.cursor()
-                        cursor.execute('''
-                            UPDATE tweet_replies 
-                            SET processed = TRUE,
-                                response_tweet_id = %s,
-                                processed_at = %s
-                            WHERE id=%s
-                        ''', (response_id, datetime.now().isoformat(), str(reply['id'])))
-                        conn.commit()
-                
-                except Exception as e:
-                    print(f"Error processing reply {reply['id']}: {e}")
-                    continue
-            
-    except Exception as e:
-        print(f"Error in process_tweet_replies: {e}")
-    finally:
-        conn.close()
-
-def test_tweet_processing():
-    """Test function to verify the tweet processing logic"""
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    # Get sample of recent tweets
-    recent_tweets = get_recent_tweets(conn)
-    print(f"Found {len(recent_tweets)} tweets from last 24 hours")
-    
-    # Test URL parsing
-    for tweet_url, timestamp in recent_tweets[:3]:  # Test first 3 tweets
-        tweet_id = extract_tweet_id(tweet_url)
-        print(f"URL: {tweet_url}")
-        print(f"Extracted ID: {tweet_id}")
-        print(f"Timestamp: {timestamp}")
-        print("---")
-    
-    conn.close()
-
-if __name__ == "__main__":
-    # For testing
-    #test_tweet_processing()
-    
-    # For production
-    process_tweet_replies()

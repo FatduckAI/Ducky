@@ -68,6 +68,66 @@ def post_tweet(content):
         error_msg = f"Error posting tweet: {str(e)}"
         print(error_msg)
         return error_msg
+      
+def post_reply(content, reply_to_tweet_id=None, reply_to_user_id=None):
+    """
+    Post a tweet with enhanced error handling and conversation threading support
+    
+    Args:
+        content (str): The content of the tweet to post
+        reply_to_tweet_id (str, optional): The ID of the tweet to reply to
+        reply_to_user_id (str, optional): The user ID being replied to
+        
+    Returns:
+        str: URL of the posted tweet or error message
+    """
+    twitter_client, api = initialize_twitter_clients()
+    
+    if not twitter_client:
+        return "Error: Twitter client not initialized"
+    
+    try:
+        # Prepare the tweet parameters
+        tweet_params = {
+            "text": content
+        }
+        
+        # If this is a reply, add the reply parameters
+        if reply_to_tweet_id:
+            # The correct parameter name is 'in_reply_to_tweet_id'
+            tweet_params["in_reply_to_tweet_id"] = reply_to_tweet_id
+            
+            # If we have the user ID, explicitly tag them in the conversation
+            if reply_to_user_id:
+                # Ensure the content starts with the @mention if it's not already there
+                user_mention = f"@{reply_to_user_id}"
+                if not content.startswith(user_mention):
+                    tweet_params["text"] = f"{user_mention} {content}"
+        
+        # Post the tweet
+        response = twitter_client.create_tweet(**tweet_params)
+        
+        # Extract the tweet ID and generate the URL
+        tweet_id = response.data['id']
+        tweet_url = f"https://x.com/duckunfiltered/status/{tweet_id}"
+        
+        print(f"Tweet posted successfully: {content}")
+        if reply_to_tweet_id:
+            print(f"In reply to tweet: {reply_to_tweet_id}")
+            
+        return tweet_url
+        
+    except Exception as e:
+        error_msg = f"Error posting tweet: {str(e)}"
+        print(error_msg)
+        
+        # Log additional debugging information
+        if reply_to_tweet_id:
+            print(f"Failed to reply to tweet ID: {reply_to_tweet_id}")
+        if reply_to_user_id:
+            print(f"Failed to reply to user: {reply_to_user_id}")
+            
+        return error_msg
 
 def get_follower_count():
     twitter_client, api = initialize_twitter_clients()

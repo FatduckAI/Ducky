@@ -18,7 +18,7 @@ if RAILWAY_ENVIRONMENT_NAME == 'production':
 else:
     DATABASE_URL = os.environ.get('APE_DATABASE_URL')
 
-def get_db_connection():
+def get_ape_db_connection():
     try:
         result = urlparse(DATABASE_URL)
         conn = psycopg2.connect(
@@ -38,7 +38,7 @@ def table_exists(table_name):
     conn = None
     cursor = None
     try:
-        conn = get_db_connection()
+        conn = get_ape_db_connection()
         if not conn:
             return False
         
@@ -67,7 +67,7 @@ def init_db():
     conn = None
     cursor = None
     try:
-        conn = get_db_connection()
+        conn = get_ape_db_connection()
         if not conn:
             return
 
@@ -120,7 +120,7 @@ def ensure_db_initialized():
       
       
 def save_ape_tweet_to_db(content, tweet_url):
-    conn = get_db_connection()
+    conn = get_ape_db_connection()
     cursor = conn.cursor()
     
     try:
