@@ -7,7 +7,7 @@ from db.db_postgres import get_db_connection
 
 EST = pytz.timezone('US/Eastern')
 
-def save_message_to_db(content, speaker, conversation_index,conversation_id):
+def save_message_to_db(content, speaker, conversation_index,conversation_id=None):
     """Save individual messages to the database"""
     conn = get_db_connection()
     cursor = conn.cursor()

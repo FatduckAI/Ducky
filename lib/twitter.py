@@ -28,17 +28,15 @@ def initialize_twitter_clients():
             access_token_secret=twitter_access_token_secret
         )
 
-        # OAuth 2.0 client for read-only actions (useful for higher rate limits)
-        oauth2_client = tweepy.Client(bearer_token=twitter_bearer_token)
-
-        return oauth1_client, oauth2_client
+       
+        return oauth1_client
 
     except Exception as e:
         print(f"Error initializing Twitter clients: {e}")
         return None, None
 
 # Initialize both clients
-twitter_client, twitter_client_v2 = initialize_twitter_clients()
+twitter_client = initialize_twitter_clients()
 
 
 def check_rate_limits_v2():
@@ -87,25 +85,12 @@ def verify_credentials():
     try:
         # Check OAuth 1.0a credentials
         if twitter_client:
-            me = twitter_client.get_me()
+            me = twitter_client.get_tweet(id=1849239730837413946)
             print(f"OAuth 1.0a Authentication successful - User: @{me.data.username}")
         else:
             print("OAuth 1.0a client initialization failed")
 
-        # Check OAuth 2.0 credentials
-        if twitter_client_v2:
-            app = twitter_client_v2.get_me()
-            print("OAuth 2.0 Authentication successful")
-        else:
-            print("OAuth 2.0 client initialization failed")
-
-        # Print environment variables (with secrets masked)
-        print("\nEnvironment variables check:")
-        print(f"TWITTER_CONSUMER_KEY: {'✓' if twitter_consumer_key else '✗'}")
-        print(f"TWITTER_CONSUMER_SECRET: {'✓' if twitter_consumer_secret else '✗'}")
-        print(f"TWITTER_ACCESS_TOKEN: {'✓' if twitter_access_token else '✗'}")
-        print(f"TWITTER_ACCESS_TOKEN_SECRET: {'✓' if twitter_access_token_secret else '✗'}")
-        print(f"TWITTER_BEARER_TOKEN: {'✓' if twitter_bearer_token else '✗'}")
+       
 
     except Exception as e:
         print(f"Error verifying credentials: {e}")
@@ -153,39 +138,6 @@ def get_follower_count():
         print(error_msg)
         return error_msg
 
-def get_tweet_replies(tweet_id):
-    """Get replies to a tweet with enhanced error handling"""
-    if not twitter_client_v2:
-        return "Error: Twitter client not initialized"
-    
-    try:
-        query = f"conversation_id:{tweet_id}"
-        replies = []
-        
-        for tweet in tweepy.Paginator(
-            twitter_client_v2.search_recent_tweets,
-            query=query,
-            tweet_fields=['author_id', 'created_at'],
-            max_results=100
-        ).flatten(limit=1000):
-            
-            user = twitter_client_v2.get_user(id=tweet.author_id).data
-            
-            reply_data = {
-                'author_name': user.username,
-                'author_id': tweet.author_id,
-                'text': tweet.text,
-                'created_at': tweet.created_at,
-                'tweet_id': tweet.id
-            }
-            replies.append(reply_data)
-            
-        return replies
-        
-    except tweepy.TweepyException as e:
-        error_msg = f"Error getting replies: {str(e)}"
-        print(error_msg)
-        return error_msg
 
 # Function to test the setup
 def test_twitter_connection():
@@ -202,6 +154,4 @@ def test_twitter_connection():
     return "Test complete"
 
 """ if __name__ == "__main__":
-    is_limited = check_rate_limits_v2()
-    print(f"Rate limited: {is_limited}")
     test_twitter_connection() """

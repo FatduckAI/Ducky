@@ -3,3 +3,4 @@ venv/
 drizzlestudio/.env
 ducky.db
 data/*
+wallet/.env
