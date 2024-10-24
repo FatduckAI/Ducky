@@ -122,18 +122,20 @@ PG_SCHEMA = {
         )
     ''',
     'tweet_replies': '''
-        CREATE TABLE IF NOT EXISTS tweet_replies (
+       CREATE TABLE IF NOT EXISTS tweet_replies (
             id TEXT PRIMARY KEY,
-            author TEXT,
-            text TEXT,
-            created_at TEXT,
-            likes INTEGER,
-            retweets INTEGER,
-            author_followers INTEGER,
-            author_verified BOOLEAN,
+            parent_tweet_id TEXT NOT NULL,
+            author TEXT NOT NULL,
+            text TEXT NOT NULL,
+            created_at TIMESTAMP NOT NULL,
+            likes INTEGER DEFAULT 0,
+            retweets INTEGER DEFAULT 0,
+            author_followers INTEGER DEFAULT 0,
+            author_verified BOOLEAN DEFAULT FALSE,
             processed BOOLEAN DEFAULT FALSE,
             response_tweet_id TEXT,
-            processed_at TEXT
+            processed_at TIMESTAMP,
+            created_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     '''
 }

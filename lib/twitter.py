@@ -97,64 +97,6 @@ def get_follower_count():
         print(error_msg)
         return error_msg
 
-def get_tweet_replies(
-    tweet_id: str,
-    tweet_author_username: str,
-    max_replies: int = 100
-):
-    """
-    Fetch replies to a specific tweet using Tweepy.
-    
-    Args:
-        api: Authenticated Tweepy API instance
-        tweet_id: ID of the tweet to fetch replies for
-        tweet_author_username: Username of the tweet author
-        max_replies: Maximum number of replies to fetch (default: 100)
-    
-    Returns:
-        List of dictionaries containing reply data
-    """
-    replies = []
-    
-    try:
-        # Use the v2 API to search for replies
-        query = f"conversation_id:{tweet_id} to:{tweet_author_username}"
-        twitter_client, api = initialize_twitter_clients()
-        # Get tweets with necessary fields
-        response = twitter_client.search_recent_tweets(
-            query=query,
-            max_results=max_replies,
-            tweet_fields=['created_at', 'public_metrics', 'author_id'],
-            user_fields=['username', 'public_metrics', 'verified'],
-            expansions=['author_id']
-        )
-        
-        if not response.data:
-            return replies
-
-        # Create a user dictionary for quick lookup
-        users = {user.id: user for user in response.includes['users']} if response.includes.get('users') else {}
-        
-        for tweet in response.data:
-            author = users.get(tweet.author_id)
-            if author:
-                reply_data = {
-                    'id': tweet.id,
-                    'author': author.username,
-                    'text': tweet.text,
-                    'created_at': tweet.created_at.isoformat(),
-                    'likes': tweet.public_metrics['like_count'],
-                    'retweets': tweet.public_metrics['retweet_count'],
-                    'author_followers': author.public_metrics['followers_count'],
-                    'author_verified': author.verified
-                }
-                replies.append(reply_data)
-    
-    except Exception as e:
-        print(f"Error fetching replies: {str(e)}")
-        return []
-    
-    return replies
 
 # Function to test the setup
 def test_twitter_connection():
@@ -168,11 +110,8 @@ def test_twitter_connection():
     followers = get_follower_count()
     print(f"Follower count: {followers}")
     
-    print("\nGetting replies...")
-    replies = get_tweet_replies("1849453012173066278", "duckunfiltered")
-    print(replies)
     
     return "Test complete"
 
-if __name__ == "__main__":
-    test_twitter_connection()
+""" if __name__ == "__main__":
+    test_twitter_connection() """

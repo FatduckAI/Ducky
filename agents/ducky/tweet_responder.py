@@ -8,15 +8,14 @@ from agents.ducky.tweet_poster import update_tweet_status
 from lib.anthropic import get_anthropic_client
 from lib.twitter import get_follower_count, post_tweet
 
-print("Starting tweet job")
-
 # Check if we're running locally (not in Railway)
 if not os.environ.get('RAILWAY_ENVIRONMENT'):
     # Load environment variables from .env file for local development
     load_dotenv()
 
-def generate_tweet_claude(tweet):
-    prompt = ducky_ai_prompt_for_reply(tweet)
+def generate_tweet_claude_responder(tweet):
+    print(f"Generating response for {tweet['author']}: {tweet['text']}")
+    prompt = ducky_ai_prompt_for_reply(tweet['text'])
     response = get_anthropic_client().messages.create(
         model="claude-3-5-sonnet-20241022",
         max_tokens=1024,
@@ -38,7 +37,7 @@ def generate_tweet_claude(tweet):
 def tweet_job(tweet):
     print("Generating tweet")
     # Get follower count
-    content = generate_tweet_claude(tweet)
+    content = generate_tweet_claude_responder(tweet)
     print(content)
     print("Posting tweet")
     #tweet_url = post_tweet(content)
@@ -46,7 +45,7 @@ def tweet_job(tweet):
     # Update the status after successful posting
     #save_tweet_to_db_posted(content, tweet_url)
 
-if __name__ == "__main__":
-    print("Starting Ducky tweet job")
-    # include a command line argument to specify the tweet to reply to
-    tweet_job(sys.argv[1])
+#if __name__ == "__main__":
+#    print("Starting Ducky tweet job")
+#    # include a command line argument to specify the tweet to reply to
+#    tweet_job(sys.argv[1])
