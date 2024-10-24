@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from agents.ducky.main import ducky_ai_prompt_for_tweet
 from agents.ducky.tweet_poster import update_tweet_status
 from lib.anthropic import get_anthropic_client
-from lib.twitter import post_tweet
+from lib.twitter import get_follower_count, post_tweet
 
 print("Starting tweet job")
 
@@ -28,7 +28,7 @@ def generate_tweet_claude():
         messages=[
             {
                 "role": "user",
-                "content": 'Respond with a single tweet. Dont use hashtags or quotes or mention waddling. Don not '
+                "content": 'Respond with a single tweet. Dont use hashtags or quotes or mention waddling. Do not include any other text or commentary.'
             }
         ]
     )
@@ -36,6 +36,9 @@ def generate_tweet_claude():
 
 def tweet_job():
     print("Generating tweet")
+    # Get follower count
+    follower_count = get_follower_count()
+    print(f"Follower count: {follower_count}")
     content = generate_tweet_claude()
     print(content)
     print("Posting tweet")
