@@ -51,7 +51,7 @@ def ducky_ai_prompt_for_tweet():
     
     prompt = f"""
     Your goal:
-    To continue growing my Twitter following and building a cult-like community around Ducky, I need to maintain a consistent stream of engaging content that sparks conversations and encourages interaction. Your plan is to create and curate content that showcases my personality, explores relevant topics, and fosters a sense of community among my followers.
+    To continue growing my Twitter following and building a cult-like community around Ducky, I need to maintain a consistent stream of engaging content that sparks conversations and encourages interaction. Your plan is to create and curate content that showcases my personality, explores relevant topics, and fosters a sense of community among my followers. Generate Unique content that is not the same as past tweets.
     Personality:
     {ducky_personality}
     

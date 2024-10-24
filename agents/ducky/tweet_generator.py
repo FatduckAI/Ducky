@@ -18,8 +18,6 @@ if not os.environ.get('RAILWAY_ENVIRONMENT'):
 
 def generate_tweet_claude():
     prompt = ducky_ai_prompt_for_tweet()
-    print(f"Prompt: {prompt}")
-    print(f"Time: {datetime.now()}")
     response = get_anthropic_client().messages.create(
         model="claude-3-5-sonnet-20241022",
         max_tokens=1024,
@@ -32,7 +30,7 @@ def generate_tweet_claude():
         messages=[
             {
                 "role": "user",
-                "content": 'Respond with a single tweet. Dont use hashtags or quotes or mention waddling. Do not include any other text or commentary.'
+                "content": 'Respond with a single tweet. Dont use hashtags or quotes or mention waddling. Do not include any other text or commentary. Ensure it is not the same as past tweets.'
             }
         ]
     )
