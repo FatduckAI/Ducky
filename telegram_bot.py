@@ -72,6 +72,8 @@ def main():
             application.run_polling()
         except Exception as e:
             logging.error(f"An error occurred: {e}")
+    except Exception as e:
+        logger.error(f"Critical error: {str(e)}", exc_info=True)
 
   
 if __name__ == '__main__':
