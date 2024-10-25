@@ -2,6 +2,7 @@ import asyncio
 import logging
 import os
 
+import requests
 from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import (Application, CommandHandler, ContextTypes,
@@ -41,10 +42,22 @@ async def handle_channel_message(update: Update, context: ContextTypes.DEFAULT_T
     except Exception as e:
         logger.error(f"Error in message handler: {str(e)}")
 
+
+def railway_dns_workaround():
+    from time import sleep
+    sleep(1.3)
+    for _ in range(3):
+        if requests.get("https://api.telegram.org", timeout=3).status_code == 200:
+            print("The api.telegram.org is reachable.")
+            return
+        print(f'The api.telegram.org is not reachable. Retrying...({_})')
+    print("Failed to reach api.telegram.org after 3 attempts.")
+
 def main():
     """Start the bot."""
     try:
         # Create the Application
+        railway_dns_workaround()
         application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
 
         # Add handlers
