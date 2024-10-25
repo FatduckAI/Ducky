@@ -58,14 +58,14 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 raise
         else:
             # For non-command messages
-            logger.info(f"Sending default reply to chat {chat_id}")
+            #logger.info(f"Sending default reply to chat {chat_id}")
             try:
-                await context.bot.send_message(
+                """ await context.bot.send_message(
                     chat_id=chat_id,
                     text="Bot is in listening mode. Use commands starting with / to interact.",
                     reply_to_message_id=message_id
-                )
-                logger.info("Successfully sent default reply")
+                ) """
+                #logger.info("Successfully sent default reply")
             except Exception as e:
                 logger.error(f"Failed to send default reply: {str(e)}")
                 raise
