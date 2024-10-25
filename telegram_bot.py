@@ -40,7 +40,6 @@ class TelegramBot:
         if not BotConfig.TELEGRAM_BOT_TOKEN:
             raise ValueError("TELEGRAM_BOT_TOKEN environment variable is not set")
         self.application: Optional[Application] = None
-        self._running = False
 
     async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle the /start command."""
@@ -168,69 +167,46 @@ class TelegramBot:
         logger.error(f"Failed to reach Telegram API after {BotConfig.MAX_RETRIES} attempts")
         return False
 
-    async def initialize(self):
-        """Initialize the application."""
-        if not self.check_telegram_api():
-            raise RuntimeError("Telegram API is unreachable")
-
-        self.application = Application.builder().token(BotConfig.TELEGRAM_BOT_TOKEN).build()
-        
-        # Add handlers
-        self.application.add_handler(CommandHandler("start", self.start))
-        self.application.add_handler(CommandHandler("help", self.help))
-        self.application.add_handler(MessageHandler(
-            filters.TEXT & ~filters.COMMAND,
-            self.handle_message
-        ))
-
-        await self.application.initialize()
-        self._running = True
-
-    async def start_polling(self):
-        """Start polling for updates."""
-        try:
-            await self.application.start_polling(
-                drop_pending_updates=True,
-                allowed_updates=Update.ALL_TYPES
-            )
-        except Exception as e:
-            logger.error(f"Error in polling: {str(e)}", exc_info=True)
-            self._running = False
-            raise
-
-    async def shutdown(self):
-        """Shutdown the application."""
-        if self.application and self._running:
-            self._running = False
+    async def run(self):
+        """Run the bot."""
+        while True:
             try:
-                await self.application.stop()
-                await self.application.shutdown()
-            except Exception as e:
-                logger.error(f"Error during shutdown: {str(e)}", exc_info=True)
+                if not self.check_telegram_api():
+                    logger.error("Cannot start bot: Telegram API is unreachable")
+                    await asyncio.sleep(BotConfig.RETRY_DELAY)
+                    continue
 
-async def main():
+                # Create and configure application
+                self.application = Application.builder().token(BotConfig.TELEGRAM_BOT_TOKEN).build()
+                
+                # Add handlers
+                self.application.add_handler(CommandHandler("start", self.start))
+                self.application.add_handler(CommandHandler("help", self.help))
+                self.application.add_handler(MessageHandler(
+                    filters.TEXT & ~filters.COMMAND,
+                    self.handle_message
+                ))
+
+                logger.info("Starting bot in polling mode...")
+                # Use run_polling instead of start_polling
+                await self.application.run_polling(drop_pending_updates=True)
+
+            except Exception as e:
+                logger.error(f"Bot error: {str(e)}", exc_info=True)
+                if self.application:
+                    await self.application.stop()
+                    self.application = None
+                await asyncio.sleep(BotConfig.RETRY_DELAY)
+
+def main():
     """Main entry point for the bot."""
     bot = TelegramBot()
-    
-    while True:
-        try:
-            await bot.initialize()
-            await bot.start_polling()
-            
-            # Keep the bot running until interrupted
-            while bot._running:
-                await asyncio.sleep(1)
-                
-        except Exception as e:
-            logger.error(f"Bot error: {str(e)}", exc_info=True)
-        finally:
-            await bot.shutdown()
-            await asyncio.sleep(BotConfig.RETRY_DELAY)
-
-if __name__ == "__main__":
     try:
-        asyncio.run(main())
+        asyncio.run(bot.run())
     except KeyboardInterrupt:
         logger.info("Bot stopped by user")
     except Exception as e:
         logger.error(f"Fatal error: {str(e)}", exc_info=True)
+
+if __name__ == "__main__":
+    main()
