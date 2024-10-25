@@ -90,7 +90,7 @@ def main() -> None:
         application.add_handler(CommandHandler("start", start))
         application.add_handler(CommandHandler("help", help_command))
         application.add_handler(MessageHandler(
-            filters.TEXT & ~filters.COMMAND,
+            filters.ALL,
             handle_message
         ))
 
