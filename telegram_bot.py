@@ -23,16 +23,19 @@ logger = logging.getLogger(__name__)
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Send a message when the command /start is issued."""
+    logger.info(f"Start command received from user {update.effective_user.id}")
     await update.message.reply_text("Hello! I'm monitoring messages and will respond to commands.")
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Send a message when the command /help is issued."""
+    logger.info(f"Help command received from user {update.effective_user.id}")
     await update.message.reply_text("Available commands:\n/start - Start the bot\n/help - Show this help message")
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle incoming messages."""
     try:
         if not update.message or not update.message.text:
+            logger.warning("Received update without message or text")
             return
 
         chat_id = update.effective_chat.id
@@ -57,17 +60,16 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             # For non-command messages
             logger.info(f"Sending default reply to chat {chat_id}")
             try:
-                """ await context.bot.send_message(
+                await context.bot.send_message(
                     chat_id=chat_id,
                     text="Bot is in listening mode. Use commands starting with / to interact.",
                     reply_to_message_id=message_id
-                ) """
+                )
                 logger.info("Successfully sent default reply")
             except Exception as e:
                 logger.error(f"Failed to send default reply: {str(e)}")
                 raise
 
-            
     except Exception as e:
         logger.error(f"Error in handle_message: {str(e)}", exc_info=True)
         try:
@@ -93,11 +95,14 @@ def main() -> None:
         ))
 
         # Start the Bot
-        logger.info("Starting bot...")
-        application.run_polling(allowed_updates=Update.ALL_TYPES)
+        logger.info("Starting bot in polling mode...")
+        application.run_polling(
+            allowed_updates=Update.ALL_TYPES,
+            drop_pending_updates=True
+        )
 
     except Exception as e:
-        logger.error(f"Error starting bot: {str(e)}", exc_info=True)
+        logger.error(f"Critical error in main: {str(e)}", exc_info=True)
 
 if __name__ == '__main__':
     main()
