@@ -120,7 +120,7 @@ async def on_message(message):
             try:
                 async with message.channel.typing():
                     logger.info(f'Generating response for: {user_input}')
-                    response = await generate_tweet_claude_responder({"tweet": user_input})
+                    response = await generate_tweet_claude_responder({"text": user_input})
                     logger.info(f'Generated response: {response}')
                     await message.reply(response if response else "*Quacks in error* 🦆")
             except Exception as e:
