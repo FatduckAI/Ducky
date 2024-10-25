@@ -33,6 +33,17 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 async def handle_channel_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     message = update.message.text
 
+    if message.startswith('/'):
+        # Remove the slash from the message
+        user_message = message[1:].strip()
+        print(f"Responding to slash command: {user_message}")
+        
+        # Temporary maintenance message
+        await context.bot.send_message(
+            chat_id=TARGET_CHANNEL_ID, 
+            text=f'{user_message} 🦆 {user_message} 🦆 {user_message} 🦆 {user_message}'
+        )
+
     # Check if the message contains the bot's tag
     if BOT_TAG in message:
                 # Remove the bot tag from the message
