@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import os
+import sys
 
 import aiohttp
 from dotenv import load_dotenv
@@ -27,6 +28,19 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
 )
+
+logger = logging.getLogger(__name__)
+
+
+# Global flag for graceful shutdown
+should_exit = False
+
+def signal_handler(signum, frame):
+    """Handle shutdown signals gracefully"""
+    global should_exit
+    logger.info(f"Received signal {signum}. Starting graceful shutdown...")
+    should_exit = True
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text("Hello! I'm monitoring the specified channel and will respond to tagged messages.")
 
@@ -38,7 +52,6 @@ async def handle_channel_message(update: Update, context: ContextTypes.DEFAULT_T
         user_message = message[1:].strip()
         print(f"Responding to slash command: {user_message}")
         
-        # Temporary maintenance message
         await context.bot.send_message(
             chat_id=TARGET_CHANNEL_ID, 
             text=f'{user_message} 🦆 {user_message} 🦆 {user_message} 🦆 {user_message}'
@@ -73,13 +86,51 @@ async def handle_channel_message(update: Update, context: ContextTypes.DEFAULT_T
     else: 
         print(f"Ignoring untagged message: {message}")
 
-def main():
-    application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
+async def main() -> None:
+    """Start the bot with proper error handling and shutdown management"""
+    try:
+        # Register signal handlers
+        signal.signal(signal.SIGINT, signal_handler)
+        signal.signal(signal.SIGTERM, signal_handler)
+        
+        # Initialize the application with proper shutdown
+        application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
+        
+        # Add handlers
+        application.add_handler(CommandHandler("start", start))
+        application.add_handler(MessageHandler(
+            filters.TEXT & ~filters.COMMAND,
+            handle_channel_message
+        ))
 
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_channel_message))
+        # Start the bot with proper shutdown handling
+        async with application:
+            logger.info("Starting bot...")
+            await application.initialize()
+            await application.start()
+            await application.run_polling(allowed_updates=Update.ALL_TYPES, close_loop=False)
+            
+            # Keep the bot running until shutdown signal
+            while not should_exit:
+                await asyncio.sleep(1)
+            
+            # Graceful shutdown
+            logger.info("Shutting down...")
+            await application.stop()
+            await application.shutdown()
+            
+    except Exception as e:
+        logger.error(f"Critical error: {str(e)}", exc_info=True)
+        sys.exit(1)
 
-    application.run_polling(allowed_updates=Update.ALL_TYPES)
-
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    try:
+        # Set up asyncio event loop with proper error handling
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(main())
+    except Exception as e:
+        logger.error(f"Failed to start bot: {str(e)}", exc_info=True)
+        sys.exit(1)
+    finally:
+        loop.close()
