@@ -67,7 +67,6 @@ def post_tweet(content):
         return tweet_url
     except tweepy.TweepyException as e:
         error_msg = f"Error posting tweet: {str(e)}"
-        print(error_msg)
         raise Exception(error_msg)
       
 def post_reply(content, reply_to_tweet_id=None, reply_to_user_id=None):
