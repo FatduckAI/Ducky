@@ -173,6 +173,7 @@ def process_tweet_replies():
                 continue
                 
             logging.info(f"Processing replies for tweet {tweet_id} posted at {timestamp}")
+            save_message_to_db(f"Processing replies for tweet {tweet_id} posted at {timestamp}", "System", 0)
             
             try:
                 replies = search_tweets_with_rate_limit(
@@ -209,7 +210,7 @@ def process_tweet_replies():
                         continue
                         
                     logging.info(f"Replying to {reply['author']}: {reply['text']}")
-                    
+                    save_message_to_db(f"Replying to {reply['author']}: {reply['text']}", "Ducky", 0)
                     try:
                         response_content = generate_tweet_claude_responder(reply)
                         
