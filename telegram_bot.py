@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import os
+import time
 from typing import Optional
 
 import aiohttp
@@ -39,6 +40,7 @@ class TelegramBot:
         if not BotConfig.TELEGRAM_BOT_TOKEN:
             raise ValueError("TELEGRAM_BOT_TOKEN environment variable is not set")
         self.application: Optional[Application] = None
+        self._running = False
 
     async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle the /start command."""
@@ -145,8 +147,7 @@ class TelegramBot:
         except Exception as e:
             logger.error(f"Error sending error message: {str(e)}", exc_info=True)
 
-    @staticmethod
-    def check_telegram_api():
+    def check_telegram_api(self):
         """Check if Telegram API is reachable."""
         for attempt in range(BotConfig.MAX_RETRIES):
             try:
@@ -162,54 +163,74 @@ class TelegramBot:
                 logger.error(f"Error checking Telegram API: {str(e)}")
             
             if attempt < BotConfig.MAX_RETRIES - 1:
-                logger.info(f"Retrying in {BotConfig.RETRY_DELAY} seconds...")
-                asyncio.sleep(BotConfig.RETRY_DELAY)
+                time.sleep(BotConfig.RETRY_DELAY)
         
         logger.error(f"Failed to reach Telegram API after {BotConfig.MAX_RETRIES} attempts")
         return False
 
-    async def run(self):
-        """Start the bot with error handling and reconnection logic."""
-        while True:
+    async def initialize(self):
+        """Initialize the application."""
+        if not self.check_telegram_api():
+            raise RuntimeError("Telegram API is unreachable")
+
+        self.application = Application.builder().token(BotConfig.TELEGRAM_BOT_TOKEN).build()
+        
+        # Add handlers
+        self.application.add_handler(CommandHandler("start", self.start))
+        self.application.add_handler(CommandHandler("help", self.help))
+        self.application.add_handler(MessageHandler(
+            filters.TEXT & ~filters.COMMAND,
+            self.handle_message
+        ))
+
+        await self.application.initialize()
+        self._running = True
+
+    async def start_polling(self):
+        """Start polling for updates."""
+        try:
+            await self.application.start_polling(
+                drop_pending_updates=True,
+                allowed_updates=Update.ALL_TYPES
+            )
+        except Exception as e:
+            logger.error(f"Error in polling: {str(e)}", exc_info=True)
+            self._running = False
+            raise
+
+    async def shutdown(self):
+        """Shutdown the application."""
+        if self.application and self._running:
+            self._running = False
             try:
-                if not self.check_telegram_api():
-                    logger.error("Cannot start bot: Telegram API is unreachable")
-                    return
-
-                self.application = Application.builder().token(BotConfig.TELEGRAM_BOT_TOKEN).build()
-                
-                # Add handlers
-                self.application.add_handler(CommandHandler("start", self.start))
-                self.application.add_handler(CommandHandler("help", self.help))
-                self.application.add_handler(MessageHandler(
-                    filters.TEXT & ~filters.COMMAND,
-                    self.handle_message
-                ))
-
-                logger.info("Starting bot in polling mode...")
-                await self.application.run_polling(
-                    drop_pending_updates=True,
-                    allowed_updates=Update.ALL_TYPES
-                )
-
-            except NetworkError as e:
-                logger.error(f"Network error: {str(e)}", exc_info=True)
-                await asyncio.sleep(BotConfig.RETRY_DELAY)
-            except TimedOut as e:
-                logger.error(f"Request timed out: {str(e)}", exc_info=True)
-                await asyncio.sleep(BotConfig.RETRY_DELAY)
+                await self.application.stop()
+                await self.application.shutdown()
             except Exception as e:
-                logger.error(f"Critical error: {str(e)}", exc_info=True)
-                await asyncio.sleep(BotConfig.RETRY_DELAY)
-            finally:
-                if self.application:
-                    await self.application.stop()
-                    self.application = None
+                logger.error(f"Error during shutdown: {str(e)}", exc_info=True)
 
-def main():
+async def main():
     """Main entry point for the bot."""
     bot = TelegramBot()
-    asyncio.run(bot.run())
+    
+    while True:
+        try:
+            await bot.initialize()
+            await bot.start_polling()
+            
+            # Keep the bot running until interrupted
+            while bot._running:
+                await asyncio.sleep(1)
+                
+        except Exception as e:
+            logger.error(f"Bot error: {str(e)}", exc_info=True)
+        finally:
+            await bot.shutdown()
+            await asyncio.sleep(BotConfig.RETRY_DELAY)
 
 if __name__ == "__main__":
-    main()
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        logger.info("Bot stopped by user")
+    except Exception as e:
+        logger.error(f"Fatal error: {str(e)}", exc_info=True)
