@@ -110,3 +110,15 @@ def save_tweet_to_db_posted(content,tweet_url):
     conn.commit()
     cursor.close()
     conn.close()
+    
+    
+def save_tweet_to_db_not_posted(content):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    timestamp = datetime.now(EST).isoformat()
+    posttime = datetime.now(EST).isoformat()
+    tweet_id = f"ducky_reflection_{timestamp.strftime('%Y%m%d_%H%M%S')}"
+    cursor.execute("INSERT INTO ducky_ai (content, posted, timestamp, tweet_id, posttime, speaker) VALUES (%s, FALSE, %s, %s, %s, %s)", (content, timestamp, tweet_id, posttime, 'Ducky'))
+    conn.commit()
+    cursor.close()
+    conn.close()
