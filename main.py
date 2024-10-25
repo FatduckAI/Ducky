@@ -223,7 +223,7 @@ async def get_chat_history():
             SELECT content, speaker, timestamp, conversation_id 
             FROM ducky_ai 
             ORDER BY timestamp DESC 
-            LIMIT 50
+            LIMIT 200
         """)
         
         messages = []
