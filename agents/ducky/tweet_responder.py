@@ -139,6 +139,21 @@ def get_recent_tweets(conn) -> list:
     
     return cursor.fetchall()
 
+def get_recent_tweets(conn) -> list:
+    """Get tweets from the last hour only"""
+    cursor = conn.cursor()
+    one_hour_ago = datetime.now() - timedelta(hours=1)
+    
+    cursor.execute('''
+        SELECT DISTINCT tweet_id, timestamp 
+        FROM ducky_ai 
+        WHERE CAST(timestamp AS timestamp) > %s
+        AND posted IS TRUE
+        ORDER BY timestamp DESC
+    ''', (one_hour_ago,))
+    
+    return cursor.fetchall()
+
 def process_tweet_replies():
     """Main function to process replies"""
     conn = get_db_connection()
@@ -147,6 +162,11 @@ def process_tweet_replies():
         recent_tweets = get_recent_tweets(conn)
         
         for tweet_url, timestamp in recent_tweets:
+            # Skip if tweet URL indicates a rate limit error
+            if "Too Many Requests" in tweet_url:
+                logging.warning(f"Skipping rate-limited tweet URL")
+                continue
+                
             tweet_id = extract_tweet_id(tweet_url)
             if not tweet_id:
                 logging.warning(f"Could not extract tweet ID from URL: {tweet_url}")
@@ -154,11 +174,17 @@ def process_tweet_replies():
                 
             logging.info(f"Processing replies for tweet {tweet_id} posted at {timestamp}")
             
-            replies = search_tweets_with_rate_limit(
-                tweet_id=tweet_id,
-                tweet_author_username="duckunfiltered",
-                max_replies=100
-            )
+            try:
+                replies = search_tweets_with_rate_limit(
+                    tweet_id=tweet_id,
+                    tweet_author_username="duckunfiltered",
+                    max_replies=100
+                )
+            except Exception as e:
+                if "429" in str(e):
+                    logging.warning(f"Rate limit reached during search, will retry next run")
+                    break  # Exit the loop to prevent further rate limit issues
+                raise  # Re-raise other exceptions
             
             if replies:
                 save_tweet_replies(replies, tweet_id)
@@ -183,25 +209,38 @@ def process_tweet_replies():
                         continue
                         
                     logging.info(f"Replying to {reply['author']}: {reply['text']}")
-                    response_content = generate_tweet_claude_responder(reply)
                     
-                    if response_content:
-                        response_url = post_reply_with_rate_limit(
-                            response_content, 
-                            reply_to_tweet_id=reply['id']
-                        )
-                        response_id = extract_tweet_id(response_url)
+                    try:
+                        response_content = generate_tweet_claude_responder(reply)
                         
-                        cursor = conn.cursor()
-                        cursor.execute('''
-                            UPDATE tweet_replies 
-                            SET processed = TRUE,
-                                response_tweet_id = %s,
-                                processed_at = %s
-                            WHERE id = %s
-                        ''', (response_id, datetime.now().isoformat(), str(reply['id'])))
-                        conn.commit()
-                        logging.info(f"Successfully processed reply {reply['id']}")
+                        if response_content:
+                            response_url = post_reply_with_rate_limit(
+                                response_content, 
+                                reply_to_tweet_id=reply['id']
+                            )
+                            
+                            if "Too Many Requests" in response_url:
+                                logging.warning("Hit rate limit while posting reply, will retry next run")
+                                return  # Exit the function entirely
+                                
+                            response_id = extract_tweet_id(response_url)
+                            if response_id:
+                                cursor = conn.cursor()
+                                cursor.execute('''
+                                    UPDATE tweet_replies 
+                                    SET processed = TRUE,
+                                        response_tweet_id = %s,
+                                        processed_at = %s
+                                    WHERE id = %s
+                                ''', (response_id, datetime.now().isoformat(), str(reply['id'])))
+                                conn.commit()
+                                logging.info(f"Successfully processed reply {reply['id']}")
+                            
+                    except Exception as e:
+                        if "429" in str(e):
+                            logging.warning("Rate limit reached during reply, will retry next run")
+                            return  # Exit the function entirely
+                        raise
                         
                 except Exception as e:
                     logging.error(f"Error processing reply {reply['id']}: {e}")
@@ -213,7 +252,10 @@ def process_tweet_replies():
         conn.close()
 
 def extract_tweet_id(tweet_url: str) -> Optional[str]:
-    """Extract tweet ID from URL"""
+    """Extract tweet ID from URL, handling rate limit errors"""
+    if not tweet_url or "Too Many Requests" in tweet_url:
+        return None
+        
     match = re.search(r'/status/(\d+)', tweet_url)
     return match.group(1) if match else None
 
