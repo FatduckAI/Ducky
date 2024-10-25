@@ -20,7 +20,6 @@ if not os.environ.get('RAILWAY_ENVIRONMENT'):
     load_dotenv()
 
 def generate_tweet_claude_responder(tweet):
-    print(f"Generating response for {tweet['author']}: {tweet['text']}")
     prompt = ducky_ai_prompt_for_reply(tweet['text'])
     response = get_anthropic_client().messages.create(
         model="claude-3-5-sonnet-20241022",
