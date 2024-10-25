@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 from agents.ducky.interviewer import simulate_conversation_with_ducky
 from agents.ducky.talk_ducky import generate_ducky_response
 from agents.ducky.tweet_poster import handle_tweet_commands
+from agents.ducky.tweet_responder import generate_tweet_claude_responder
 
 # Set up logging
 logging.basicConfig(
@@ -119,7 +120,7 @@ async def on_message(message):
             try:
                 async with message.channel.typing():
                     logger.info(f'Generating response for: {user_input}')
-                    response = await generate_ducky_response(user_input)
+                    response = await generate_tweet_claude_responder(user_input)
                     logger.info(f'Generated response: {response}')
                     await message.reply(response if response else "*Quacks in error* 🦆")
             except Exception as e:
