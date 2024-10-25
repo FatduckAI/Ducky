@@ -24,3 +24,11 @@ Install ollama: `(curl -fsSL https://ollama.com/install.sh | sh && OLLAMA_HOST=0
 KeepAlive: `ollama run llama3.1:70b --keepalive 1000m`
 
 DONT FORGET OLLAMA_HOST=0.0.0.0 in above command
+
+# Rate Limit
+
+| tweepy                                                                                        | twitter                                                                                    | rate limit                                                                                              | Link                                                                                 |
+| --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| create_tweet                                                                                  | POST /2/tweets                                                                             | User rate limit (User context): 200 requests per 15-minute window per each authenticated user           | https://developer.x.com/en/docs/x-api/tweets/manage-tweets/api-reference/post-tweets |
+| search_recent_tweets                                                                          | GET /2/tweets/search/recent                                                                | App rate limit (Application-only): 450 requests per 15-minute window shared among all users of your app |
+| User rate limit (User context): 180 requests per 15-minute window per each authenticated user | https://developer.x.com/en/docs/x-api/tweets/search/api-reference/get-tweets-search-recent |
