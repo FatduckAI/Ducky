@@ -1,6 +1,7 @@
 import os
 import sys
-from datetime import datetime, time
+from datetime import datetime
+from time import sleep
 
 from dotenv import load_dotenv
 
@@ -83,17 +84,18 @@ def process_tweet_replies():
             print(f"Found {len(replies)} replies")
             # Process each reply
             for reply in replies:
-                save_message_to_db(f"\n-------------- Processing reply {reply['id']}\n\n ---------------------","System", 0)
+                #save_message_to_db(f"\n-------------- Processing reply {reply['id']}\n\n ---------------------","System", 0)
                 try:
                     # Generate response using Claude
                     print(f"Replying to {reply['author']}: {reply['text']}")
+                    save_message_to_db(f"\n-------------- Responding to {reply['id']}\n\n ---------------------","System", 0)
                     response_content = generate_tweet_claude_responder(reply)
                     print(f"Response: {response_content}")
                     # Post the response
                     if response_content:
                         response_url =  post_reply(response_content, reply_to_tweet_id=reply['id'])
                         # add a delay
-                        time.sleep(15)
+                        sleep(15)
                         #response_url = "https://x.com/duckunfiltered/status/1234567890"
                         print(f"Posted response to {reply['author']}:")
                         response_id = extract_tweet_id(response_url)
@@ -109,7 +111,7 @@ def process_tweet_replies():
                         ''', (response_id, datetime.now().isoformat(), str(reply['id'])))
                         conn.commit()
                         save_message_to_db(f"\n-------------- Reply {reply['id']} processed\n\n ---------------------","System", 0)                  
-                        save_message_to_db(f"\nResponsed {response_url}\n\n ---------------------","Ducky", 0)                  
+                        #save_message_to_db(f"\nResponsed {response_url}\n\n ---------------------","Ducky", 0)                  
                 except Exception as e:
                     print(f"Error processing reply {reply['id']}: {e}")
                     continue
