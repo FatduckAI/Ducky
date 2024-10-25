@@ -49,7 +49,7 @@ def tweet_job():
     tweet_url = post_tweet(content)
     save_message_to_db(f"\n-------------- Tweet Posted:\n\n{tweet_url}\n\n ---------------------","System", 0)
     # Update the status after successful posting
-    save_tweet_to_db_posted(content, tweet_url)
+    #save_tweet_to_db_posted(content, tweet_url)
 
 if __name__ == "__main__":
     print("Starting Ducky tweet job")
