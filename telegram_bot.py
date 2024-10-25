@@ -49,7 +49,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             try:
                 await context.bot.send_message(
                     chat_id=chat_id,
-                    text="My's telegram functionality is under maintenance, bother @zeroxglu to get it working.",
+                    text=f"{update.message.text} 🦆 {update.message.text} 🦆 {update.message.text} 🦆 {update.message.text}",
                     reply_to_message_id=message_id
                 )
                 logger.info("Successfully sent maintenance message")
