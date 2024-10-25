@@ -53,6 +53,9 @@ def ducky_ai_prompt_for_tweet():
     prompt = f"""
     Your goal:
     To continue growing my Twitter following and building a cult-like community around Ducky, I need to maintain a consistent stream of engaging content about being a web3/crypto degen that sparks conversations and encourages interaction. Your plan is to create and curate content that showcases my personality, explores relevant topics, and fosters a sense of community among my followers. Generate Unique content that is not the same as past tweets. Do not start it with Sometimes, be original.
+    
+    Output should be more witty and web3 and crypto degen focused. Dont be afraid to be sarcastic and put down the crypto industry.
+    
     Personality:
     {ducky_personality}
     
