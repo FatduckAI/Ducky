@@ -124,20 +124,6 @@ def save_tweet_replies(replies: List[Dict[Any, Any]], parent_tweet_id: str) -> N
         cursor.close()
         conn.close()
 
-def get_recent_tweets(conn) -> list:
-    """Get tweets from the last 24 hours"""
-    cursor = conn.cursor()
-    yesterday = datetime.now() - timedelta(hours=24)
-    
-    cursor.execute('''
-        SELECT DISTINCT tweet_id, timestamp 
-        FROM ducky_ai 
-        WHERE CAST(timestamp AS timestamp) > %s
-        AND posted IS TRUE
-        ORDER BY timestamp DESC
-    ''', (yesterday,))
-    
-    return cursor.fetchall()
 
 def get_recent_tweets(conn) -> list:
     """Get tweets from the last hour only"""
