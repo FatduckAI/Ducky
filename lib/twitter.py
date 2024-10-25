@@ -26,7 +26,8 @@ def initialize_twitter_clients():
             consumer_secret=twitter_consumer_secret,
             access_token=twitter_access_token,
             access_token_secret=twitter_access_token_secret,
-            bearer_token=twitter_bearer_token
+            bearer_token=twitter_bearer_token,
+            wait_on_rate_limit=True
         )
         api = tweepy.API(oauth1_client)
 
