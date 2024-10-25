@@ -9,6 +9,7 @@ from typing import Any, Dict, List, Optional
 from dotenv import load_dotenv
 
 from agents.ducky.main import ducky_ai_prompt_for_reply
+from agents.ducky.utilts import save_message_to_db
 from agents.twitter.rate_limiter import rate_limit
 from db.db_postgres import get_db_connection
 from lib.anthropic import get_anthropic_client
@@ -164,8 +165,23 @@ def process_tweet_replies():
             
             logging.info(f"Found {len(replies)} replies")
             
+            # Get list of already processed reply IDs
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT id 
+                FROM tweet_replies 
+                WHERE parent_tweet_id = %s 
+                AND processed = TRUE
+            ''', (tweet_id,))
+            processed_replies = {str(row[0]) for row in cursor.fetchall()}
+            
             for reply in replies:
                 try:
+                    # Skip if we've already processed this reply
+                    if str(reply['id']) in processed_replies:
+                        logging.info(f"Skipping already processed reply {reply['id']}")
+                        continue
+                        
                     logging.info(f"Replying to {reply['author']}: {reply['text']}")
                     response_content = generate_tweet_claude_responder(reply)
                     
@@ -182,7 +198,7 @@ def process_tweet_replies():
                             SET processed = TRUE,
                                 response_tweet_id = %s,
                                 processed_at = %s
-                            WHERE id=%s
+                            WHERE id = %s
                         ''', (response_id, datetime.now().isoformat(), str(reply['id'])))
                         conn.commit()
                         logging.info(f"Successfully processed reply {reply['id']}")
@@ -203,4 +219,5 @@ def extract_tweet_id(tweet_url: str) -> Optional[str]:
 
 if __name__ == "__main__":
     logging.info("Starting Twitter bot")
+    save_message_to_db(f"\n-------------- Starting Ducky responder Job \n\n ---------------------", "System", 0)
     process_tweet_replies()
