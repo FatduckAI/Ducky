@@ -67,13 +67,13 @@ def main():
             handle_channel_message
         ))
 
-        # Start polling
-        logger.info("Starting bot...")
-        application.run_polling(allowed_updates=Update.ALL_TYPES)
+        try:
+            print("The Telegram Bot will now be running in long polling mode.")
+            application.run_polling()
+        except Exception as e:
+            logging.error(f"An error occurred: {e}")
 
-    except Exception as e:
-        logger.error(f"Critical error: {str(e)}", exc_info=True)
-
+  
 if __name__ == '__main__':
     main()
         
