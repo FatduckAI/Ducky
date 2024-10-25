@@ -52,7 +52,7 @@ def tweet_job():
         save_tweet_to_db_posted(content, tweet_url)
     except Exception as e:
         print(f"Error posting tweet: {e}")
-        save_message_to_db(f"Error posting tweet","System", 0)
+        save_message_to_db(f"Rate Limited, saving tweet for later","System", 0)
         save_tweet_to_db_not_posted(content)
 if __name__ == "__main__":
     print("Starting Ducky tweet job")
