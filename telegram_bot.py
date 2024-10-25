@@ -35,17 +35,48 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         if not update.message or not update.message.text:
             return
 
+        chat_id = update.effective_chat.id
+        message_id = update.message.message_id
+        
+        logger.info(f"Processing message from chat {chat_id}: {update.message.text[:50]}...")
+
+        # Check if the message starts with a forward slash but isn't a command we handle
         if update.message.text.startswith('/'):
-            await update.message.reply_text(
-                "My's telegram functionality is under maintenance, bother @zeroxglu to get it working.",
-                reply_to_message_id=update.message.message_id
-            )
+            logger.info(f"Responding to command-like message in chat {chat_id}")
+            try:
+                await context.bot.send_message(
+                    chat_id=chat_id,
+                    text="My's telegram functionality is under maintenance, bother @zeroxglu to get it working.",
+                    reply_to_message_id=message_id
+                )
+                logger.info("Successfully sent maintenance message")
+            except Exception as e:
+                logger.error(f"Failed to send maintenance message: {str(e)}")
+                raise
         else:
-            logger.info(f"Received message: {update.message.text[:50]}...")
+            # For non-command messages
+            logger.info(f"Sending default reply to chat {chat_id}")
+            try:
+                """ await context.bot.send_message(
+                    chat_id=chat_id,
+                    text="Bot is in listening mode. Use commands starting with / to interact.",
+                    reply_to_message_id=message_id
+                ) """
+                logger.info("Successfully sent default reply")
+            except Exception as e:
+                logger.error(f"Failed to send default reply: {str(e)}")
+                raise
+
             
     except Exception as e:
-        logger.error(f"Error handling message: {str(e)}", exc_info=True)
-        await update.message.reply_text("Sorry, I encountered an error processing your request.")
+        logger.error(f"Error in handle_message: {str(e)}", exc_info=True)
+        try:
+            await context.bot.send_message(
+                chat_id=update.effective_chat.id,
+                text="Sorry, I encountered an error processing your request."
+            )
+        except Exception as send_error:
+            logger.error(f"Failed to send error message: {str(send_error)}")
 
 def main() -> None:
     """Start the bot."""
