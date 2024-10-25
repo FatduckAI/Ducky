@@ -1,105 +1,181 @@
+# twitter_bot.py
+import logging
 import os
+import re
 import sys
-from datetime import datetime
-from time import sleep
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
 
 from dotenv import load_dotenv
 
 from agents.ducky.main import ducky_ai_prompt_for_reply
-from agents.ducky.tweet_poster import update_tweet_status
-from agents.ducky.utilts import save_message_to_db
-from agents.twitter.getReplies import (extract_tweet_id, get_recent_tweets,
-                                       get_tweet_replies)
+from agents.twitter.rate_limiter import rate_limit
 from db.db_postgres import get_db_connection
 from lib.anthropic import get_anthropic_client
-from lib.twitter import get_follower_count, post_reply, post_tweet
+from lib.twitter import initialize_twitter_clients, post_reply, post_tweet
 
-# Check if we're running locally (not in Railway)
+# Load environment variables
 if not os.environ.get('RAILWAY_ENVIRONMENT'):
-    # Load environment variables from .env file for local development
     load_dotenv()
 
+@rate_limit('post_tweet')
+def post_tweet_with_rate_limit(content: str) -> str:
+    """Post a tweet with rate limiting"""
+    return post_tweet(content)
+
+@rate_limit('post_tweet')
+def post_reply_with_rate_limit(content: str, reply_to_tweet_id: str) -> str:
+    """Post a reply with rate limiting"""
+    return post_reply(content, reply_to_tweet_id)
+
+@rate_limit('search')
+def search_tweets_with_rate_limit(tweet_id: str, tweet_author_username: str, max_replies: int = 100):
+    """Search for tweets with rate limiting"""
+    replies = []
+    try:
+        query = f"conversation_id:{tweet_id} to:{tweet_author_username}"
+        twitter_client, _ = initialize_twitter_clients()
+        
+        response = twitter_client.search_recent_tweets(
+            query=query,
+            max_results=max_replies,
+            tweet_fields=['created_at', 'public_metrics', 'author_id'],
+            user_fields=['username', 'public_metrics', 'verified'],
+            expansions=['author_id']
+        )
+        
+        if not response.data:
+            return replies
+
+        users = {user.id: user for user in response.includes['users']} if response.includes.get('users') else {}
+        
+        for tweet in response.data:
+            author = users.get(tweet.author_id)
+            if author:
+                reply_data = {
+                    'id': tweet.id,
+                    'author': author.username,
+                    'text': tweet.text,
+                    'created_at': tweet.created_at.isoformat(),
+                    'likes': tweet.public_metrics['like_count'],
+                    'retweets': tweet.public_metrics['retweet_count'],
+                    'author_followers': author.public_metrics['followers_count'],
+                    'author_verified': author.verified
+                }
+                replies.append(reply_data)
+    
+    except Exception as e:
+        logging.error(f"Error searching tweets: {str(e)}")
+        
+    return replies
+
 def generate_tweet_claude_responder(tweet):
+    """Generate a response using Claude"""
     prompt = ducky_ai_prompt_for_reply(tweet['text'])
     response = get_anthropic_client().messages.create(
         model="claude-3-5-sonnet-20241022",
         max_tokens=1024,
-        system=[
-            {
-                "type": "text",
-                "text": prompt
-            }
-        ],
-        messages=[
-            {
-                "role": "user",
-                "content": 'Respond with a single tweet. Dont use hashtags or quotes or mention waddling. Do not include any other text or commentary.'
-            }
-        ]
+        system=[{"type": "text", "text": prompt}],
+        messages=[{
+            "role": "user",
+            "content": 'Respond with a single tweet. Dont use hashtags or quotes or mention waddling. Do not include any other text or commentary.'
+        }]
     )
     return response.content[0].text.strip()
 
-def tweet_job(tweet):
-    print("Generating tweet")
-    # Get follower count
-    content = generate_tweet_claude_responder(tweet)
-    print(content)
-    print("Posting tweet")
-    #tweet_url = post_tweet(content)
-    #save_message_to_db(f"```diff\n-------------- Tweet Posted:\n\n{tweet_url}\n\n ---------------------```","System", 0)
-    # Update the status after successful posting
-    #save_tweet_to_db_posted(content, tweet_url)
+def save_tweet_replies(replies: List[Dict[Any, Any]], parent_tweet_id: str) -> None:
+    """Save replies to database"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        for reply in replies:
+            cursor.execute("""
+                INSERT INTO tweet_replies (
+                    id, parent_tweet_id, author, text, created_at, 
+                    likes, retweets, author_followers, author_verified
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (id) DO UPDATE SET
+                    likes = EXCLUDED.likes,
+                    retweets = EXCLUDED.retweets,
+                    author_followers = EXCLUDED.author_followers
+                WHERE tweet_replies.processed = FALSE
+            """, (
+                reply['id'],
+                parent_tweet_id,
+                reply['author'],
+                reply['text'],
+                reply['created_at'],
+                reply['likes'],
+                reply['retweets'],
+                reply['author_followers'],
+                reply['author_verified']
+            ))
+        
+        conn.commit()
+        logging.info(f"Successfully saved {len(replies)} replies to database")
+        
+    except Exception as e:
+        conn.rollback()
+        logging.error(f"Error saving replies to database: {e}")
+        raise
+    finally:
+        cursor.close()
+        conn.close()
 
-#if __name__ == "__main__":
-#    print("Starting Ducky tweet job")
-#    # include a command line argument to specify the tweet to reply to
-#    tweet_job(sys.argv[1])
-
+def get_recent_tweets(conn) -> list:
+    """Get tweets from the last 24 hours"""
+    cursor = conn.cursor()
+    yesterday = datetime.now() - timedelta(hours=24)
+    
+    cursor.execute('''
+        SELECT DISTINCT tweet_id, timestamp 
+        FROM ducky_ai 
+        WHERE CAST(timestamp AS timestamp) > %s
+        AND posted IS TRUE
+        ORDER BY timestamp DESC
+    ''', (yesterday,))
+    
+    return cursor.fetchall()
 
 def process_tweet_replies():
-    """Main function to process replies for recent tweets"""
+    """Main function to process replies"""
     conn = get_db_connection()
     
     try:
-        # Get recent tweets
         recent_tweets = get_recent_tweets(conn)
         
         for tweet_url, timestamp in recent_tweets:
-            # Extract tweet ID from URL
             tweet_id = extract_tweet_id(tweet_url)
             if not tweet_id:
-                print(f"Could not extract tweet ID from URL: {tweet_url}")
+                logging.warning(f"Could not extract tweet ID from URL: {tweet_url}")
                 continue
                 
-            print(f"Processing replies for tweet {tweet_id} posted at {timestamp}")
+            logging.info(f"Processing replies for tweet {tweet_id} posted at {timestamp}")
             
-            # Get replies for this tweet
-            replies = get_tweet_replies(
+            replies = search_tweets_with_rate_limit(
                 tweet_id=tweet_id,
                 tweet_author_username="duckunfiltered",
                 max_replies=100
             )
             
-            print(f"Found {len(replies)} replies")
-            # Process each reply
+            if replies:
+                save_tweet_replies(replies, tweet_id)
+            
+            logging.info(f"Found {len(replies)} replies")
+            
             for reply in replies:
-                #save_message_to_db(f"\n-------------- Processing reply {reply['id']}\n\n ---------------------","System", 0)
                 try:
-                    # Generate response using Claude
-                    print(f"Replying to {reply['author']}: {reply['text']}")
-                    save_message_to_db(f"\n-------------- Responding to {reply['id']}\n\n ---------------------","System", 0)
+                    logging.info(f"Replying to {reply['author']}: {reply['text']}")
                     response_content = generate_tweet_claude_responder(reply)
-                    print(f"Response: {response_content}")
-                    # Post the response
+                    
                     if response_content:
-                        response_url =  post_reply(response_content, reply_to_tweet_id=reply['id'])
-                        # add a delay
-                        sleep(10)
-                        #response_url = "https://x.com/duckunfiltered/status/1234567890"
-                        print(f"Posted response to {reply['author']}:")
+                        response_url = post_reply_with_rate_limit(
+                            response_content, 
+                            reply_to_tweet_id=reply['id']
+                        )
                         response_id = extract_tweet_id(response_url)
                         
-                        # Update database to mark this reply as processed
                         cursor = conn.cursor()
                         cursor.execute('''
                             UPDATE tweet_replies 
@@ -109,19 +185,22 @@ def process_tweet_replies():
                             WHERE id=%s
                         ''', (response_id, datetime.now().isoformat(), str(reply['id'])))
                         conn.commit()
-                        save_message_to_db(f"\n-------------- Reply {reply['id']} processed\n\n ---------------------","System", 0)                  
-                        #save_message_to_db(f"\nResponsed {response_url}\n\n ---------------------","Ducky", 0)                  
+                        logging.info(f"Successfully processed reply {reply['id']}")
+                        
                 except Exception as e:
-                    print(f"Error processing reply {reply['id']}: {e}")
+                    logging.error(f"Error processing reply {reply['id']}: {e}")
                     continue
             
     except Exception as e:
-        print(f"Error in process_tweet_replies: {e}")
+        logging.error(f"Error in process_tweet_replies: {e}")
     finally:
         conn.close()
-        
-        
+
+def extract_tweet_id(tweet_url: str) -> Optional[str]:
+    """Extract tweet ID from URL"""
+    match = re.search(r'/status/(\d+)', tweet_url)
+    return match.group(1) if match else None
+
 if __name__ == "__main__":
-    save_message_to_db(f"\n-------------- Starting Ducky responder Job \n\n ---------------------","System", 0)
-    save_message_to_db(f"\n-------------- Goal: Respond to replies \n\n ---------------------","System", 0)
+    logging.info("Starting Twitter bot")
     process_tweet_replies()
