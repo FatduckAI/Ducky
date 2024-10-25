@@ -1,6 +1,6 @@
 import os
 import sys
-from datetime import datetime
+from datetime import datetime, time
 
 from dotenv import load_dotenv
 
@@ -92,6 +92,8 @@ def process_tweet_replies():
                     # Post the response
                     if response_content:
                         response_url =  post_reply(response_content, reply_to_tweet_id=reply['id'])
+                        # add a delay
+                        time.sleep(15)
                         #response_url = "https://x.com/duckunfiltered/status/1234567890"
                         print(f"Posted response to {reply['author']}:")
                         response_id = extract_tweet_id(response_url)
