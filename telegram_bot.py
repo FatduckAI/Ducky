@@ -196,35 +196,40 @@ async def my_info(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle the /myinfo command to display user's registered information."""
     try:
         user = update.effective_user
-        telegram_id = user.id
+        telegram_id = str(user.id)  # Cast to string
+        telegram_username = user.username  # Get current username
         
         conn = get_db_connection()
         cursor = conn.cursor()
         try:
             cursor.execute("""
-                SELECT telegram_username, solana_address, eth_address, twitter_username, twitter_name
-                FROM users
-                WHERE telegram_id = %s
-            """, (telegram_id,))
+                INSERT INTO users (telegram_id, telegram_username)
+                VALUES (%s, %s)
+                ON CONFLICT (telegram_id) DO UPDATE 
+                SET telegram_username = EXCLUDED.telegram_username
+                RETURNING telegram_username, solana_address, eth_address, twitter_username, twitter_name
+            """, (telegram_id, telegram_username))
             
             user_info = cursor.fetchone()
+            conn.commit()
             
-            if user_info:
-                response = "🔍 Your registered information:\n\n"
-                telegram_username, solana_address, eth_address, twitter_username, twitter_name = user_info
+            response = "🔍 Your registered information:\n\n"
+            telegram_username, solana_address, eth_address, twitter_username, twitter_name = user_info
+            
+            response += f"Telegram ID: {telegram_id}\n"
+            if telegram_username:
+                response += f"Telegram: @{telegram_username}\n"
+            if solana_address:
+                response += f"Solana: {solana_address}\n"
+            if eth_address:
+                response += f"Ethereum: {eth_address}\n"
+            if twitter_username:
+                response += f"Twitter: @{twitter_username}\n"
+            if twitter_name:
+                response += f"Twitter Name: {twitter_name}\n"
                 
-                if telegram_username:
-                    response += f"Telegram: @{telegram_username}\n"
-                if solana_address:
-                    response += f"Solana: {solana_address}\n"
-                if eth_address:
-                    response += f"Ethereum: {eth_address}\n"
-                if twitter_username:
-                    response += f"Twitter: @{twitter_username}\n"
-                if twitter_name:
-                    response += f"Twitter Name: {twitter_name}\n"
-            else:
-                response = "❌ You haven't registered yet. Use /register <solana_address> to register."
+            if not any([solana_address, eth_address, twitter_username]):
+                response += "\n📝 You haven't registered any addresses yet.\nUse /register <solana_address> to register your Solana address."
                 
             await update.message.reply_text(response)
             
