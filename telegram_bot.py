@@ -13,7 +13,7 @@ from db.db_postgres import get_db_connection
 from lib.raydium import format_market_cap, get_token_price
 
 # Add these constants near the top of your file with other configurations
-IMAGES_FOLDER = "static/images/quack"  # Replace with your actual images folder path
+IMAGES_FOLDER = "/static/images/quack"  # Replace with your actual images folder path
 ALLOWED_IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif'}
 # Load environment variables
 load_dotenv()
