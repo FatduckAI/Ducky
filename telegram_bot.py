@@ -130,7 +130,7 @@ async def register_wallet(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     try:
         # Get user info from the update
         user = update.effective_user
-        telegram_id = user.id
+        telegram_id = str(user.id)
         telegram_username = user.username
         
         # Check if any arguments were provided
