@@ -222,6 +222,7 @@ def process_tweet_replies():
                                 ''', (response_id, datetime.now().isoformat(), str(reply['id'])))
                                 conn.commit()
                                 logging.info(f"Successfully processed reply {reply['id']}")
+                                save_message_to_db(f"Replied: {reply['id']}", "Ducky", 0)
                             
                     except Exception as e:
                         if "429" in str(e):
