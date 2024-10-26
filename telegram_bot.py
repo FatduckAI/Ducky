@@ -69,6 +69,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                     reply_to_message_id=message_id
                 ) """
                 #logger.info("Successfully sent default reply")
+                pass
             except Exception as e:
                 logger.error(f"Failed to send default reply: {str(e)}")
                 raise
