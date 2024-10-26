@@ -176,7 +176,9 @@ USER_INDICES = '''
     CREATE INDEX IF NOT EXISTS idx_users_eth_address ON users(eth_address);
 '''
 
-
+UPDATE_USER_TABLE = '''
+    ALTER TABLE users ADD CONSTRAINT telegram_id_key UNIQUE (telegram_id);
+'''
 
 
 # add a new column to the ducky_ai table

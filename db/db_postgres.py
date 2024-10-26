@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 from psycopg2.extras import RealDictCursor
 
 from db.pg_schema import (FOLLOWER_INDICES, PG_SCHEMA, UPDATE_DUCKY_AI_POSTED,
-                          USER_INDICES)
+                          UPDATE_USER_TABLE, USER_INDICES)
 
 load_dotenv()
 EST = pytz.timezone('US/Eastern')
@@ -138,7 +138,7 @@ def ensure_db_initialized():
             print("All required tables exist")
             
         #cursor.execute(UPDATE_DUCKY_AI_POSTED)
-        #cursor.execute(USER_INDICES)
+        #cursor.execute(UPDATE_USER_TABLE)
         #conn.commit()
         #conn.close()
     except Exception as e:
