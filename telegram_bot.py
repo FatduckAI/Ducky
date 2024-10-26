@@ -97,7 +97,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                         text="❌ Error fetching price. Please try again later.",
                         reply_to_message_id=message_id
                     )
-            elif update.message.text == "/report":
+            elif update.message.text == "/report" or update.message.text == "/raid":
                 pass
             elif update.message.text == "/ca":
                 await context.bot.send_message(
@@ -131,6 +131,7 @@ async def register_wallet(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         user = update.effective_user
         telegram_id = str(user.id)
         telegram_username = user.username
+        chat_type = update.effective_chat.type
         
         # Check if any arguments were provided
         if not context.args:
@@ -139,6 +140,7 @@ async def register_wallet(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
                 "Usage: /register <solana_address>\n"
                 "Example: /register 7PoGwU6HuWuqpqR1YtRoXKphvhXw8MKaWMWkVgEhgP7n"
             )
+            # Send in group
             await update.message.reply_text(
                 text=usage_text,
                 reply_to_message_id=update.message.message_id
@@ -148,8 +150,7 @@ async def register_wallet(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         solana_address = context.args[0]
         
         if not (32 <= len(solana_address) <= 44):
-            await context.bot.send_message(
-                chat_id=update.effective_chat.id,
+            await update.message.reply_text(
                 text="❌ Invalid Solana address format. Please check your address and try again.",
                 reply_to_message_id=update.message.message_id
             )
@@ -168,26 +169,35 @@ async def register_wallet(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             """, (telegram_id, telegram_username, solana_address))
             conn.commit()
             
-            success_message = (
-                "✅ Registration successful!\n\n"
-                f"Solana Address: {solana_address[:6]}...{solana_address[-4:]}\n\n"
-                "Your wallet has been securely registered."
-            )
-            
-            # Send ephemeral message that only the command user can see
-            await context.bot.send_message(
-                chat_id=update.effective_chat.id,
-                reply_to_message_id=update.message.message_id,
-                text=success_message
+            # Send full details in DM
+            try:
+                dm_message = (
+                    "✅ Registration successful!\n\n"
+                    f"Telegram: @{telegram_username}\n"
+                    f"Solana Address: {solana_address}\n\n"
+                    "Your wallet has been securely registered."
+                )
+                await context.bot.send_message(
+                    chat_id=user.id,
+                    text=dm_message
+                )
+            except Exception as dm_error:
+                logger.error(f"Failed to send DM: {dm_error}")
+
+            # Send limited info response in group
+            group_message = "✅ Registration successful!"
+            await update.message.reply_text(
+                text=group_message,
+                reply_to_message_id=update.message.message_id
             )
             
             logger.info(f"User {telegram_id} registered with Solana address {solana_address}")
             
         except Exception as db_error:
             logger.error(f"Database error while registering user: {str(db_error)}")
-            await context.bot.send_message(
-                chat_id=update.effective_chat.id,
-                text="❌ Sorry, there was an error saving your information. Please try again later."
+            await update.message.reply_text(
+                text="❌ Sorry, there was an error saving your information. Please try again later.",
+                reply_to_message_id=update.message.message_id
             )
             conn.rollback()
         finally:
@@ -227,26 +237,39 @@ async def my_info(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                 user_info = cursor.fetchone()
                 conn.commit()
             
-            response = "🔍 Your registered information:\n\n"
             telegram_username, solana_address, eth_address, twitter_username, twitter_name = user_info
             
-            if telegram_username:
-                response += f"Telegram: @{telegram_username}\n"
-            if solana_address:
-                response += f"Solana: {solana_address[:6]}...\n"
-            if eth_address:
-                response += f"Ethereum: {eth_address[:6]}...\n"
-            if twitter_username:
-                response += f"Twitter: @{twitter_username}\n"
-            if twitter_name:
-                response += f"Twitter Name: {twitter_name}\n"
+            # Send full details in DM
+            try:
+                dm_response = "🔍 Your registered information:\n\n"
+                if telegram_username:
+                    dm_response += f"Telegram: @{telegram_username}\n"
+                if solana_address:
+                    dm_response += f"Solana: {solana_address}\n"
+                if eth_address:
+                    dm_response += f"Ethereum: {eth_address}\n"
+                if twitter_username:
+                    dm_response += f"Twitter: @{twitter_username}\n"
+                if twitter_name:
+                    dm_response += f"Twitter Name: {twitter_name}\n"
                 
-            if not any([solana_address, eth_address, twitter_username]):
-                response += "\n📝 You haven't registered any addresses yet.\nUse /register <solana_address> to register your Solana address."
+                if not any([solana_address, eth_address, twitter_username]):
+                    dm_response += "\n📝 You haven't registered any addresses yet.\nUse /register <solana_address> to register your Solana address."
+                
+                await context.bot.send_message(
+                    chat_id=user.id,
+                    text=dm_response
+                )
+            except Exception as dm_error:
+                logger.error(f"Failed to send DM: {dm_error}")
             
-            # Send as ephemeral message in the group
+            # Send limited info response in group
+            group_response = "✅ Information has been sent to you in a private message!"
+            if not any([solana_address, eth_address, twitter_username]):
+                group_response += "\n📝 You haven't registered any addresses yet."
+                
             await update.message.reply_text(
-                text=response,
+                text=group_response,
                 reply_to_message_id=update.message.message_id
             )
             
