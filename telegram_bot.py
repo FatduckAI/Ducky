@@ -46,7 +46,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         
         logger.info(f"Processing message from chat {chat_id}: {update.message.text[:50]}...")
 
-        if "dm" in update.message.text:
+        if "dm" in update.message.text or "DM" in update.message.text:
             dm_response = (
                 "⚠️ Note: We are receiving a large volume of DMs at the moment. "
                 "We will get back to you if we can. If your matter is urgent, "
