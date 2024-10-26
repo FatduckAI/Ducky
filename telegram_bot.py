@@ -152,9 +152,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                         reply_to_message_id=message_id
                     )
             elif update.message.text == "/report" or update.message.text == "/raid":
-                pass
+                return
             elif update.message.text.startswith("/raid") or update.message.text.startswith("/RAID"):
-                pass
+                return
             elif "promotion" in update.message.text.lower() or "promote" in update.message.text.lower() or "influencers" in update.message.text.lower() or "influencer" in update.message.text.lower():
                 await context.bot.send_message(
                     chat_id=chat_id,
