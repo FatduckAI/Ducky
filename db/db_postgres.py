@@ -381,3 +381,25 @@ def get_coin_info_by_id(id):
     finally:
         cursor.close()
         conn.close()
+        
+def save_user(telegram_id=None, telegram_username=None, solana_address=None, 
+              twitter_username=None, twitter_name=None, eth_address=None):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            INSERT INTO users (telegram_id, telegram_username, solana_address,
+                             twitter_username, twitter_name, eth_address)
+            VALUES (%s, %s, %s, %s, %s, %s)
+            ON CONFLICT (telegram_id) DO UPDATE
+            SET telegram_username = EXCLUDED.telegram_username,
+                solana_address = EXCLUDED.solana_address,
+                twitter_username = EXCLUDED.twitter_username,
+                twitter_name = EXCLUDED.twitter_name,
+                eth_address = EXCLUDED.eth_address
+        """, (telegram_id, telegram_username, solana_address,
+              twitter_username, twitter_name, eth_address))
+        conn.commit()
+    finally:
+        cursor.close()
+        conn.close()

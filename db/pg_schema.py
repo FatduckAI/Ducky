@@ -137,6 +137,20 @@ PG_SCHEMA = {
             processed_at TIMESTAMP,
             created_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
+    ''',
+    'users': '''
+        CREATE TABLE IF NOT EXISTS users (
+            id SERIAL PRIMARY KEY,
+            telegram_id VARCHAR(255),
+            telegram_username VARCHAR(255),
+            solana_address VARCHAR(44),  -- Solana addresses are 32-44 characters long
+            twitter_username VARCHAR(15), -- Twitter usernames are limited to 15 characters
+            twitter_name VARCHAR(50),    -- Twitter display names are limited to 50 characters
+            eth_address VARCHAR(42),     -- Ethereum addresses are exactly 42 characters (including '0x')
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            is_active BOOLEAN DEFAULT TRUE
+        );
     '''
 }
 
@@ -152,6 +166,16 @@ FOLLOWER_INDICES = '''
     CREATE INDEX IF NOT EXISTS idx_sync_runs_timestamp ON follower_sync_runs(run_timestamp);
     CREATE INDEX IF NOT EXISTS idx_sync_runs_status ON follower_sync_runs(run_status);
 '''
+
+
+USER_INDICES = '''
+    CREATE INDEX IF NOT EXISTS idx_users_telegram_id ON users(telegram_id);
+    CREATE INDEX IF NOT EXISTS idx_users_telegram_username ON users(telegram_username);
+    CREATE INDEX IF NOT EXISTS idx_users_twitter_username ON users(twitter_username);
+    CREATE INDEX IF NOT EXISTS idx_users_solana_address ON users(solana_address);
+    CREATE INDEX IF NOT EXISTS idx_users_eth_address ON users(eth_address);
+'''
+
 
 
 

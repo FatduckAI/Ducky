@@ -7,6 +7,7 @@ from telegram import Update
 from telegram.ext import (Application, CommandHandler, ContextTypes,
                           MessageHandler, filters)
 
+from db.db_postgres import get_db_connection
 from lib.raydium import format_market_cap, get_token_price
 
 # Load environment variables
@@ -32,7 +33,16 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Send a message when the command /help is issued."""
     logger.info(f"Help command received from user {update.effective_user.id}")
-    await update.message.reply_text("Available commands:\n/start - Start the bot\n/help - Show this help message")
+    help_text = """
+Available commands:
+/start - Start the bot
+/help - Show this help message
+/register <solana_address> - Register your Solana wallet address
+/myinfo - View your registered information
+/price - Check token price
+/ca - Get contract address
+    """
+    await update.message.reply_text(help_text)
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle incoming messages."""
@@ -114,6 +124,122 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         except Exception as send_error:
             logger.error(f"Failed to send error message: {str(send_error)}")
 
+
+async def register_wallet(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle the /register command to save user's wallet address."""
+    try:
+        # Get user info from the update
+        user = update.effective_user
+        telegram_id = user.id
+        telegram_username = user.username
+        
+        # Check if any arguments were provided
+        if not context.args:
+            await update.message.reply_text(
+                "❌ Please provide your Solana wallet address.\n\n"
+                "Usage: /register <solana_address>\n"
+                "Example: /register 7PoGwU6HuWuqpqR1YtRoXKphvhXw8MKaWMWkVgEhgP7n"
+            )
+            return
+
+        # Get the wallet address from command arguments
+        solana_address = context.args[0]
+        
+        # Basic validation for Solana address (should be 32-44 chars)
+        if not (32 <= len(solana_address) <= 44):
+            await update.message.reply_text(
+                "❌ Invalid Solana address format. Please check your address and try again."
+            )
+            return
+
+        # Connect to database and save user info
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute("""
+                INSERT INTO users (telegram_id, telegram_username, solana_address)
+                VALUES (%s, %s, %s)
+                ON CONFLICT (telegram_id) DO UPDATE
+                SET telegram_username = EXCLUDED.telegram_username,
+                    solana_address = EXCLUDED.solana_address,
+                    updated_at = CURRENT_TIMESTAMP
+            """, (telegram_id, telegram_username, solana_address))
+            conn.commit()
+            
+            await update.message.reply_text(
+                "✅ Registration successful!\n\n"
+                f"Telegram ID: {telegram_id}\n"
+                f"Username: @{telegram_username}\n"
+                f"Solana Address: {solana_address}\n\n"
+                "You can update your address anytime by using the /register command again."
+            )
+            logger.info(f"User {telegram_id} registered with Solana address {solana_address}")
+            
+        except Exception as db_error:
+            logger.error(f"Database error while registering user: {str(db_error)}")
+            await update.message.reply_text(
+                "❌ Sorry, there was an error saving your information. Please try again later."
+            )
+            conn.rollback()
+        finally:
+            cursor.close()
+            conn.close()
+            
+    except Exception as e:
+        logger.error(f"Error in register_wallet: {str(e)}", exc_info=True)
+        await update.message.reply_text(
+            "❌ An error occurred while processing your registration. Please try again later."
+        )
+
+# Function to get user info
+async def my_info(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle the /myinfo command to display user's registered information."""
+    try:
+        user = update.effective_user
+        telegram_id = user.id
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute("""
+                SELECT telegram_username, solana_address, eth_address, twitter_username, twitter_name
+                FROM users
+                WHERE telegram_id = %s
+            """, (telegram_id,))
+            
+            user_info = cursor.fetchone()
+            
+            if user_info:
+                response = "🔍 Your registered information:\n\n"
+                telegram_username, solana_address, eth_address, twitter_username, twitter_name = user_info
+                
+                if telegram_username:
+                    response += f"Telegram: @{telegram_username}\n"
+                if solana_address:
+                    response += f"Solana: {solana_address}\n"
+                if eth_address:
+                    response += f"Ethereum: {eth_address}\n"
+                if twitter_username:
+                    response += f"Twitter: @{twitter_username}\n"
+                if twitter_name:
+                    response += f"Twitter Name: {twitter_name}\n"
+            else:
+                response = "❌ You haven't registered yet. Use /register <solana_address> to register."
+                
+            await update.message.reply_text(response)
+            
+        finally:
+            cursor.close()
+            conn.close()
+            
+    except Exception as e:
+        logger.error(f"Error in my_info: {str(e)}", exc_info=True)
+        await update.message.reply_text(
+            "❌ An error occurred while fetching your information. Please try again later."
+        )
+
+
+
 def main() -> None:
     """Start the bot."""
     try:
@@ -123,6 +249,8 @@ def main() -> None:
         # Add handlers
         application.add_handler(CommandHandler("start", start))
         application.add_handler(CommandHandler("help", help_command))
+        application.add_handler(CommandHandler("register", register_wallet))  # Add this line
+        application.add_handler(CommandHandler("myinfo", my_info))
         application.add_handler(MessageHandler(
             filters.ALL,
             handle_message
