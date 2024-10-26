@@ -25,22 +25,19 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Send a message when the command /start is issued."""
-    logger.info(f"Start command received from user {update.effective_user.id}")
-    await update.message.reply_text("Hello! I'm monitoring messages and will respond to commands.")
-
+# Update help command to clarify registration is DM only
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Send a message when the command /help is issued."""
-    logger.info(f"Help command received from user {update.effective_user.id}")
     help_text = """
 Available commands:
 /start - Start the bot
 /help - Show this help message
-/register <solana_address> - Register your Solana wallet address
+/register <solana_address> - Register your wallet address (DM only)
 /myinfo - View your registered information
 /price - Check token price
 /ca - Get contract address
+
+Note: For security, wallet registration must be done in private chat with the bot.
     """
     await update.message.reply_text(help_text)
 
@@ -128,10 +125,20 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 async def register_wallet(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle the /register command to save user's wallet address."""
     try:
+        # Check if this is a private chat
+        if update.effective_chat.type != 'private':
+            await update.message.reply_text(
+                "🔒 For security reasons, please register your wallet address in private chat.\n"
+                "Click the button below to start a private chat.",
+                reply_markup=InlineKeyboardMarkup([[
+                    InlineKeyboardButton("Register Privately", url=f"https://t.me/duckyai_ai_bot?start=register")
+                ]])
+            )
+            return
+
         user = update.effective_user
         telegram_id = str(user.id)
         telegram_username = user.username
-        chat_type = update.effective_chat.type
         
         # Check if any arguments were provided
         if not context.args:
@@ -140,64 +147,67 @@ async def register_wallet(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
                 "Usage: /register <solana_address>\n"
                 "Example: /register 7PoGwU6HuWuqpqR1YtRoXKphvhXw8MKaWMWkVgEhgP7n"
             )
-            # Send in group
-            await update.message.reply_text(
-                text=usage_text,
-                reply_to_message_id=update.message.message_id
-            )
+            await update.message.reply_text(usage_text)
             return
 
         solana_address = context.args[0]
         
         if not (32 <= len(solana_address) <= 44):
             await update.message.reply_text(
-                text="❌ Invalid Solana address format. Please check your address and try again.",
-                reply_to_message_id=update.message.message_id
+                "❌ Invalid Solana address format. Please check your address and try again."
             )
             return
 
         conn = get_db_connection()
         cursor = conn.cursor()
         try:
+            # First check if user exists
             cursor.execute("""
-                INSERT INTO users (telegram_id, telegram_username, solana_address)
-                VALUES (%s, %s, %s)
-                ON CONFLICT (telegram_id) DO UPDATE
-                SET telegram_username = EXCLUDED.telegram_username,
-                    solana_address = EXCLUDED.solana_address,
+                SELECT telegram_id FROM users WHERE telegram_id = %s
+            """, (telegram_id,))
+            user_exists = cursor.fetchone()
+            
+            if not user_exists:
+                logger.info(f"Creating new user account for {telegram_id}")
+                # Create new user first
+                cursor.execute("""
+                    INSERT INTO users (telegram_id, telegram_username)
+                    VALUES (%s, %s)
+                """, (telegram_id, telegram_username))
+                conn.commit()
+            
+            # Then update with solana address
+            cursor.execute("""
+                UPDATE users 
+                SET solana_address = %s,
+                    telegram_username = %s,
                     updated_at = CURRENT_TIMESTAMP
-            """, (telegram_id, telegram_username, solana_address))
+                WHERE telegram_id = %s
+                RETURNING *
+            """, (solana_address, telegram_username, telegram_id))
+            
+            updated_user = cursor.fetchone()
             conn.commit()
             
-            # Send full details in DM
-            try:
-                dm_message = (
-                    "✅ Registration successful!\n\n"
-                    f"Telegram: @{telegram_username}\n"
-                    f"Solana Address: {solana_address}\n\n"
-                    "Your wallet has been securely registered."
-                )
-                await context.bot.send_message(
-                    chat_id=user.id,
-                    text=dm_message
-                )
-            except Exception as dm_error:
-                logger.error(f"Failed to send DM: {dm_error}")
-
-            # Send limited info response in group
-            group_message = "✅ Registration successful!"
-            await update.message.reply_text(
-                text=group_message,
-                reply_to_message_id=update.message.message_id
+            success_message = (
+                "✅ Registration successful!\n\n"
+                f"Telegram: @{telegram_username}\n"
+                f"Solana Address: {solana_address}\n\n"
+                "Your wallet has been securely registered."
             )
             
-            logger.info(f"User {telegram_id} registered with Solana address {solana_address}")
+            # Add first-time registration message if new user
+            if not user_exists:
+                success_message = "🎉 Account created!\n\n" + success_message
+            
+            await update.message.reply_text(success_message)
+            
+            logger.info(f"User {telegram_id} {'created and ' if not user_exists else ''}registered with Solana address {solana_address}")
             
         except Exception as db_error:
             logger.error(f"Database error while registering user: {str(db_error)}")
             await update.message.reply_text(
-                text="❌ Sorry, there was an error saving your information. Please try again later.",
-                reply_to_message_id=update.message.message_id
+                "❌ Sorry, there was an error saving your information. Please try again later."
             )
             conn.rollback()
         finally:
