@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 TOKEN_ADDRESS = "HFw81sUUPBkNF5tKDanV8VCYTfVY4XbrEEPiwzyypump"
 SOL_ADDRESS = "So11111111111111111111111111111111111111112"  # SOL
 USDC_ADDRESS = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"  # USDC
+TOKEN_SUPPLY = 1_000_000_000  # 1 billion fixed supply
 
 # Cache configuration
 CACHE_DURATION = 60  # seconds
@@ -54,33 +55,6 @@ class PriceCache:
         self._cache[token] = info
 
 price_cache = PriceCache()
-
-async def get_token_supply() -> int:
-    """Get token circulating supply"""
-    try:
-        url = "https://public-api.solscan.io/token/meta"
-        params = {
-            "tokenAddress": TOKEN_ADDRESS
-        }
-        
-        headers = {
-            "Accept": "application/json"
-        }
-        
-        response = requests.get(url, params=params, headers=headers)
-        response.raise_for_status()
-        data = response.json()
-        
-        if "supply" in data:
-            return int(float(data["supply"]))
-        elif "totalSupply" in data:
-            return int(float(data["totalSupply"]))
-        else:
-            raise ValueError("No supply data found")
-            
-    except Exception as e:
-        logger.error(f"Error fetching token supply: {str(e)}")
-        raise
 
 async def get_sol_price() -> float:
     """Get SOL price in USD"""
@@ -139,9 +113,8 @@ async def get_token_price() -> PriceInfo:
         # Calculate SOL price with full precision
         sol_price = token_price_usd / sol_price_usd
         
-        # Get token supply and calculate market cap
-        supply = await get_token_supply()
-        market_cap = token_price_usd * supply
+        # Calculate market cap using fixed supply
+        market_cap = token_price_usd * TOKEN_SUPPLY
         
         # Get best DEX info
         best_dex = token_data.get("project", "Jupiter")
