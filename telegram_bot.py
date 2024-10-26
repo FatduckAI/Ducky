@@ -233,9 +233,9 @@ async def my_info(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             if telegram_username:
                 response += f"Telegram: @{telegram_username}\n"
             if solana_address:
-                response += f"Solana: {solana_address[:6]}...{solana_address[-4:]}\n"
+                response += f"Solana: {solana_address[:6]}...\n"
             if eth_address:
-                response += f"Ethereum: {eth_address[:6]}...{eth_address[-4:]}\n"
+                response += f"Ethereum: {eth_address[:6]}...\n"
             if twitter_username:
                 response += f"Twitter: @{twitter_username}\n"
             if twitter_name:
