@@ -46,15 +46,18 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         # Check if the message starts with a forward slash but isn't a command we handle
         if update.message.text.startswith('/'):
             logger.info(f"Responding to command-like message in chat {chat_id}")
-            try:
-                await context.bot.send_message(
+            if update.message.text == "/report":
+                pass
+            else:
+                try:
+                    await context.bot.send_message(
                     chat_id=chat_id,
                     text=f"{update.message.text} 🦆 {update.message.text} 🦆 {update.message.text} 🦆 {update.message.text}",
                     reply_to_message_id=message_id
-                )
-                logger.info("Successfully sent maintenance message")
-            except Exception as e:
-                logger.error(f"Failed to send maintenance message: {str(e)}")
+                    )
+                    logger.info("Successfully sent maintenance message")
+                except Exception as e:
+                    logger.error(f"Failed to send maintenance message: {str(e)}")
                 raise
         else:
             # For non-command messages
