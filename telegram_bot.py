@@ -51,30 +51,30 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             logger.info(f"Responding to command-like message in chat {chat_id}")
             if update.message.text == "/price":
                 try:
-                    price, is_cached = await get_token_price()
-                    cache_indicator = " (cached)" if is_cached else ""
+                    price_info = await get_token_price()
+                    cache_indicator = " (cached)" if price_info.is_cached else ""
+                    
+                    message = (
+                        f"💰 Token Price Info{cache_indicator}\n\n"
+                        f"USD: ${price_info.usd_price}\n"
+                        f"Best DEX: {price_info.best_dex}\n"
+                        f"Source: Jupiter"
+                    )
+                    
                     await context.bot.send_message(
                         chat_id=chat_id,
-                        text=f"🦆 Token Price: ${price:.4f} USD{cache_indicator}",
+                        text=message,
                         reply_to_message_id=message_id
                     )
-                    logger.info(f"Successfully sent price {price} to chat {chat_id}")
-                except requests.exceptions.RequestException as e:
-                    logger.error(f"Network error while fetching price: {str(e)}")
-                    await context.bot.send_message(
-                        chat_id=chat_id,
-                        text="❌ Error fetching price: Network error",
-                        reply_to_message_id=message_id
-                    )
+                    logger.info(f"Successfully sent price info to chat {chat_id}")
                 except Exception as e:
-                    logger.error(f"Error fetching price: {str(e)}", exc_info=True)
-                    print(e)
+                    logger.error(f"Error fetching price: {str(e)}")
                     await context.bot.send_message(
                         chat_id=chat_id,
-                        text="❌ An unexpected error occurred while fetching the price",
+                        text="❌ Error fetching price. Please try again later.",
                         reply_to_message_id=message_id
                     )
-            elif update.message.text == "/report":
+            elif update.message.text == "/report" or update.message.text == "/ca":
                 pass
             else:
                 await context.bot.send_message(
@@ -106,6 +106,8 @@ def main() -> None:
             filters.ALL,
             handle_message
         ))
+
+
 
         # Start the Bot
         logger.info("Starting bot in polling mode...")

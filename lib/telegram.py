@@ -12,7 +12,7 @@ TARGET_CHANNEL_ID = os.getenv("TARGET_CHANNEL_ID")
 
 
 
-def send_telegram_notification(content: str, tweet_url: str) -> Optional[str]:
+def send_telegram_notification(content: str, tweet_url: str, reply_tweet_url: Optional[str] = None) -> Optional[str]:
     """
     Send a notification to Telegram using direct HTTP request to Bot API.
     This can be called from any process without needing a running bot instance.
@@ -31,7 +31,12 @@ def send_telegram_notification(content: str, tweet_url: str) -> Optional[str]:
         
     telegram_api_url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
     
-    message = f"🦆 New Tweet Posted!\n\n{content}\n\n{tweet_url}"
+    if reply_tweet_url:
+        message = f"🦆 Replying...\n\n'{content}'\n\n{tweet_url}\n\n"
+    else:
+        message = f"🦆 Tweeeting...\n\n'{content}'\n\n{tweet_url}"
+    
+    
     
     try:
         response = requests.post(

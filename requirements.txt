@@ -15,3 +15,6 @@ asyncpg
 discord-py
 pytz
 python-dateutil
+solana
+solders
+base58

@@ -113,9 +113,9 @@ def post_reply(content, reply_to_tweet_id=None, reply_to_user_id=None):
         # Extract the tweet ID and generate the URL
         tweet_id = response.data['id']
         tweet_url = f"https://x.com/duckunfiltered/status/{tweet_id}"
-        
+        reply_tweet_url = f"https://x.com/duckunfiltered/status/{reply_to_tweet_id}"
         print(f"Tweet posted successfully: {content}")
-        send_telegram_notification(content, tweet_url)
+        send_telegram_notification(content, tweet_url, reply_tweet_url)
         if reply_to_tweet_id:
             print(f"In reply to tweet: {reply_to_tweet_id}")
             
