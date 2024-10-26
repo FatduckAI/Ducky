@@ -33,26 +33,6 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     """Send a message when the command /help is issued."""
     logger.info(f"Help command received from user {update.effective_user.id}")
     await update.message.reply_text("Available commands:\n/start - Start the bot\n/help - Show this help message")
-    
-async def price_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handle the /price command"""
-    try:
-        logger.info(f"Price command received from user {update.effective_user.id}")
-        price, is_cached = await get_token_price()
-        cache_indicator = " (cached)" if is_cached else ""
-        
-        await update.message.reply_text(
-            f"🪙 Token Price: ${price:.4f} USD{cache_indicator}"
-        )
-        logger.info(f"Successfully sent price {price} to user {update.effective_user.id}")
-        
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Network error while fetching price: {str(e)}")
-        await update.message.reply_text("❌ Error fetching price: Network error")
-    except Exception as e:
-        logger.error(f"Error in price command: {str(e)}", exc_info=True)
-        await update.message.reply_text("❌ An unexpected error occurred")    
-
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle incoming messages."""
@@ -69,6 +49,30 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         # Check if the message starts with a forward slash but isn't a command we handle
         if update.message.text.startswith('/'):
             logger.info(f"Responding to command-like message in chat {chat_id}")
+            if update.message.text == "/price":
+                try:
+                    price, is_cached = await get_token_price()
+                    cache_indicator = " (cached)" if is_cached else ""
+                    await context.bot.send_message(
+                        chat_id=chat_id,
+                        text=f"🦆 Token Price: ${price:.4f} USD{cache_indicator}",
+                        reply_to_message_id=message_id
+                    )
+                    logger.info(f"Successfully sent price {price} to chat {chat_id}")
+                except requests.exceptions.RequestException as e:
+                    logger.error(f"Network error while fetching price: {str(e)}")
+                    await context.bot.send_message(
+                        chat_id=chat_id,
+                        text="❌ Error fetching price: Network error",
+                        reply_to_message_id=message_id
+                    )
+                except Exception as e:
+                    logger.error(f"Error fetching price: {str(e)}", exc_info=True)
+                    await context.bot.send_message(
+                        chat_id=chat_id,
+                        text="❌ An unexpected error occurred while fetching the price",
+                        reply_to_message_id=message_id
+                    )
             if update.message.text == "/report":
                 pass
             else:
@@ -97,7 +101,6 @@ def main() -> None:
         # Add handlers
         application.add_handler(CommandHandler("start", start))
         application.add_handler(CommandHandler("help", help_command))
-        application.add_handler(CommandHandler("price", price_command))
         application.add_handler(MessageHandler(
             filters.ALL,
             handle_message
