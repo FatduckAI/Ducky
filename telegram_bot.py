@@ -369,6 +369,8 @@ def main() -> None:
         application.add_handler(CommandHandler("help", help_command))
         application.add_handler(CommandHandler("register", register_wallet))  # Add this line
         application.add_handler(CommandHandler("myinfo", my_info))
+        application.add_handler(CommandHandler("quack", send_random_quack))  # Add this line
+
         application.add_handler(MessageHandler(
             filters.ALL,
             handle_message
