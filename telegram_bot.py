@@ -68,6 +68,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                     )
                 except Exception as e:
                     logger.error(f"Error fetching price: {str(e)}", exc_info=True)
+                    print(e)
                     await context.bot.send_message(
                         chat_id=chat_id,
                         text="❌ An unexpected error occurred while fetching the price",
