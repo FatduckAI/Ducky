@@ -1,5 +1,7 @@
 import logging
 import os
+import random
+from pathlib import Path
 
 import requests
 from dotenv import load_dotenv
@@ -10,6 +12,9 @@ from telegram.ext import (Application, CommandHandler, ContextTypes,
 from db.db_postgres import get_db_connection
 from lib.raydium import format_market_cap, get_token_price
 
+# Add these constants near the top of your file with other configurations
+IMAGES_FOLDER = "images/quack"  # Replace with your actual images folder path
+ALLOWED_IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif'}
 # Load environment variables
 load_dotenv()
 
@@ -41,6 +46,41 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             "/myinfo - View your registered information"
         )
 
+async def send_random_quack(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Send a random quack image from the images folder."""
+    try:
+        # Get list of all image files in the folder
+        image_files = []
+        for file in Path(IMAGES_FOLDER).iterdir():
+            if file.is_file() and file.suffix.lower() in ALLOWED_IMAGE_EXTENSIONS:
+                image_files.append(file)
+        
+        if not image_files:
+            await update.message.reply_text("🦆 No quack images found!")
+            logger.warning(f"No images found in {IMAGES_FOLDER}")
+            return
+        
+        # Select a random image
+        random_image = random.choice(image_files)
+        
+        try:
+            # Send the image with a caption
+            with open(random_image, 'rb') as photo:
+                await context.bot.send_photo(
+                    chat_id=update.effective_chat.id,
+                    photo=photo,
+                    caption="🦆 QUACK!",
+                    reply_to_message_id=update.message.message_id
+                )
+            logger.info(f"Sent random quack image: {random_image.name}")
+        except Exception as e:
+            logger.error(f"Error sending image {random_image}: {str(e)}")
+            await update.message.reply_text("🦆 Error sending quack image!")
+            
+    except Exception as e:
+        logger.error(f"Error in send_random_quack: {str(e)}", exc_info=True)
+        await update.message.reply_text("🦆 Something went wrong with the quack!")
+
 
 # Update help command to clarify registration is DM only
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -53,7 +93,7 @@ Available commands:
 /myinfo - View your registered information
 /price - Check token price
 /ca - Get contract address
-
+/quack - Send a random quack image
 Note: For security, wallet registration must be done in private chat with the bot.
     """
     await update.message.reply_text(help_text)
@@ -113,7 +153,15 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                     )
             elif update.message.text == "/report" or update.message.text == "/raid":
                 pass
-            elif update.message.text == "/ca":
+            elif update.message.text.startswith("/raid") or update.message.text.startswith("/RAID"):
+                pass
+            elif "promotion" in update.message.text.lower() or "promote" in update.message.text.lower() or "influencers" in update.message.text.lower() or "influencer" in update.message.text.lower():
+                await context.bot.send_message(
+                    chat_id=chat_id,
+                    text="🦆 We are not accepting any promotion/influencer requests at the moment. Please refrain from pinging the devs again and again.",
+                    reply_to_message_id=message_id
+                )
+            elif update.message.text == "/ca" or update.message.text == "/CA":
                 await context.bot.send_message(
                     chat_id=chat_id,
                     text="🦆 Chain: solana\n📋 CA (click to copy):\n<code>HFw81sUUPBkNF5tKDanV8VCYTfVY4XbrEEPiwzyypump</code>\n\nEx: https://explorer.solana.com/tx/HFw81sUUPBkNF5tKDanV8VCYTfVY4XbrEEPiwzyypump\nBuy: https://raydium.io/swap/?inputCurrency=sol&outputCurrency=HFw81sUUPBkNF5tKDanV8VCYTfVY4XbrEEPiwzyypump",
