@@ -1,10 +1,13 @@
 import logging
 import os
 
+import requests
 from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import (Application, CommandHandler, ContextTypes,
                           MessageHandler, filters)
+
+from lib.raydium import get_token_price
 
 # Load environment variables
 load_dotenv()
@@ -30,6 +33,26 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     """Send a message when the command /help is issued."""
     logger.info(f"Help command received from user {update.effective_user.id}")
     await update.message.reply_text("Available commands:\n/start - Start the bot\n/help - Show this help message")
+    
+async def price_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle the /price command"""
+    try:
+        logger.info(f"Price command received from user {update.effective_user.id}")
+        price, is_cached = await get_token_price()
+        cache_indicator = " (cached)" if is_cached else ""
+        
+        await update.message.reply_text(
+            f"🪙 Token Price: ${price:.4f} USD{cache_indicator}"
+        )
+        logger.info(f"Successfully sent price {price} to user {update.effective_user.id}")
+        
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Network error while fetching price: {str(e)}")
+        await update.message.reply_text("❌ Error fetching price: Network error")
+    except Exception as e:
+        logger.error(f"Error in price command: {str(e)}", exc_info=True)
+        await update.message.reply_text("❌ An unexpected error occurred")    
+
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle incoming messages."""
@@ -74,6 +97,7 @@ def main() -> None:
         # Add handlers
         application.add_handler(CommandHandler("start", start))
         application.add_handler(CommandHandler("help", help_command))
+        application.add_handler(CommandHandler("price", price_command))
         application.add_handler(MessageHandler(
             filters.ALL,
             handle_message
