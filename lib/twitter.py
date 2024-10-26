@@ -5,6 +5,8 @@ from datetime import datetime, timedelta
 import tweepy
 from dotenv import load_dotenv
 
+from lib.telegram import send_telegram_notification
+
 # Load environment variables
 load_dotenv()
 
@@ -64,6 +66,7 @@ def post_tweet(content):
         tweet_id = response.data['id']
         tweet_url = f"https://x.com/duckunfiltered/status/{tweet_id}"
         print(f"Tweet posted successfully: {content}")
+        send_telegram_notification(content, tweet_url)
         return tweet_url
     except tweepy.TweepyException as e:
         error_msg = f"Error posting tweet: {str(e)}"
@@ -112,6 +115,7 @@ def post_reply(content, reply_to_tweet_id=None, reply_to_user_id=None):
         tweet_url = f"https://x.com/duckunfiltered/status/{tweet_id}"
         
         print(f"Tweet posted successfully: {content}")
+        send_telegram_notification(content, tweet_url)
         if reply_to_tweet_id:
             print(f"In reply to tweet: {reply_to_tweet_id}")
             
