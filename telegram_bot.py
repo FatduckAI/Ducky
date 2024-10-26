@@ -128,31 +128,33 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 async def register_wallet(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle the /register command to save user's wallet address."""
     try:
-        # Get user info from the update
         user = update.effective_user
         telegram_id = str(user.id)
         telegram_username = user.username
         
         # Check if any arguments were provided
         if not context.args:
-            await update.message.reply_text(
+            usage_text = (
                 "❌ Please provide your Solana wallet address.\n\n"
                 "Usage: /register <solana_address>\n"
                 "Example: /register 7PoGwU6HuWuqpqR1YtRoXKphvhXw8MKaWMWkVgEhgP7n"
             )
-            return
-
-        # Get the wallet address from command arguments
-        solana_address = context.args[0]
-        
-        # Basic validation for Solana address (should be 32-44 chars)
-        if not (32 <= len(solana_address) <= 44):
             await update.message.reply_text(
-                "❌ Invalid Solana address format. Please check your address and try again."
+                text=usage_text,
+                reply_to_message_id=update.message.message_id
             )
             return
 
-        # Connect to database and save user info
+        solana_address = context.args[0]
+        
+        if not (32 <= len(solana_address) <= 44):
+            await context.bot.send_message(
+                chat_id=update.effective_chat.id,
+                text="❌ Invalid Solana address format. Please check your address and try again.",
+                reply_to_message_id=update.message.message_id
+            )
+            return
+
         conn = get_db_connection()
         cursor = conn.cursor()
         try:
@@ -166,19 +168,26 @@ async def register_wallet(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             """, (telegram_id, telegram_username, solana_address))
             conn.commit()
             
-            await update.message.reply_text(
+            success_message = (
                 "✅ Registration successful!\n\n"
-                f"Telegram ID: {telegram_id}\n"
-                f"Username: @{telegram_username}\n"
-                f"Solana Address: {solana_address}\n\n"
-                "You can update your address anytime by using the /register command again."
+                f"Solana Address: {solana_address[:6]}...{solana_address[-4:]}\n\n"
+                "Your wallet has been securely registered."
             )
+            
+            # Send ephemeral message that only the command user can see
+            await context.bot.send_message(
+                chat_id=update.effective_chat.id,
+                reply_to_message_id=update.message.message_id,
+                text=success_message
+            )
+            
             logger.info(f"User {telegram_id} registered with Solana address {solana_address}")
             
         except Exception as db_error:
             logger.error(f"Database error while registering user: {str(db_error)}")
-            await update.message.reply_text(
-                "❌ Sorry, there was an error saving your information. Please try again later."
+            await context.bot.send_message(
+                chat_id=update.effective_chat.id,
+                text="❌ Sorry, there was an error saving your information. Please try again later."
             )
             conn.rollback()
         finally:
@@ -191,38 +200,42 @@ async def register_wallet(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             "❌ An error occurred while processing your registration. Please try again later."
         )
 
-# Function to get user info
 async def my_info(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle the /myinfo command to display user's registered information."""
     try:
         user = update.effective_user
-        telegram_id = str(user.id)  # Cast to string
-        telegram_username = user.username  # Get current username
-        
+        telegram_id = str(user.id)
+        telegram_username = user.username
+
         conn = get_db_connection()
         cursor = conn.cursor()
         try:
             cursor.execute("""
-                INSERT INTO users (telegram_id, telegram_username)
-                VALUES (%s, %s)
-                ON CONFLICT (telegram_id) DO UPDATE 
-                SET telegram_username = EXCLUDED.telegram_username
-                RETURNING telegram_username, solana_address, eth_address, twitter_username, twitter_name
-            """, (telegram_id, telegram_username))
+                SELECT telegram_username, solana_address, eth_address, twitter_username, twitter_name
+                FROM users
+                WHERE telegram_id = %s
+            """, (telegram_id,))
             
             user_info = cursor.fetchone()
-            conn.commit()
+            
+            if not user_info:
+                cursor.execute("""
+                    INSERT INTO users (telegram_id, telegram_username)
+                    VALUES (%s, %s)
+                    RETURNING telegram_username, solana_address, eth_address, twitter_username, twitter_name
+                """, (telegram_id, telegram_username))
+                user_info = cursor.fetchone()
+                conn.commit()
             
             response = "🔍 Your registered information:\n\n"
             telegram_username, solana_address, eth_address, twitter_username, twitter_name = user_info
             
-            response += f"Telegram ID: {telegram_id}\n"
             if telegram_username:
                 response += f"Telegram: @{telegram_username}\n"
             if solana_address:
-                response += f"Solana: {solana_address}\n"
+                response += f"Solana: {solana_address[:6]}...{solana_address[-4:]}\n"
             if eth_address:
-                response += f"Ethereum: {eth_address}\n"
+                response += f"Ethereum: {eth_address[:6]}...{eth_address[-4:]}\n"
             if twitter_username:
                 response += f"Twitter: @{twitter_username}\n"
             if twitter_name:
@@ -230,8 +243,12 @@ async def my_info(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                 
             if not any([solana_address, eth_address, twitter_username]):
                 response += "\n📝 You haven't registered any addresses yet.\nUse /register <solana_address> to register your Solana address."
-                
-            await update.message.reply_text(response)
+            
+            # Send as ephemeral message in the group
+            await update.message.reply_text(
+                text=response,
+                reply_to_message_id=update.message.message_id
+            )
             
         finally:
             cursor.close()
@@ -242,8 +259,6 @@ async def my_info(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_text(
             "❌ An error occurred while fetching your information. Please try again later."
         )
-
-
 
 def main() -> None:
     """Start the bot."""
