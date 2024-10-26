@@ -76,8 +76,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             elif update.message.text == "/ca":
                 await context.bot.send_message(
                     chat_id=chat_id,
-                    text="🦆 Chain: solana\nCA: HFw81sUUPBkNF5tKDanV8VCYTfVY4XbrEEPiwzyypump\nEx: https://explorer.solana.com/tx/HFw81sUUPBkNF5tKDanV8VCYTfVY4XbrEEPiwzyypump\nBuy: https://raydium.io/swap/?inputCurrency=sol&outputCurrency=HFw81sUUPBkNF5tKDanV8VCYTfVY4XbrEEPiwzyypump\nDexScreener: https://dexscreener.com/solana/HFw81sUUPBkNF5tKDanV8VCYTfVY4XbrEEPiwzyypump",
-                    reply_to_message_id=message_id
+                    text="🦆 Chain: solana\n📋 Contract Address (click to copy):\n<code>HFw81sUUPBkNF5tKDanV8VCYTfVY4XbrEEPiwzyypump</code>\nEx: https://explorer.solana.com/tx/HFw81sUUPBkNF5tKDanV8VCYTfVY4XbrEEPiwzyypump\nBuy: https://raydium.io/swap/?inputCurrency=sol&outputCurrency=HFw81sUUPBkNF5tKDanV8VCYTfVY4XbrEEPiwzyypump",
+                    reply_to_message_id=message_id,
+                    parse_mode='HTML'
                 )
                 logger.info("Successfully sent maintenance message")
             else:
