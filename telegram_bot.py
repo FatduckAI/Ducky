@@ -49,8 +49,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         if "dm" in update.message.text:
             dm_response = (
                 "⚠️ Note: We are receiving a large volume of DMs at the moment. "
-                "The devs will get back to you if they can. If your matter is urgent, "
+                "We will get back to you if we can. If your matter is urgent, "
                 "please state the nature of your request here so we can prioritize accordingly."
+                "if not, please refrain from pinging the devs again and again."
             )
             await context.bot.send_message(
                 chat_id=chat_id,
