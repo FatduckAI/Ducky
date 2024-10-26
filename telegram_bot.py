@@ -73,7 +73,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                         text="❌ An unexpected error occurred while fetching the price",
                         reply_to_message_id=message_id
                     )
-            if update.message.text == "/report":
+            elif update.message.text == "/report":
                 pass
             else:
                 await context.bot.send_message(
