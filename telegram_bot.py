@@ -55,7 +55,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                     cache_indicator = " (cached)" if price_info.is_cached else ""
                     
                     message = (
-                        f"🦆 Token Price Info{cache_indicator}\n\n"
+                        f"🦆 Price{cache_indicator}\n\n"
                         f"💲{price_info.usd_price} USD\n"
                         f"💰 Market Cap: {format_market_cap(price_info.market_cap)}\n"
                     )
