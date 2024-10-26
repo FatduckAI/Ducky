@@ -56,9 +56,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                     
                     message = (
                         f"💰 Token Price Info{cache_indicator}\n\n"
-                        f"USD: ${price_info.usd_price}\n"
-                        f"Best DEX: {price_info.best_dex}\n"
-                        f"Source: Jupiter"
                     )
                     
                     await context.bot.send_message(
