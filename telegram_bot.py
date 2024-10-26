@@ -3,7 +3,7 @@ import os
 
 import requests
 from dotenv import load_dotenv
-from telegram import Update
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import (Application, CommandHandler, ContextTypes,
                           MessageHandler, filters)
 
@@ -24,6 +24,23 @@ logging.basicConfig(
     level=logging.INFO
 )
 logger = logging.getLogger(__name__)
+
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle start command and registration deep linking."""
+    if len(context.args) > 0 and context.args[0] == 'register':
+        await update.message.reply_text(
+            "🔒 Welcome! You can securely register your wallet address here.\n\n"
+            "Use the /register command followed by your Solana address:\n"
+            "Example: /register 7PoGwU6HuWuqpqR1YtRoXKphvhXw8MKaWMWkVgEhgP7n"
+        )
+    else:
+        await update.message.reply_text(
+            "👋 Welcome! I'm here to help you manage your wallet registration.\n\n"
+            "Available commands:\n"
+            "/register <address> - Register your Solana wallet (DM only)\n"
+            "/myinfo - View your registered information"
+        )
+
 
 # Update help command to clarify registration is DM only
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
