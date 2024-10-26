@@ -56,7 +56,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                     
                     message = (
                         f"🦆 Token Price Info{cache_indicator}\n\n"
-                        f"💲{price_info.token_price_usd} USD\n"
+                        f"💲{price_info.usd_price} USD\n"
                         f"💰 Market Cap: {format_market_cap(price_info.market_cap)}\n"
                     )
                     
