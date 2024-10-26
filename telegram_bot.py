@@ -46,6 +46,19 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         
         logger.info(f"Processing message from chat {chat_id}: {update.message.text[:50]}...")
 
+        if "dm" in update.message.text:
+            dm_response = (
+                "⚠️ Note: We are receiving a large volume of DMs at the moment. "
+                "The devs will get back to you if they can. If your matter is urgent, "
+                "please state the nature of your request here so we can prioritize accordingly."
+            )
+            await context.bot.send_message(
+                chat_id=chat_id,
+                text=dm_response,
+                reply_to_message_id=message_id
+            )
+            logger.info(f"Sent DM volume response to chat {chat_id}")
+            return  
         # Check if the message starts with a forward slash but isn't a command we handle
         if update.message.text.startswith('/'):
             logger.info(f"Responding to command-like message in chat {chat_id}")

@@ -21,7 +21,7 @@ USDC_ADDRESS = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"  # USDC
 TOKEN_SUPPLY = 1_000_000_000  # 1 billion fixed supply
 
 # Cache configuration
-CACHE_DURATION = 60  # seconds
+CACHE_DURATION = 15  # seconds
 
 @dataclass
 class PriceInfo:
