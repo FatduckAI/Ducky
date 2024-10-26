@@ -151,9 +151,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                         text="❌ Error fetching price. Please try again later.",
                         reply_to_message_id=message_id
                     )
-            elif update.message.text == "/report" or update.message.text == "/raid":
-                return
-            elif update.message.text.startswith("/raid") or update.message.text.startswith("/RAID"):
+            elif update.message.text.startswith("/raid") or update.message.text.startswith("/RAID") or update.message.text.startswith("/report") or update.message.text == '/report' or update.message.text == '/raid' or update.message.text == '/smute':
                 return
             elif "promotion" in update.message.text.lower() or "promote" in update.message.text.lower() or "influencers" in update.message.text.lower() or "influencer" in update.message.text.lower():
                 await context.bot.send_message(
