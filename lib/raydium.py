@@ -20,12 +20,13 @@ SOL_ADDRESS = "So11111111111111111111111111111111111111112"  # SOL
 USDC_ADDRESS = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"  # USDC
 
 # Cache configuration
-CACHE_DURATION = 15  # seconds
+CACHE_DURATION = 60  # seconds
 
 @dataclass
 class PriceInfo:
     usd_price: float
     sol_price: float
+    market_cap: float
     best_dex: str
     timestamp: float
     is_cached: bool
@@ -43,6 +44,7 @@ class PriceCache:
         return PriceInfo(
             usd_price=cached_info.usd_price,
             sol_price=cached_info.sol_price,
+            market_cap=cached_info.market_cap,
             best_dex=cached_info.best_dex,
             timestamp=cached_info.timestamp,
             is_cached=True
@@ -52,6 +54,33 @@ class PriceCache:
         self._cache[token] = info
 
 price_cache = PriceCache()
+
+async def get_token_supply() -> int:
+    """Get token circulating supply"""
+    try:
+        url = "https://public-api.solscan.io/token/meta"
+        params = {
+            "tokenAddress": TOKEN_ADDRESS
+        }
+        
+        headers = {
+            "Accept": "application/json"
+        }
+        
+        response = requests.get(url, params=params, headers=headers)
+        response.raise_for_status()
+        data = response.json()
+        
+        if "supply" in data:
+            return int(float(data["supply"]))
+        elif "totalSupply" in data:
+            return int(float(data["totalSupply"]))
+        else:
+            raise ValueError("No supply data found")
+            
+    except Exception as e:
+        logger.error(f"Error fetching token supply: {str(e)}")
+        raise
 
 async def get_sol_price() -> float:
     """Get SOL price in USD"""
@@ -110,12 +139,17 @@ async def get_token_price() -> PriceInfo:
         # Calculate SOL price with full precision
         sol_price = token_price_usd / sol_price_usd
         
+        # Get token supply and calculate market cap
+        supply = await get_token_supply()
+        market_cap = token_price_usd * supply
+        
         # Get best DEX info
         best_dex = token_data.get("project", "Jupiter")
         
         price_info = PriceInfo(
             usd_price=token_price_usd,
             sol_price=sol_price,
+            market_cap=market_cap,
             best_dex=best_dex,
             timestamp=time.time(),
             is_cached=False
@@ -123,7 +157,7 @@ async def get_token_price() -> PriceInfo:
         
         # Update cache
         price_cache.set(TOKEN_ADDRESS, price_info)
-        logger.info(f"Updated price cache for {TOKEN_ADDRESS}: ${token_price_usd} USD, ◎{sol_price} SOL")
+        logger.info(f"Updated price cache for {TOKEN_ADDRESS}: ${token_price_usd} USD, ◎{sol_price} SOL, MCap: ${market_cap}")
         
         return price_info
         
@@ -133,6 +167,17 @@ async def get_token_price() -> PriceInfo:
     except Exception as e:
         logger.error(f"Error processing Jupiter response: {str(e)}")
         raise
+
+def format_market_cap(market_cap: float) -> str:
+    """Format market cap to human readable format"""
+    if market_cap >= 1_000_000_000:  # Billions
+        return f"${market_cap / 1_000_000_000:.2f}B"
+    elif market_cap >= 1_000_000:  # Millions
+        return f"${market_cap / 1_000_000:.2f}M"
+    elif market_cap >= 1_000:  # Thousands
+        return f"${market_cap / 1_000:.2f}K"
+    else:
+        return f"${market_cap:.2f}"
 
 # For testing
 if __name__ == "__main__":
@@ -144,6 +189,8 @@ if __name__ == "__main__":
             price_info = await get_token_price()
             print(f"\nToken Price Information:")
             print(f"USD Price: ${price_info.usd_price}")
+            print(f"SOL Price: ◎{price_info.sol_price}")
+            print(f"Market Cap: {format_market_cap(price_info.market_cap)}")
             print(f"Best DEX: {price_info.best_dex}")
             print(f"Cached: {price_info.is_cached}")
             

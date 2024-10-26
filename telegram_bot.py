@@ -7,7 +7,7 @@ from telegram import Update
 from telegram.ext import (Application, CommandHandler, ContextTypes,
                           MessageHandler, filters)
 
-from lib.raydium import get_token_price
+from lib.raydium import format_market_cap, get_token_price
 
 # Load environment variables
 load_dotenv()
@@ -55,7 +55,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                     cache_indicator = " (cached)" if price_info.is_cached else ""
                     
                     message = (
-                        f"💰 Token Price Info{cache_indicator}\n\n"
+                        f"🦆 Token Price Info{cache_indicator}\n\n"
+                        f"💲{price_info.token_price_usd} USD\n"
+                        f"💰 Market Cap: {format_market_cap(price_info.market_cap)}\n"
                     )
                     
                     await context.bot.send_message(
