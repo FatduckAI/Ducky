@@ -71,15 +71,21 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                         text="❌ Error fetching price. Please try again later.",
                         reply_to_message_id=message_id
                     )
-            elif update.message.text == "/report" or update.message.text == "/ca":
+            elif update.message.text == "/report":
                 pass
+            elif update.message.text == "/ca":
+                await context.bot.send_message(
+                    chat_id=chat_id,
+                    text="🦆 Chain: solana\nCA: HFw81sUUPBkNF5tKDanV8VCYTfVY4XbrEEPiwzyypump\nEx: https://explorer.solana.com/tx/HFw81sUUPBkNF5tKDanV8VCYTfVY4XbrEEPiwzyypump\nBuy: https://raydium.io/swap/?inputCurrency=sol&outputCurrency=HFw81sUUPBkNF5tKDanV8VCYTfVY4XbrEEPiwzyypump\nDexScreener: https://dexscreener.com/solana/HFw81sUUPBkNF5tKDanV8VCYTfVY4XbrEEPiwzyypump",
+                    reply_to_message_id=message_id
+                )
+                logger.info("Successfully sent maintenance message")
             else:
                 await context.bot.send_message(
                     chat_id=chat_id,
                     text=f"{update.message.text} 🦆 {update.message.text} 🦆 {update.message.text} 🦆 {update.message.text}",
                     reply_to_message_id=message_id
                 )
-                logger.info("Successfully sent maintenance message")
     except Exception as e:
         logger.error(f"Error in handle_message: {str(e)}", exc_info=True)
         try:
