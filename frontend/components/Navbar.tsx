@@ -35,7 +35,7 @@ const Navbar = () => {
         <div className="flex justify-between h-16">
           {/* Logo and Title */}
           <div className="flex items-center">
-            <h2 className="text-ducky-text text-2xl font-bold">
+            <h2 className="text-purple-500 text-2xl font-bold">
               Ducky&apos;s Stream of Thought
             </h2>
           </div>
