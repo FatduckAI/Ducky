@@ -10,7 +10,7 @@ export function ChatContainer() {
   const containerRef = useRef<HTMLDivElement>(null);
   const isInitialLoad = useRef(true);
 
-  const scrollToBottom = (instant: boolean = false) => {
+  const scrollToBottom = () => {
     if (containerRef.current) {
       containerRef.current.scrollTop = containerRef.current.scrollHeight;
     }
@@ -19,7 +19,7 @@ export function ChatContainer() {
   // Initial load - instant scroll
   useEffect(() => {
     if (messages.length > 0 && isInitialLoad.current) {
-      scrollToBottom(true);
+      scrollToBottom();
       isInitialLoad.current = false;
     }
   }, [messages]);
@@ -69,7 +69,7 @@ export function ChatContainer() {
             />
           ))}
         </div>
-        <ChatInput onSend={() => scrollToBottom(false)} />
+        <ChatInput onSend={scrollToBottom} />
         <div className="text-center text-red-700">
           Chating with Ducky will be available soon, you can access, Mistral,
           GPT-4o, Claude, Llama3.1, Gemini and Mallard (who ducky is based off
@@ -77,7 +77,7 @@ export function ChatContainer() {
           <a href="https://fatduck.ai" className="text-red-700 hover:underline">
             https://fatduck.ai
           </a>
-          &nbsp;Use code "Ducky" for 50% off
+          &nbsp;Use code &quot;Ducky&quot; for 50% off
         </div>
       </div>
     </div>
