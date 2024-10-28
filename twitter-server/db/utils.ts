@@ -81,7 +81,7 @@ export const getDuckyAiTweets = async () => {
       and(
         gt(
           duckyAi.timestamp,
-          formatEstTime(dayjs().subtract(24, "hours").toDate())
+          formatEstTime(dayjs().subtract(3, "hours").toDate())
         ),
         eq(duckyAi.posted, true)
       )

@@ -333,7 +333,7 @@ export class ReplyBot {
     try {
       // Log start to database
       await this.logToDatabase(
-        `Starting Reply Bot (${
+        `Starting Reply  (${
           this.testMode ? "TEST MODE" : "LIVE MODE"
         }) - Max replies: ${CONFIG.MAX_TOTAL_REPLIES_PER_RUN}, Max run time: ${
           CONFIG.MAX_RUN_TIME / 1000 / 60
@@ -386,7 +386,7 @@ export class ReplyBot {
 
       // Log completion to database
       await this.logToDatabase(
-        `Reply Bot run completed (${
+        `Reply run completed (${
           this.testMode ? "TEST MODE" : "LIVE MODE"
         }) - Runtime: ${runtime}s, Processed replies: ${
           this.processedCount
@@ -433,4 +433,34 @@ export class ReplyBot {
 // Export default instance
 export const replyBot = new ReplyBot(process.env.TEST_MODE === "false");
 
-replyBot.start().catch(console.error);
+// Modify the main execution to handle process exit
+async function main() {
+  try {
+    await replyBot.start();
+    // Give a small delay to ensure all logs are written
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    process.exit(0);
+  } catch (error) {
+    console.error("Fatal error:", error);
+    process.exit(1);
+  }
+}
+
+// Add handlers for graceful shutdown
+process.on("SIGTERM", async () => {
+  console.log("Received SIGTERM signal. Stopping bot...");
+  await replyBot.stop();
+  process.exit(0);
+});
+
+process.on("SIGINT", async () => {
+  console.log("Received SIGINT signal. Stopping bot...");
+  await replyBot.stop();
+  process.exit(0);
+});
+
+// Run the bot
+main().catch((error) => {
+  console.error("Uncaught error in main:", error);
+  process.exit(1);
+});
