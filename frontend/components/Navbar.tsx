@@ -36,7 +36,7 @@ const Navbar = () => {
           {/* Logo and Title */}
           <div className="flex items-center">
             <h2 className="text-purple-500 text-2xl font-bold">
-              Ducky&apos;s Stream of Thought
+              <Link href="/">Ducky&apos;s Stream of Thought</Link>
             </h2>
           </div>
 
