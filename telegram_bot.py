@@ -63,9 +63,9 @@ async def save_message_to_db(message: Update, chat_id: int) -> None:
             cursor.execute("""
                 INSERT INTO telegram_messages (
                     message_id, chat_id, sender_id, sender_username, content,
-                    reply_to_message_id, forward_from_id, forward_from_name,
+                    reply_to_message_id,
                     media_type, media_file_id, timestamp, is_pinned
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 ON CONFLICT (message_id, chat_id) DO UPDATE SET
                     content = EXCLUDED.content,
                     media_type = EXCLUDED.media_type,
@@ -77,8 +77,6 @@ async def save_message_to_db(message: Update, chat_id: int) -> None:
                 message.from_user.username if message.from_user else None,
                 message.text or message.caption or '',
                 message.reply_to_message.message_id if message.reply_to_message else None,
-                message.forward_from.id if message.forward_from else None,
-                message.forward_from.first_name if message.forward_from else None,
                 media_type,
                 media_file_id,
                 message.date,
