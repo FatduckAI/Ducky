@@ -11,22 +11,10 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 const Navbar = () => {
-  const [timestamp, setTimestamp] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-
-  useEffect(() => {
-    const updateTimestamp = () => {
-      setTimestamp(new Date().toLocaleString());
-    };
-
-    updateTimestamp();
-    const interval = setInterval(updateTimestamp, 1000);
-
-    return () => clearInterval(interval);
-  }, []);
 
   return (
     <div className="bg-zinc-800 shadow-lg">
@@ -43,7 +31,6 @@ const Navbar = () => {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-4">
             <NavLinks />
-            <div className="text-zinc-400">{timestamp}</div>
           </div>
 
           {/* Mobile menu button */}
@@ -63,9 +50,6 @@ const Navbar = () => {
         <div className="md:hidden bg-zinc-800 shadow-lg">
           <div className="px-2 pt-2 pb-3 space-y-1">
             <MobileNavLinks />
-          </div>
-          <div className="px-4 py-2 text-zinc-400 border-t border-zinc-700">
-            {timestamp}
           </div>
         </div>
       )}

@@ -256,7 +256,11 @@ export default function Dashboard() {
                         className="stroke-muted"
                       />
                       <XAxis type="number" />
-                      <YAxis dataKey="username" type="category" width={100} />
+                      <YAxis
+                        dataKey="anonymous_username"
+                        type="category"
+                        width={100}
+                      />
                       <Tooltip content={<CustomTooltip />} />
                       <Legend />
                       <Bar dataKey="positive" fill="#22c55e" stackId="stack" />
