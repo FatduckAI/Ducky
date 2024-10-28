@@ -449,7 +449,7 @@ async def get_user_sentiment_analysis(min_messages: int = 10):
         conn = get_db_connection()
         cur = conn.cursor()
         
-        query = """
+        user_query = """
             WITH UserStats AS (
                 SELECT 
                     sender_username,
@@ -457,7 +457,8 @@ async def get_user_sentiment_analysis(min_messages: int = 10):
                     AVG(sentiment_negative) as negative,
                     AVG(sentiment_helpful) as helpful,
                     AVG(sentiment_sarcastic) as sarcastic,
-                    COUNT(*) as message_count
+                    COUNT(*) as message_count,
+                    ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) as user_rank
                 FROM telegram_messages
                 WHERE sentiment_analyzed = TRUE
                 AND sender_username IS NOT NULL
@@ -467,7 +468,7 @@ async def get_user_sentiment_analysis(min_messages: int = 10):
                 LIMIT 20
             )
             SELECT 
-                sender_username as username,
+                'User' || LPAD(user_rank::text, 2, '0') as anonymous_username,
                 positive,
                 negative,
                 helpful,
@@ -478,7 +479,7 @@ async def get_user_sentiment_analysis(min_messages: int = 10):
             ORDER BY sentiment_balance DESC;
         """
         
-        cur.execute(query, (min_messages,))
+        cur.execute(user_query, (min_messages,))
         columns = [desc[0] for desc in cur.description]
         results = [dict(zip(columns, row)) for row in cur.fetchall()]
         
