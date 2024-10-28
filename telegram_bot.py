@@ -80,7 +80,7 @@ async def save_message_to_db(message: Update, chat_id: int) -> None:
                     reply_to_message_id,
                     media_type, media_file_id, timestamp, is_pinned,
                     sentiment_positive, sentiment_negative, sentiment_helpful, sentiment_sarcastic
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,%s)
                 ON CONFLICT (message_id, chat_id) DO UPDATE SET
                     content = EXCLUDED.content,
                     media_type = EXCLUDED.media_type,
