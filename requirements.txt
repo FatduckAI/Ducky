@@ -19,3 +19,6 @@ solana
 solders
 base58
 spl
+telethon
+plotly
+pandas

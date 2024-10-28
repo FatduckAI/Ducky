@@ -10,8 +10,9 @@ import pytz
 from dotenv import load_dotenv
 from psycopg2.extras import RealDictCursor
 
-from db.pg_schema import (FOLLOWER_INDICES, PG_SCHEMA, UPDATE_DUCKY_AI_POSTED,
-                          UPDATE_USER_TABLE, USER_INDICES)
+from db.pg_schema import (FOLLOWER_INDICES, PG_SCHEMA, TELEGRAM_INDICES,
+                          UPDATE_DUCKY_AI_POSTED, UPDATE_USER_TABLE,
+                          USER_INDICES)
 
 load_dotenv()
 EST = pytz.timezone('US/Eastern')
@@ -119,7 +120,8 @@ def ensure_db_initialized():
         'rate_limit',
         'ducky_ai',
         'tweet_replies',
-        'users'
+        'users',
+        'telegram_messages'
     ]
     
     try:
@@ -139,6 +141,7 @@ def ensure_db_initialized():
             
         #cursor.execute(UPDATE_DUCKY_AI_POSTED)
         #cursor.execute(UPDATE_USER_TABLE)
+        #cursor.execute(TELEGRAM_INDICES)
         #conn.commit()
         #conn.close()
     except Exception as e:

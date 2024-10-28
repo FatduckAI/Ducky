@@ -15,6 +15,11 @@ from lib.raydium import format_market_cap, get_token_price
 # Add these constants near the top of your file with other configurations
 IMAGES_FOLDER = "/static/images/quack"  # Replace with your actual images folder path
 ALLOWED_IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif'}
+
+IGNORE_SENDER_IDS = [
+    5976408419,609517172,7804337971,6868734170
+]
+
 # Load environment variables
 load_dotenv()
 
@@ -29,6 +34,68 @@ logging.basicConfig(
     level=logging.INFO
 )
 logger = logging.getLogger(__name__)
+
+async def save_message_to_db(message: Update, chat_id: int) -> None:
+    """Save message to database."""
+    if message.from_user.id in IGNORE_SENDER_IDS:
+        return
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Handle media type
+        media_type = None
+        media_file_id = None
+        if message.photo:
+            media_type = 'photo'
+            media_file_id = message.photo[-1].file_id
+        elif message.document:
+            media_type = 'document'
+            media_file_id = message.document.file_id
+        elif message.video:
+            media_type = 'video'
+            media_file_id = message.video.file_id
+        elif message.audio:
+            media_type = 'audio'
+            media_file_id = message.audio.file_id
+
+        try:
+            cursor.execute("""
+                INSERT INTO telegram_messages (
+                    message_id, chat_id, sender_id, sender_username, content,
+                    reply_to_message_id, forward_from_id, forward_from_name,
+                    media_type, media_file_id, timestamp, is_pinned
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (message_id, chat_id) DO UPDATE SET
+                    content = EXCLUDED.content,
+                    media_type = EXCLUDED.media_type,
+                    media_file_id = EXCLUDED.media_file_id
+            """, (
+                message.message_id,
+                chat_id,
+                message.from_user.id if message.from_user else None,
+                message.from_user.username if message.from_user else None,
+                message.text or message.caption or '',
+                message.reply_to_message.message_id if message.reply_to_message else None,
+                message.forward_from.id if message.forward_from else None,
+                message.forward_from.first_name if message.forward_from else None,
+                media_type,
+                media_file_id,
+                message.date,
+                message.pinned_message is not None if hasattr(message, 'pinned_message') else False
+            ))
+            conn.commit()
+            logger.info(f"Saved message {message.message_id} from chat {chat_id}")
+            
+        except Exception as e:
+            logger.error(f"Error saving message {message.message_id}: {str(e)}")
+            conn.rollback()
+        finally:
+            cursor.close()
+            conn.close()
+            
+    except Exception as e:
+        logger.error(f"Database connection error: {str(e)}")
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle start command and registration deep linking."""
@@ -108,7 +175,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         chat_id = update.effective_chat.id
         message_id = update.message.message_id
         
-        logger.info(f"Processing message from chat {chat_id}: {update.message.text[:50]}...")
+        await save_message_to_db(update.message, chat_id)
 
         if "dm" in update.message.text or "DM" in update.message.text or "Dm" in update.message.text:
             dm_response = (
@@ -126,7 +193,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             return  
         # Check if the message starts with a forward slash but isn't a command we handle
         if update.message.text.startswith('/'):
-            logger.info(f"Responding to command-like message in chat {chat_id}")
             if update.message.text == "/price":
                 try:
                     price_info = await get_token_price()
@@ -169,11 +235,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 )
                 logger.info("Successfully sent maintenance message")
             else:
-                await context.bot.send_message(
-                    chat_id=chat_id,
-                    text=f"{update.message.text} 🦆 {update.message.text} 🦆 {update.message.text} 🦆 {update.message.text}",
-                    reply_to_message_id=message_id
-                )
+              return
     except Exception as e:
         logger.error(f"Error in handle_message: {str(e)}", exc_info=True)
         try:

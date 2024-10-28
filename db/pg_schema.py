@@ -151,6 +151,24 @@ PG_SCHEMA = {
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             is_active BOOLEAN DEFAULT TRUE
         );
+    ''',
+    'telegram_messages': '''
+            CREATE TABLE IF NOT EXISTS telegram_messages (
+            message_id BIGINT,
+            chat_id BIGINT,
+            sender_id BIGINT,
+            sender_username VARCHAR(255),
+            content TEXT,
+            reply_to_message_id BIGINT,
+            forward_from_id BIGINT,
+            forward_from_name VARCHAR(255),
+            media_type VARCHAR(50),
+            media_file_id TEXT,
+            timestamp TIMESTAMP,
+            edited_timestamp TIMESTAMP,
+            is_pinned BOOLEAN,
+            PRIMARY KEY (message_id, chat_id)
+        )
     '''
 }
 
@@ -180,9 +198,29 @@ UPDATE_USER_TABLE = '''
     ALTER TABLE users ADD CONSTRAINT telegram_id_key UNIQUE (telegram_id);
 '''
 
+TELEGRAM_INDICES = '''
+    CREATE INDEX IF NOT EXISTS idx_telegram_messages_chat_id ON telegram_messages(chat_id);
+    CREATE INDEX IF NOT EXISTS idx_telegram_messages_sender_id ON telegram_messages(sender_id);
+    CREATE INDEX IF NOT EXISTS idx_telegram_messages_reply_to ON telegram_messages(reply_to_message_id);
+'''
 
 # add a new column to the ducky_ai table
 UPDATE_DUCKY_AI_POSTED = '''
     ALTER TABLE ducky_ai 
 DROP CONSTRAINT IF EXISTS ducky_ai_tweet_id_key;
+'''
+
+ADD_SENTIMENT_ANALYSIS_COLUMNS = '''
+    ALTER TABLE telegram_messages
+    ADD COLUMN IF NOT EXISTS sentiment_positive FLOAT,
+    ADD COLUMN IF NOT EXISTS sentiment_negative FLOAT,
+    ADD COLUMN IF NOT EXISTS sentiment_helpful FLOAT,
+    ADD COLUMN IF NOT EXISTS sentiment_sarcastic FLOAT,
+    ADD COLUMN IF NOT EXISTS sentiment_analyzed BOOLEAN DEFAULT FALSE;
+
+    CREATE INDEX IF NOT EXISTS idx_sentiment_positive ON telegram_messages(sentiment_positive);
+    CREATE INDEX IF NOT EXISTS idx_sentiment_negative ON telegram_messages(sentiment_negative);
+    CREATE INDEX IF NOT EXISTS idx_sentiment_helpful ON telegram_messages(sentiment_helpful);
+    CREATE INDEX IF NOT EXISTS idx_sentiment_sarcastic ON telegram_messages(sentiment_sarcastic);
+    CREATE INDEX IF NOT EXISTS idx_sentiment_analyzed ON telegram_messages(sentiment_analyzed);
 '''

@@ -113,6 +113,32 @@ async def read_archive():
     with open("static/archive.html", "r") as f:
         return f.read()
 
+@app.get("/charts/user_sentiment_analysis.html", response_class=HTMLResponse)
+async def read_user_sentiment_analysis():
+    with open("static/charts/user_sentiment_analysis.html", "r") as f:
+        return f.read()
+
+@app.get("/charts/hourly_pattern.html", response_class=HTMLResponse)
+async def read_hourly_pattern():
+    with open("static/charts/sentiment_hourly_pattern.html", "r") as f:
+        return f.read()
+      
+@app.get("/charts/daily_trends.html", response_class=HTMLResponse)
+async def read_daily_trends():
+    with open("static/charts/sentiment_daily_trends.html", "r") as f:
+        return f.read()
+
+@app.get("/charts/top_users.html", response_class=HTMLResponse)
+async def read_top_users():
+    with open("static/charts/top_users_by_sentiment.html", "r") as f:
+        return f.read()
+
+
+@app.get("/charts/sentiment_balance.html", response_class=HTMLResponse)
+async def read_sentiment_balance():
+    with open("static/charts/sentiment_balance.html", "r") as f:
+        return f.read()
+
 @app.get("/api/conversations")
 async def get_conversations_endpoint(
     page: int = Query(default=1, ge=1),
