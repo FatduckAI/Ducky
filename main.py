@@ -376,6 +376,150 @@ async def chat(request: Request):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/daily_trends")
+async def get_daily_trends(days: int = 30):
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        query = """
+            SELECT 
+                DATE(timestamp) as date,
+                AVG(sentiment_positive) as positive,
+                AVG(sentiment_negative) as negative,
+                AVG(sentiment_helpful) as helpful,
+                AVG(sentiment_sarcastic) as sarcastic,
+                COUNT(*) as message_count
+            FROM telegram_messages
+            WHERE sentiment_analyzed = TRUE
+            AND timestamp >= NOW() - INTERVAL '%s days'
+            GROUP BY DATE(timestamp)
+            ORDER BY date;
+        """
+        
+        cur.execute(query, (days,))
+        columns = [desc[0] for desc in cur.description]
+        results = [dict(zip(columns, row)) for row in cur.fetchall()]
+        
+        # Convert datetime objects to strings
+        for row in results:
+            row['date'] = row['date'].strftime('%Y-%m-%d')
+            
+        cur.close()
+        conn.close()
+        
+        return results
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/hourly_pattern")
+async def get_hourly_pattern():
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        query = """
+            SELECT 
+                EXTRACT(HOUR FROM timestamp) as hour,
+                AVG(sentiment_positive) as positive,
+                AVG(sentiment_negative) as negative,
+                AVG(sentiment_helpful) as helpful,
+                AVG(sentiment_sarcastic) as sarcastic,
+                COUNT(*) as message_count
+            FROM telegram_messages
+            WHERE sentiment_analyzed = TRUE
+            GROUP BY EXTRACT(HOUR FROM timestamp)
+            ORDER BY hour;
+        """
+        
+        cur.execute(query)
+        columns = [desc[0] for desc in cur.description]
+        results = [dict(zip(columns, row)) for row in cur.fetchall()]
+        
+        cur.close()
+        conn.close()
+        
+        return results
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/user_sentiment_analysis")
+async def get_user_sentiment_analysis(min_messages: int = 10):
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        query = """
+            WITH UserStats AS (
+                SELECT 
+                    sender_username,
+                    AVG(sentiment_positive) as positive,
+                    AVG(sentiment_negative) as negative,
+                    AVG(sentiment_helpful) as helpful,
+                    AVG(sentiment_sarcastic) as sarcastic,
+                    COUNT(*) as message_count
+                FROM telegram_messages
+                WHERE sentiment_analyzed = TRUE
+                AND sender_username IS NOT NULL
+                GROUP BY sender_username
+                HAVING COUNT(*) >= %s
+                ORDER BY COUNT(*) DESC
+                LIMIT 20
+            )
+            SELECT 
+                sender_username as username,
+                positive,
+                negative,
+                helpful,
+                sarcastic,
+                message_count,
+                (positive - negative) as sentiment_balance
+            FROM UserStats
+            ORDER BY sentiment_balance DESC;
+        """
+        
+        cur.execute(query, (min_messages,))
+        columns = [desc[0] for desc in cur.description]
+        results = [dict(zip(columns, row)) for row in cur.fetchall()]
+        
+        cur.close()
+        conn.close()
+        
+        return results
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/sentiment_stats")
+async def get_sentiment_stats(days: int = 30):
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        query = """
+            SELECT 
+                COUNT(*) as total_messages,
+                AVG(sentiment_positive) as avg_positive,
+                AVG(sentiment_negative) as avg_negative,
+                AVG(sentiment_helpful) as avg_helpful,
+                AVG(sentiment_sarcastic) as avg_sarcastic,
+                AVG(sentiment_positive - sentiment_negative) as avg_sentiment_balance
+            FROM telegram_messages
+            WHERE sentiment_analyzed = TRUE
+            AND timestamp >= NOW() - INTERVAL '%s days'
+        """
+        
+        cur.execute(query, (days,))
+        columns = [desc[0] for desc in cur.description]
+        results = dict(zip(columns, cur.fetchone()))
+        
+        cur.close()
+        conn.close()
+        
+        return results
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/api/health")
 async def healthcheck():
     return {"status": "ok"}

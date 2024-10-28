@@ -31,7 +31,7 @@ const Navbar = () => {
   return (
     <div className="bg-zinc-800 shadow-lg">
       {/* Main Navigation */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className=" mx-auto sm:px-6">
         <div className="flex justify-between h-16">
           {/* Logo and Title */}
           <div className="flex items-center">
@@ -99,11 +99,11 @@ const NavLinks = () => (
       <span>Telegram</span>
     </Link>
     <Link
-      href="/charts"
+      href="/community"
       className="text-zinc-400 hover:text-white flex items-center gap-1 transition-colors"
     >
       <BarChart2 size={18} />
-      <span>Charts</span>
+      <span>Community</span>
     </Link>
     <Link
       href="/archive"
