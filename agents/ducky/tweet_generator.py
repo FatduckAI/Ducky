@@ -32,7 +32,7 @@ def generate_tweet_claude():
         messages=[
             {
                 "role": "user",
-                "content": 'Respond with a single tweet. Dont use hashtags or quotes or mention waddling. Do not include any other text or commentary. Ensure it is not the same as past tweets from your history. Do not start it with Sometimes, be original.'
+                "content": 'Respond with a single tweet. Dont use hashtags or quotes or mention waddling. Do not include any other text or commentary. Ensure it is not the same as past tweets from your history. Do not start it with Sometimes, be original. Do not juxtapose.'
             }
         ]
     )
