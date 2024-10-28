@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 // app/api/narrative/route.ts
 export async function GET() {
   try {
-    const response = await fetch(`${process.env.API_URL}/api/narrative`, {
+    const response = await fetch(`${process.env.API_URL}/narrative`, {
       headers: {
         "x-api-key": process.env.INTERNAL_API_KEY || "",
       },

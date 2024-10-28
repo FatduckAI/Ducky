@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 // app/api/ducky_ai_tweets/route.ts
 export async function GET() {
   try {
-    const response = await fetch(`${process.env.API_URL}/api/ducky_ai_tweets`, {
+    const response = await fetch(`${process.env.API_URL}/ducky_ai_tweets`, {
       headers: {
         "x-api-key": process.env.INTERNAL_API_KEY || "",
       },

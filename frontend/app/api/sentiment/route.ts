@@ -5,22 +5,22 @@ export async function GET(request: Request) {
     // Fetch all sentiment data in parallel
     const [dailyResponse, hourlyResponse, userResponse, statsResponse] =
       await Promise.all([
-        fetch(`${process.env.API_URL}/api/daily_trends`, {
+        fetch(`${process.env.API_URL}/daily_trends`, {
           headers: {
             "x-api-key": process.env.INTERNAL_API_KEY || "",
           },
         }),
-        fetch(`${process.env.API_URL}/api/hourly_pattern`, {
+        fetch(`${process.env.API_URL}/hourly_pattern`, {
           headers: {
             "x-api-key": process.env.INTERNAL_API_KEY || "",
           },
         }),
-        fetch(`${process.env.API_URL}/api/user_sentiment_analysis`, {
+        fetch(`${process.env.API_URL}/user_sentiment_analysis`, {
           headers: {
             "x-api-key": process.env.INTERNAL_API_KEY || "",
           },
         }),
-        fetch(`${process.env.API_URL}/api/sentiment_stats`, {
+        fetch(`${process.env.API_URL}/sentiment_stats`, {
           headers: {
             "x-api-key": process.env.INTERNAL_API_KEY || "",
           },

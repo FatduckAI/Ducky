@@ -6,7 +6,7 @@ export async function GET(request: Request) {
     const days = searchParams.get("days") || "30";
 
     const response = await fetch(
-      `${process.env.API_URL}/api/sentiment_stats?days=${days}`,
+      `${process.env.API_URL}/sentiment_stats?days=${days}`,
       {
         headers: {
           "x-api-key": process.env.INTERNAL_API_KEY || "",

@@ -12,7 +12,7 @@ export async function GET(request: Request) {
     const { page, limit } = QuerySchema.parse(Object.fromEntries(searchParams));
 
     const response = await fetch(
-      `${process.env.API_URL}/api/conversations?page=${page}&limit=${limit}`,
+      `${process.env.API_URL}/conversations?page=${page}&limit=${limit}`,
       {
         headers: {
           "x-api-key": process.env.INTERNAL_API_KEY || "",

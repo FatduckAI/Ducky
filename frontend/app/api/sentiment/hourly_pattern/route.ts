@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
-    const response = await fetch(`${process.env.API_URL}/api/hourly_pattern`, {
+    const response = await fetch(`${process.env.API_URL}/hourly_pattern`, {
       headers: {
         "x-api-key": process.env.INTERNAL_API_KEY || "",
       },

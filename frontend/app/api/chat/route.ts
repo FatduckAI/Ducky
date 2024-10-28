@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const response = await fetch(`${process.env.API_URL}/api/chat`, {
+    const response = await fetch(`${process.env.API_URL}/chat`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

@@ -6,7 +6,7 @@ export async function GET(request: Request) {
     const minMessages = searchParams.get("min_messages") || "10";
 
     const response = await fetch(
-      `${process.env.API_URL}/api/user_sentiment_analysis?min_messages=${minMessages}`,
+      `${process.env.API_URL}/user_sentiment_analysis?min_messages=${minMessages}`,
       {
         headers: {
           "x-api-key": process.env.INTERNAL_API_KEY || "",
