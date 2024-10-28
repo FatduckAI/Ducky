@@ -10,6 +10,7 @@ from telethon import TelegramClient
 from telethon.sessions import StringSession
 
 from db.db_postgres import get_db_connection
+from telegram_messages.sentiment_analysis import SentimentAnalyzer
 
 # Set up logging
 logging.basicConfig(
@@ -18,8 +19,13 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+IGNORE_SENDER_IDS = [
+    5976408419,609517172,7804337971,6868734170,
+]
+
 # Load environment variables
 load_dotenv()
+sentiment_analyzer = SentimentAnalyzer()
 
 class TelegramMessageFetcher:
     def __init__(self):
@@ -38,6 +44,8 @@ class TelegramMessageFetcher:
     async def save_message(self, message):
         """Save a message to the database"""
         try:
+            if message.sender.id in IGNORE_SENDER_IDS:
+                return
             # Handle media type
             media_type = None
             media_file_id = None
@@ -57,15 +65,20 @@ class TelegramMessageFetcher:
                 sender_id = None
                 sender_username = None
 
+            sentiment_scores = await sentiment_analyzer.analyze_sentiment(message.text or message.caption or '')
             self.cursor.execute("""
                 INSERT INTO telegram_messages (
                     message_id, chat_id, sender_id, sender_username, content,
                     reply_to_message_id, forward_from_id, forward_from_name,
                     media_type, media_file_id, timestamp, edited_timestamp,
-                    is_pinned
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    is_pinned, sentiment_positive, sentiment_negative, sentiment_helpful, sentiment_sarcastic
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 ON CONFLICT (message_id, chat_id) DO UPDATE SET
-                    edited_timestamp = EXCLUDED.edited_timestamp
+                    edited_timestamp = EXCLUDED.edited_timestamp,
+                    sentiment_positive = EXCLUDED.sentiment_positive,
+                    sentiment_negative = EXCLUDED.sentiment_negative,
+                    sentiment_helpful = EXCLUDED.sentiment_helpful,
+                    sentiment_sarcastic = EXCLUDED.sentiment_sarcastic
             """, (
                 message.id,
                 self.channel_id,
@@ -79,7 +92,11 @@ class TelegramMessageFetcher:
                 media_file_id,
                 message.date,
                 message.edit_date,
-                message.pinned
+                message.pinned,
+                sentiment_scores[0] if sentiment_scores else None,
+                sentiment_scores[1] if sentiment_scores else None,
+                sentiment_scores[2] if sentiment_scores else None,
+                sentiment_scores[3] if sentiment_scores else None
             ))
             self.conn.commit()
             logger.info(f"Saved message {message.id}")

@@ -11,6 +11,7 @@ from telegram.ext import (Application, CommandHandler, ContextTypes,
 
 from db.db_postgres import get_db_connection
 from lib.raydium import format_market_cap, get_token_price
+from telegram_messages.sentiment_analysis import SentimentAnalyzer
 
 # Add these constants near the top of your file with other configurations
 IMAGES_FOLDER = "/static/images/quack"  # Replace with your actual images folder path
@@ -34,6 +35,9 @@ logging.basicConfig(
     level=logging.INFO
 )
 logger = logging.getLogger(__name__)
+
+sentiment_analyzer = SentimentAnalyzer()
+
 
 async def save_message_to_db(message: Update, chat_id: int) -> None:
     """Save message to database."""
@@ -59,13 +63,24 @@ async def save_message_to_db(message: Update, chat_id: int) -> None:
             media_type = 'audio'
             media_file_id = message.audio.file_id
 
+       # Get message content
+        content = message.text or message.caption or ''
+        
+        # Analyze sentiment if there's content
+        sentiment_scores = None
+        if content:
+            try:
+                sentiment_scores = await sentiment_analyzer.analyze_sentiment(content)
+            except Exception as e:
+                logger.error(f"Error analyzing sentiment: {str(e)}")
         try:
             cursor.execute("""
                 INSERT INTO telegram_messages (
                     message_id, chat_id, sender_id, sender_username, content,
                     reply_to_message_id,
-                    media_type, media_file_id, timestamp, is_pinned
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    media_type, media_file_id, timestamp, is_pinned,
+                    sentiment_positive, sentiment_negative, sentiment_helpful, sentiment_sarcastic
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 ON CONFLICT (message_id, chat_id) DO UPDATE SET
                     content = EXCLUDED.content,
                     media_type = EXCLUDED.media_type,
@@ -80,7 +95,11 @@ async def save_message_to_db(message: Update, chat_id: int) -> None:
                 media_type,
                 media_file_id,
                 message.date,
-                message.pinned_message is not None if hasattr(message, 'pinned_message') else False
+                message.pinned_message is not None if hasattr(message, 'pinned_message') else False,
+                sentiment_scores[0] if sentiment_scores else None,
+                sentiment_scores[1] if sentiment_scores else None,
+                sentiment_scores[2] if sentiment_scores else None,
+                sentiment_scores[3] if sentiment_scores else None
             ))
             conn.commit()
             logger.info(f"Saved message {message.message_id} from chat {chat_id}")
