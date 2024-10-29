@@ -17,7 +17,7 @@ const CONFIG = {
   MAX_TOTAL_REPLIES_PER_RUN: 30,
 
   // Search Keywords
-  SEARCH_QUERIES: ["$DUCKAI"],
+  SEARCH_QUERIES: ["@duckunfiltered", "$DUCKAI"],
 
   // Delays
   MIN_DELAY_BETWEEN_REPLIES: 5000, // 5 seconds
