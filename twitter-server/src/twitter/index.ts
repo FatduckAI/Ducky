@@ -582,6 +582,71 @@ export class TwitterService {
     };
   }
 
+  public async searchMentionsAndKeywords(
+    query: string,
+    sinceId?: string
+  ): Promise<{
+    tweets: Array<{
+      id: string;
+      author: string;
+      text: string;
+      created_at: string;
+      likes: number;
+      retweets: number;
+      author_followers: number;
+      author_verified: boolean;
+    }>;
+    oldestId?: string;
+    newestId?: string;
+  }> {
+    try {
+      await this.respectRateLimit("search");
+
+      const searchQuery = `${query} -from:duckunfiltered -is:retweet`;
+
+      const results = await this.scraper.fetchSearchTweets(
+        searchQuery,
+        100,
+        SearchMode.Latest
+      );
+
+      const tweets = await Promise.all(
+        results.tweets.map(async (tweet) => ({
+          id: tweet.id || "",
+          author: tweet.username || "",
+          text: tweet.text || "",
+          created_at:
+            tweet.timeParsed?.toISOString() || new Date().toISOString(),
+          likes: tweet.likes || 0,
+          retweets: tweet.retweets || 0,
+          author_followers: tweet.userId
+            ? await this.getAuthorFollowers(tweet.userId)
+            : 0,
+          author_verified: false,
+        }))
+      );
+
+      let oldestId: string | undefined;
+      let newestId: string | undefined;
+
+      if (tweets.length > 0) {
+        oldestId = tweets[tweets.length - 1].id;
+        newestId = tweets[0].id;
+      }
+
+      return {
+        tweets,
+        oldestId,
+        newestId,
+      };
+    } catch (error) {
+      this.logError(`Error searching mentions and keywords`, error);
+      return {
+        tweets: [],
+      };
+    }
+  }
+
   // Method to reset rate limiting counters
   public resetRateLimits(): void {
     this.tweetCount = 0;

@@ -10,7 +10,8 @@
     "testTweet": "bun run src/twitter/testTweet.ts",
     "generateReplies": "bun run src/twitter/replyBot.ts",
     "generateTweet": "bun run src/twitter/oneOffGenerator.ts",
-    "influencerResponse": "bun run src/twitter/influencers.ts"
+    "influencerResponse": "bun run src/twitter/influencers.ts",
+    "mentionResponse": "bun run src/twitter/mentionBot.ts"
   },
   "devDependencies": {
     "@types/bun": "latest",
