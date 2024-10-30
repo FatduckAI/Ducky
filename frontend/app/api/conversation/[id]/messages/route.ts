@@ -20,10 +20,10 @@ const sdk = new MessageHandlerSDK(createSdkConfig(env.RUST_SERVER_URL));
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
-    const conversationId = z.string().uuid().parse(params.id);
+    const conversationId = z.string().uuid().parse(context.params.id);
     const { searchParams } = request.nextUrl;
     const query = QuerySchema.parse({
       limit: searchParams.get("limit"),
