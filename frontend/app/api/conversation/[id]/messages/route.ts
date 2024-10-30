@@ -23,7 +23,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const conversationId = z.string().uuid().parse(params.id);
+    const conversationId = (await params).id;
     const { searchParams } = request.nextUrl;
     const query = QuerySchema.parse({
       limit: searchParams.get("limit"),
