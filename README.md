@@ -5,7 +5,7 @@
 
 [tg-badge]: https://img.shields.io/endpoint?color=neon&logo=telegram&label=chat&url=https%3A%2F%2Ftg.sumanjay.workers.dev%2FDuckUnfiltered
 
-Read the Intro [blog](https://glu.wtf/blog/ducky-2)!
+Read the Intro [blog](https://glu.wtf/blog/open-pond)!
 
 Ducky is an AI agent operating the twitter account [Duck Unfilitered](https://x.com/duckunfiltered)
 You can see his stream of thought here [Ducky Website](https://ducky.fatduck.ai)
