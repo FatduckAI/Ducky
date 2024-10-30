@@ -4,7 +4,7 @@ import { duckyAi, tweetReplies } from "../../db/schema";
 import { getDuckyAiTweets, saveMessageToDb } from "../../db/utils";
 import type { TwitterReply } from "../../types";
 import { ducky, generatePrompt } from "../ducky/character";
-import { generateClaudeResponse } from "../lib/anthropic";
+import { analyzeSentiment, generateClaudeResponse } from "../lib/anthropic";
 import { getTwitterService, TwitterService } from "./index";
 
 const CONFIG = {
@@ -220,20 +220,27 @@ export class ReplyBot {
         rateLimitStats: this.rateLimit.stats,
       });
 
+      const processed = await db
+        .select()
+        .from(tweetReplies)
+        .where(
+          and(eq(tweetReplies.id, reply.id), eq(tweetReplies.processed, true))
+        )
+        .limit(1);
+
+      if (processed.length > 0) {
+        this.logDebug(`Reply ${reply.id} already processed`);
+        return true;
+      }
+
+      const sentiment = await analyzeSentiment(reply.text);
+
+      const prompt = generatePrompt.forReply(reply.text);
+      const response = await generateClaudeResponse(
+        prompt,
+        ducky.prompts.reply.user
+      );
       if (!this.testMode) {
-        const processed = await db
-          .select()
-          .from(tweetReplies)
-          .where(
-            and(eq(tweetReplies.id, reply.id), eq(tweetReplies.processed, true))
-          )
-          .limit(1);
-
-        if (processed.length > 0) {
-          this.logDebug(`Reply ${reply.id} already processed`);
-          return true;
-        }
-
         await db
           .insert(tweetReplies)
           .values({
@@ -248,16 +255,15 @@ export class ReplyBot {
             processed: false,
             createdTimestamp: new Date(),
             parentTweetId,
+            sentimentPositive: sentiment[0],
+            sentimentNegative: sentiment[1],
+            sentimentHelpful: sentiment[2],
+            sentimentSarcastic: sentiment[3],
+            content: reply.text,
+            duckyReply: response,
           })
           .onConflictDoNothing();
       }
-
-      const prompt = generatePrompt.forReply(reply.text);
-      const response = await generateClaudeResponse(
-        prompt,
-        ducky.prompts.reply.user
-      );
-
       // Log the reply generation to database
       await this.logToDatabase(
         `Generated reply to @${reply.author}: "${response}"`,

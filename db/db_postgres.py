@@ -10,8 +10,9 @@ import pytz
 from dotenv import load_dotenv
 from psycopg2.extras import RealDictCursor
 
-from db.pg_schema import (FOLLOWER_INDICES, MENTION_TYPE,
-                          MENTIONED_TWEETS_INDICES, PG_SCHEMA,
+from db.pg_schema import (ADD_TWEET_CONTENT_TO_REPLIES, ADD_TWEET_DUCKY_REPLY,
+                          ADD_TWEET_REPLIES_SENTIMENT, FOLLOWER_INDICES,
+                          MENTION_TYPE, MENTIONED_TWEETS_INDICES, PG_SCHEMA,
                           TELEGRAM_INDICES, UPDATE_DUCKY_AI_POSTED,
                           UPDATE_USER_TABLE, USER_INDICES)
 
@@ -107,10 +108,8 @@ def init_db():
             conn.close()
 
 def ensure_db_initialized():
-    #conn = get_db_connection()
-    #cursor = conn.cursor()
-    #cursor.execute(MENTION_TYPE)
-    #conn.commit()
+    conn = get_db_connection()
+    cursor = conn.cursor()
     """Ensure all required tables exist in the database"""
     print("Ensuring database is initialized")
     tables = [
@@ -143,11 +142,11 @@ def ensure_db_initialized():
         else:
             print("All required tables exist")
             
-        #cursor.execute(UPDATE_DUCKY_AI_POSTED)
+        cursor.execute(ADD_TWEET_DUCKY_REPLY)
         #cursor.execute(UPDATE_USER_TABLE)
         #cursor.execute(MENTIONED_TWEETS_INDICES)
-        #conn.commit()
-        #conn.close()
+        conn.commit()
+        conn.close()
     except Exception as e:
         print(f"Error during database initialization: {e}")
         raise

@@ -35,6 +35,12 @@ export const tweetReplies = pgTable("tweet_replies", {
   responseTweetId: text("response_tweet_id"),
   processedAt: timestamp("processed_at"),
   createdTimestamp: timestamp("created_timestamp").defaultNow(),
+  sentimentPositive: real("sentiment_positive"),
+  sentimentNegative: real("sentiment_negative"),
+  sentimentHelpful: real("sentiment_helpful"),
+  sentimentSarcastic: real("sentiment_sarcastic"),
+  duckyReply: text("ducky_reply"),
+  content: text("content"),
 });
 
 const mentionType = pgEnum("mention_type", ["username", "token", "keyword"]);

@@ -293,3 +293,28 @@ CREATE INDEX idx_mentioned_tweets_metrics ON mentioned_tweets (engagement_score,
 -- Create GIN index for text search
 CREATE INDEX idx_mentioned_tweets_text_search ON mentioned_tweets USING gin(to_tsvector('english', text));
 '''
+
+ADD_TWEET_REPLIES_SENTIMENT = '''
+ALTER TABLE tweet_replies
+    ADD COLUMN IF NOT EXISTS sentiment_positive FLOAT,
+    ADD COLUMN IF NOT EXISTS sentiment_negative FLOAT,
+    ADD COLUMN IF NOT EXISTS sentiment_helpful FLOAT,
+    ADD COLUMN IF NOT EXISTS sentiment_sarcastic FLOAT,
+    ADD COLUMN IF NOT EXISTS sentiment_analyzed BOOLEAN DEFAULT FALSE;
+
+    CREATE INDEX IF NOT EXISTS idx_sentiment_positive ON telegram_messages(sentiment_positive);
+    CREATE INDEX IF NOT EXISTS idx_sentiment_negative ON telegram_messages(sentiment_negative);
+    CREATE INDEX IF NOT EXISTS idx_sentiment_helpful ON telegram_messages(sentiment_helpful);
+    CREATE INDEX IF NOT EXISTS idx_sentiment_sarcastic ON telegram_messages(sentiment_sarcastic);
+    CREATE INDEX IF NOT EXISTS idx_sentiment_analyzed ON telegram_messages(sentiment_analyzed);
+'''
+
+ADD_TWEET_CONTENT_TO_REPLIES = '''
+    ALTER TABLE tweet_replies
+    ADD COLUMN IF NOT EXISTS content TEXT;
+'''
+
+ADD_TWEET_DUCKY_REPLY = '''
+    ALTER TABLE tweet_replies
+    ADD COLUMN IF NOT EXISTS ducky_reply TEXT;
+'''
