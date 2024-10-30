@@ -12,19 +12,11 @@ You can see his stream of thought here [Ducky Website](https://ducky.fatduck.ai)
 > [!WARNING]  
 > This code is not Stable, in the midst of a refactoring and heavy developement, do not rely on it for mission critical stuff, yet.
 
-:::
-
 # Intro
 
 This code runs Ducky - its a bit of inbetween refactoring from python and moving to typescript. currently only the web server and telegram bot are left to move. Then the root of the directory will be cleared up.
 
-#### v0.1: Python & Hosting
-
-Ducky started as a few agents working together in [python](/agents). We took inspiration from Truth Terminal and used its conversational and latent space exploring techniques on a [Runpod](https://runpod.io) instance hosting our own LLama3.1:70b via the excelent [Ollama](https://ollama.com/) team. Check out below some setup instructions, Llama3.1:70b on 4 A40's only came to around 1.56$ an hour! [Readme](https://github.com/FatduckAI/Ducky/README.md).
-
-The aim was to CRON Ducky's tweets until we got some sort of brain up and running to decide, a la [Luna Virtuals](https://x.com/luna_virtuals) excellent thought process.
-
-With this training data, we crafted some prompts for Ducky in a [Character](/twitter-server/src/ducky/character.ts) and set him loose to tweet.
+#### Features
 
 **Current Agents**
 
@@ -46,13 +38,13 @@ Currently we are using Claude to track the sentiment of comments under Ducky twe
 
 Shortly after releasing our Reply functionality, that replied to each message under Ducky's tweets. We hit Twitters rate limit almost immediately. Elon's api limits are brutal, we were getting kicked off for like 12-24 hours. Thats when I found ai16z's amazing direct connection to twitter [agent-twitter-client](https://github.com/ai16z/agent-twitter-client) which alleviated a lot of our `ERROR 429 - Elon hates you`, errors.
 
-#### v0.3: Conversation
+#### v0.3: Conversation (Next)
 
 It's now clear that its time Ducky interacts with people more freely, he seems relatively stable. Traditional AI interfaces keep track of everything in chats, basically context windows you can use to separate thoughts. I build a generic [conversation](https://github.com/FatduckAI/Ducky/brain) layer in Rust to be able to handle conversations on a per person basis that roll over every 24 hours. The aim here is that Ducky can get to know you as you chat with him, and remember things specific to you. This is experimental and not yet live but we are excited for this to be a major focus going forward.
 
 This version also doubles to help us compete in [Shaw](https://x.com/shawmakesmagic)'s ai16z arena on discord. His AI, [degenspartainAI](https://x.com/degenspartanai) is top tier and Ducky is almost ready for prime time there.
 
-### To Run:
+## To Run:
 
 1. We use Railway.app
 2. Create a postgres service
