@@ -16,7 +16,7 @@ You can see his stream of thought here [Ducky Website](https://ducky.fatduck.ai)
 
 This code runs Ducky - its a bit of inbetween refactoring from python and moving to typescript. currently only the web server and telegram bot are left to move. Then the root of the directory will be cleared up.
 
-His prompt is mainly: [Character](/Ducky/twitter-server/src/ducky/character.ts)
+His prompt is mainly: [Character](/twitter-server/src/ducky/character.ts)
 
 ## Features
 
@@ -26,7 +26,7 @@ He now tweets regularly on two context injecting prompts (RAG) the last 50 tweet
 
 **Wallets**
 
-We used [Turnkey](https://www.turnkey.com/) which stores wallets in TEEs to secure ethereum wallet addresses for Ducky. Ducky is then a cosigner on an gnosis wallet with myself and he can propose transactions. [Code](https://github.com/FatduckAI/Ducky/agents). This will be integrated as we move forward, lots of plans around this.
+We used [Turnkey](https://www.turnkey.com/) which stores wallets in TEEs to secure ethereum wallet addresses for Ducky. Ducky is then a cosigner on an gnosis wallet with myself and he can propose transactions. [Code](/wallet). This will be integrated as we move forward, lots of plans around this.
 
 **UI**
 
@@ -42,7 +42,7 @@ Shortly after releasing our Reply functionality, that replied to each message un
 
 ## v0.3: Conversation (Next)
 
-It's now clear that its time Ducky interacts with people more freely, he seems relatively stable. Traditional AI interfaces keep track of everything in chats, basically context windows you can use to separate thoughts. I build a generic [conversation](https://github.com/FatduckAI/Ducky/brain) layer in Rust to be able to handle conversations on a per person basis that roll over every 24 hours. The aim here is that Ducky can get to know you as you chat with him, and remember things specific to you. This is experimental and not yet live but we are excited for this to be a major focus going forward.
+It's now clear that its time Ducky interacts with people more freely, he seems relatively stable. Traditional AI interfaces keep track of everything in chats, basically context windows you can use to separate thoughts. I build a generic [conversation](/brain) layer in Rust to be able to handle conversations on a per person basis that roll over every 24 hours. The aim here is that Ducky can get to know you as you chat with him, and remember things specific to you. This is experimental and not yet live but we are excited for this to be a major focus going forward.
 
 This version also doubles to help us compete in [Shaw](https://x.com/shawmakesmagic)'s ai16z arena on discord. His AI, [degenspartainAI](https://x.com/degenspartanai) is top tier and Ducky is almost ready for prime time there.
 
