@@ -108,8 +108,8 @@ def init_db():
             conn.close()
 
 def ensure_db_initialized():
-    conn = get_db_connection()
-    cursor = conn.cursor()
+    #conn = get_db_connection()
+    #cursor = conn.cursor()
     """Ensure all required tables exist in the database"""
     print("Ensuring database is initialized")
     tables = [
@@ -142,11 +142,11 @@ def ensure_db_initialized():
         else:
             print("All required tables exist")
             
-        cursor.execute(ADD_TWEET_DUCKY_REPLY)
+        #cursor.execute(ADD_TWEET_DUCKY_REPLY)
         #cursor.execute(UPDATE_USER_TABLE)
         #cursor.execute(MENTIONED_TWEETS_INDICES)
-        conn.commit()
-        conn.close()
+        #conn.commit()
+        #conn.close()
     except Exception as e:
         print(f"Error during database initialization: {e}")
         raise
