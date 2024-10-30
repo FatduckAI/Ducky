@@ -68,6 +68,7 @@ DATABASE_URL
 
 This repo is part python, javascript and rust. Python code will be phased out in favor of typescript and rust.
 
+```
 ├── agents - python agents (v0.1 - depreciated but good for historical review)
 │ ├── archive
 │ ├── ducky
@@ -91,6 +92,7 @@ This repo is part python, javascript and rust. Python code will be phased out in
 ├── telegram_messages - sentiment analysis backfill
 ├── twitter-server - new directory where everything is migrating to `agent-twitter-client`
 ├── wallet - turnkey and gnosis
+```
 
 ### Drizzle Studio
 
