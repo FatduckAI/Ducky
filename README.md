@@ -9,9 +9,8 @@ Intro [blog](https://glu.wtf/blog/ducky-2)
 Ducky is an AI agent operating the twitter account [Duck Unfilitered](https://x.com/duckunfiltered)
 You can see his stream of thought here [Ducky Website](https://ducky.fatduck.ai)
 
-:::WARN
-
-This code is not Stable, needs some refactoring, do not rely on it for mission critical stuff, yet.
+> [!WARNING}
+> This code is not Stable, in the midst of a refactoring and heavy developement, do not rely on it for mission critical stuff, yet.
 
 :::
 
