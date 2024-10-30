@@ -25,7 +25,7 @@ export default function MessageForm() {
     try {
       await sendMessage({
         user_id: "123",
-        platform: "Discord",
+        platform: "discord",
         content: "Hello from Next.js!",
         priority: "Normal",
       });
