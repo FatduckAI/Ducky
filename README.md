@@ -10,41 +10,18 @@ Ducky is an AI agent operating the twitter account [Duck Unfilitered](https://x.
 You can see his stream of thought here [Ducky Website](https://ducky.fatduck.ai)
 
 > [!WARNING]  
-> This code is not Stable, in the midst of a refactoring and heavy developement, do not rely on it for mission critical stuff, yet.
+> This code is not Stable, in the midst of a refactoring and heavy developement, do not rely on it for mission critical stuff, yet. I would advise to use it as a reference to get to know Ducky untill it becomes stable to use.
 
-# Intro
+This code runs the Unfiltered Duck, [Ducky](https://x.com/duckunfiltered) on twitter.
 
-This code runs Ducky - its a bit of inbetween refactoring from python and moving to typescript. currently only the web server and telegram bot are left to move. Then the root of the directory will be cleared up.
+**Character Prompt**: [Character](/twitter-server/src/ducky/character.ts)
+**Agents** - Context Injecting prompts
+**Wallets** - AI controlled [Turnkey](https://www.turnkey.com/) TEE wallet, cosigned on a gnosis multisign [Code](/wallet)
+**UI** - [Website](https://ducky.fatduck.ai) (Stream of thought backend logs,
+**Sentiment Analysis** - Tracks sentiment in telegram and twitter replies
+**Conversations** - (in progress), personalized chat with Ducky
 
-His prompt is mainly: [Character](/twitter-server/src/ducky/character.ts)
-
-## Features
-
-**Agents**
-
-Tweets regularly on two context injecting prompts (RAG) the last 50 tweets and replies he has created and (2) the same prompt but with the generated synthetic data from llama3.1:70b conversational runs.
-
-**Wallets**
-
-We used [Turnkey](https://www.turnkey.com/) which stores wallets in TEEs to secure ethereum wallet addresses for Ducky. Ducky is then a cosigner on an gnosis wallet with myself and he can propose transactions. [Code](/wallet). This will be integrated as we move forward, lots of plans around this.
-
-**UI**
-
-The UI originally was just an html page, but i recently gave it a facelift with nextjs. You can see his stream of thought here: [Ducky](https://ducky.fatduck.ai)
-
-**Airdrops**
-
-Currently we are using Claude to track the sentiment of comments under Ducky tweets and in Telegram. This will help Ducky airdrop where he rewards the members of our community who contribute the most, or provide the most value. This idea is in its infant stage but will be airdropping next week, so get those comments in and register in [telegram](https://t.me/DuckUnfiltered) to setup your account.
-
-## v0.2: Typescript (We are here)
-
-Shortly after releasing our Reply functionality, that replied to each message under Ducky's tweets. We hit Twitters rate limit almost immediately. Elon's api limits are brutal, we were getting kicked off for like 12-24 hours. Thats when I found ai16z's amazing direct connection to twitter [agent-twitter-client](https://github.com/ai16z/agent-twitter-client) which alleviated a lot of our `ERROR 429 - Elon hates you`, errors.
-
-## v0.3: Conversation (Next)
-
-We built a generic [conversation](/brain) layer in Rust to be able to handle conversations on a per person basis that roll over every 24 hours. The aim here is that Ducky can get to know you as you chat with him, and remember things specific to you. This is experimental and not yet live but we are excited for this to be a major focus going forward.
-
-## To Run:
+## Getting Started
 
 1. We use [Railway.app](https://railway.app)
 2. Create a postgres service
@@ -66,7 +43,7 @@ TODO:(some others not documented yet)
 
 ### Structure
 
-This repo is part python, javascript and rust. Python code will be phased out in favor of typescript and rust.
+This repo is part python, javascript and rust. Python code will be phased out in favor of typescript and rust over the next few days.
 
 ```
 ├── agents - python agents (v0.1 - depreciated but good for historical review)
@@ -117,3 +94,8 @@ This repo is part python, javascript and rust. Python code will be phased out in
 | -------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | 
 | create_tweet         | POST /2/tweets              | User rate limit (User context): 200 requests per 15-minute window per each authenticated user           | https://developer.x.com/en/docs/x-api/tweets/manage-tweets/api-reference/post-tweets          |
 | search_recent_tweets | GET /2/tweets/search/recent | App rate limit (Application-only): 450 requests per 15-minute window shared among all users of your app | User rate limit (User context): 180 requests per 15-minute window per each authenticated user | https://developer.x.com/en/docs/x-api/tweets/search/api-reference/get-tweets-search-recent |
+
+### Acknowledgement
+
+- [agent-twitter-client](https://github.com/ai16z/agent-twitter-client)saved us from `ERROR 429 - Elon hates you`, errors
+- [Luna Virtuals](https://x.com/luna_virtuals) - awesome brain and prompting
