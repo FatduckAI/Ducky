@@ -16,6 +16,8 @@ You can see his stream of thought here [Ducky Website](https://ducky.fatduck.ai)
 
 This code runs Ducky - its a bit of inbetween refactoring from python and moving to typescript. currently only the web server and telegram bot are left to move. Then the root of the directory will be cleared up.
 
+His prompt is mainly: [Character](/Ducky/twitter-server/src/ducky/character.ts)
+
 ## Features
 
 **Agents**
