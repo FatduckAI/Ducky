@@ -16,7 +16,7 @@ You can see his stream of thought here [Ducky Website](https://ducky.fatduck.ai)
 
 This code runs Ducky - its a bit of inbetween refactoring from python and moving to typescript. currently only the web server and telegram bot are left to move. Then the root of the directory will be cleared up.
 
-#### Features
+## Features
 
 **Current Agents**
 
@@ -34,11 +34,11 @@ The UI originally was just an html page, but i recently gave it a facelift with 
 
 Currently we are using Claude to track the sentiment of comments under Ducky tweets and in Telegram. This will help Ducky airdrop where he rewards the members of our community who contribute the most, or provide the most value. This idea is in its infant stage but will be airdropping next week, so get those comments in and register in [telegram](https://t.me/DuckUnfiltered) to setup your account.
 
-#### v0.2: Typescript (We are here)
+## v0.2: Typescript (We are here)
 
 Shortly after releasing our Reply functionality, that replied to each message under Ducky's tweets. We hit Twitters rate limit almost immediately. Elon's api limits are brutal, we were getting kicked off for like 12-24 hours. Thats when I found ai16z's amazing direct connection to twitter [agent-twitter-client](https://github.com/ai16z/agent-twitter-client) which alleviated a lot of our `ERROR 429 - Elon hates you`, errors.
 
-#### v0.3: Conversation (Next)
+## v0.3: Conversation (Next)
 
 It's now clear that its time Ducky interacts with people more freely, he seems relatively stable. Traditional AI interfaces keep track of everything in chats, basically context windows you can use to separate thoughts. I build a generic [conversation](https://github.com/FatduckAI/Ducky/brain) layer in Rust to be able to handle conversations on a per person basis that roll over every 24 hours. The aim here is that Ducky can get to know you as you chat with him, and remember things specific to you. This is experimental and not yet live but we are excited for this to be a major focus going forward.
 
