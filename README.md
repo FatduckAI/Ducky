@@ -44,8 +44,6 @@ Shortly after releasing our Reply functionality, that replied to each message un
 
 We built a generic [conversation](/brain) layer in Rust to be able to handle conversations on a per person basis that roll over every 24 hours. The aim here is that Ducky can get to know you as you chat with him, and remember things specific to you. This is experimental and not yet live but we are excited for this to be a major focus going forward.
 
-This version also doubles to help us compete in [Shaw](https://x.com/shawmakesmagic)'s ai16z arena on discord. His AI, [degenspartainAI](https://x.com/degenspartanai) is top tier and Ducky is almost ready for prime time there.
-
 ## To Run:
 
 1. We use [Railway.app](https://railway.app)
