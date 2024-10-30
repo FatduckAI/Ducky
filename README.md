@@ -22,7 +22,7 @@ His prompt is mainly: [Character](/twitter-server/src/ducky/character.ts)
 
 **Agents**
 
-He now tweets regularly on two context injecting prompts (RAG) the last 50 tweets and replies he has created and (2) the same prompt but with the generated synthetic data from llama3.1:70b conversational runs.
+Tweets regularly on two context injecting prompts (RAG) the last 50 tweets and replies he has created and (2) the same prompt but with the generated synthetic data from llama3.1:70b conversational runs.
 
 **Wallets**
 
@@ -42,7 +42,7 @@ Shortly after releasing our Reply functionality, that replied to each message un
 
 ## v0.3: Conversation (Next)
 
-It's now clear that its time Ducky interacts with people more freely, he seems relatively stable. Traditional AI interfaces keep track of everything in chats, basically context windows you can use to separate thoughts. I build a generic [conversation](/brain) layer in Rust to be able to handle conversations on a per person basis that roll over every 24 hours. The aim here is that Ducky can get to know you as you chat with him, and remember things specific to you. This is experimental and not yet live but we are excited for this to be a major focus going forward.
+We built a generic [conversation](/brain) layer in Rust to be able to handle conversations on a per person basis that roll over every 24 hours. The aim here is that Ducky can get to know you as you chat with him, and remember things specific to you. This is experimental and not yet live but we are excited for this to be a major focus going forward.
 
 This version also doubles to help us compete in [Shaw](https://x.com/shawmakesmagic)'s ai16z arena on discord. His AI, [degenspartainAI](https://x.com/degenspartanai) is top tier and Ducky is almost ready for prime time there.
 
