@@ -1,11 +1,11 @@
 import { db } from "../../db";
 import { duckyAi } from "../../db/schema";
-import { getDuckyAiForTweetGenerationTweets } from "../../db/utils";
+import { getDuckyAiForTweetGenerationCleo } from "../../db/utils";
 import { ducky, generatePrompt } from "../ducky/character";
 import { generateClaudeResponse } from "../lib/anthropic";
 import { getTwitterService } from "./index";
 
-class SingleTweetBot {
+class OneOffCleoConvos {
   private readonly testMode: boolean;
 
   constructor(testModeEnv?: string) {
@@ -59,7 +59,7 @@ class SingleTweetBot {
         "System"
       );
 
-      const tweets = await getDuckyAiForTweetGenerationTweets();
+      const tweets = await getDuckyAiForTweetGenerationCleo();
       const prompt = generatePrompt.forTweet(
         tweets.map((tweet) => tweet.content)
       );
@@ -103,11 +103,11 @@ class SingleTweetBot {
   }
 }
 
-export const singleTweetBot = new SingleTweetBot(process.env.TEST_MODE);
+export const oneOffCleoConvos = new OneOffCleoConvos(process.env.TEST_MODE);
 
 async function main() {
   try {
-    await singleTweetBot.tweet();
+    await oneOffCleoConvos.tweet();
     await new Promise((resolve) => setTimeout(resolve, 1000));
     process.exit(0);
   } catch (error) {

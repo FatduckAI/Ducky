@@ -1,7 +1,7 @@
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
-import { and, desc, eq, gt } from "drizzle-orm";
+import { and, asc, desc, eq, gt } from "drizzle-orm";
 import { db } from "../db";
 import { duckyAi } from "./schema";
 
@@ -90,7 +90,7 @@ export const getDuckyAiTweets = async () => {
     .limit(50);
 };
 
-export const getDuckyAiForTweetGeneration = async () => {
+export const getDuckyAiForTweetGenerationTweets = async () => {
   return await db
     .select({
       id: duckyAi.id,
@@ -102,6 +102,21 @@ export const getDuckyAiForTweetGeneration = async () => {
     .from(duckyAi)
     .where(and(eq(duckyAi.speaker, "Ducky"), eq(duckyAi.posted, true)))
     .orderBy(desc(duckyAi.timestamp))
+    .limit(50);
+};
+
+export const getDuckyAiForTweetGenerationCleo = async () => {
+  return await db
+    .select({
+      id: duckyAi.id,
+      content: duckyAi.content,
+      tweetId: duckyAi.tweetId,
+      timestamp: duckyAi.timestamp,
+      speaker: duckyAi.speaker,
+    })
+    .from(duckyAi)
+    .where(and(eq(duckyAi.speaker, "Ducky"), eq(duckyAi.posted, false)))
+    .orderBy(asc(duckyAi.timestamp))
     .limit(50);
 };
 
