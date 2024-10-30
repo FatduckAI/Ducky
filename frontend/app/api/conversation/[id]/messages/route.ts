@@ -36,7 +36,7 @@ export async function GET(
       offset: query.offset,
     });
     console.log(messages);
-    return NextResponse.json(messages);
+    return NextResponse.json(messages.data);
   } catch (error) {
     console.error("Error fetching conversation messages:", error);
     return handleApiError(error);

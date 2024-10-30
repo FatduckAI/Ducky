@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
       pageSize: query.pageSize,
     });
 
-    return NextResponse.json(conversations);
+    return NextResponse.json(conversations.data);
   } catch (error) {
     console.error("Error processing conversation request:", error);
     return handleApiError(error);

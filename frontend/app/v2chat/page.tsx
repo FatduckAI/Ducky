@@ -240,33 +240,34 @@ const ConversationsPage = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {conversationsData?.conversations.map((conversation) => (
-                      <TableRow
-                        key={conversation.id}
-                        className={`cursor-pointer hover:bg-gray-100 ${
-                          selectedConversation?.id === conversation.id
-                            ? "bg-gray-100"
-                            : ""
-                        }`}
-                        onClick={() => handleConversationSelect(conversation)}
-                      >
-                        <TableCell>{conversation.platform}</TableCell>
-                        <TableCell>
-                          {dayjs(conversation.createdAt).format(
-                            "MMM D, YYYY h:mm A"
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={
-                              conversation.isActive ? "default" : "secondary"
-                            }
-                          >
-                            {conversation.isActive ? "Active" : "Inactive"}
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {conversationsData?.conversations &&
+                      conversationsData?.conversations.map((conversation) => (
+                        <TableRow
+                          key={conversation.id}
+                          className={`cursor-pointer hover:bg-gray-100 ${
+                            selectedConversation?.id === conversation.id
+                              ? "bg-gray-100"
+                              : ""
+                          }`}
+                          onClick={() => handleConversationSelect(conversation)}
+                        >
+                          <TableCell>{conversation.platform}</TableCell>
+                          <TableCell>
+                            {dayjs(conversation.startedAt).format(
+                              "MMM D, YYYY h:mm A"
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={
+                                conversation.isActive ? "default" : "secondary"
+                              }
+                            >
+                              {conversation.isActive ? "Active" : "Inactive"}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))}
                   </TableBody>
                 </Table>
               </div>
@@ -310,7 +311,7 @@ const ConversationsPage = () => {
                     </h2>
                     <p className="text-sm text-gray-500">
                       {selectedConversation.platform} ·{" "}
-                      {dayjs(selectedConversation.createdAt).format(
+                      {dayjs(selectedConversation.startedAt).format(
                         "MMM D, YYYY h:mm A"
                       )}
                     </p>

@@ -11,13 +11,15 @@
 //! 
 //! The main component is the `MessageHandler` which orchestrates all these features.
 
+use std::convert::Infallible;
 use std::sync::Arc;
 use std::collections::HashMap;
+use metrics::{counter, gauge};
 use tokio::sync::RwLock;
 use chrono::{DateTime, Utc};
 use deadpool_postgres::Pool;
 use tracing::{debug, error, info, instrument};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use serde_json::json;
 use uuid::Uuid;
 use warp::reject::Rejection;
@@ -35,6 +37,22 @@ const MAX_RETRIES: u32 = 3;
 const RATE_LIMIT_WINDOW: i64 = 60;
 /// Maximum number of messages allowed per rate limit window
 const RATE_LIMIT_MAX: u32 = 100;
+
+// Add query parameter structs
+#[derive(Debug, Deserialize)]
+pub struct ConversationsQuery {
+    user_id: String,
+    include_inactive: Option<bool>,
+    page: Option<i64>,
+    page_size: Option<i64>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct MessagesQuery {
+    offset: Option<i64>,
+    limit: Option<i64>,
+}
+
 
 /// Handles all message processing and conversation management.
 #[derive(Debug)]
@@ -101,36 +119,43 @@ impl MessageHandler {
     /// - Rate limit is exceeded
     /// - Message validation fails
     /// - Queue is full
-    #[instrument(skip(handler, message))]
-    pub async fn handle_message(
-        message: Message,
-        handler: Arc<MessageHandler>,
-    ) -> Result<impl Reply, Rejection> {
-        info!("Received message: {:?}", message);
-        
-        // Clone needed values before moving message
-        let message_id = message.id;
-  
-        let response = tokio::spawn(async move {
-            handler.process_message(&message).await
-        })
-        .await
-        .map_err(|e| {
-            error!("Task join error: {:?}", e);
-            warp::reject::custom(ServiceError::Internal("Task join failed".to_string()))
-        })?
-        .map_err(|e| {
-            error!("Message processing error: {:?}", e);
-            warp::reject::custom(ServiceError::ProcessingError(e.to_string()))
-        })?;
-  
-        Ok(warp::reply::json(&json!({
-            "success": true,
-            "response": response,
-            "message_id": message_id,
-            "timestamp": chrono::Utc::now().timestamp()
-        })))
-    }
+    /// Handler for the message submission endpoint
+#[instrument(skip(handler))]
+pub async fn handle_message(
+  message: Message,
+  handler: Arc<MessageHandler>,
+) -> Result<impl Reply, Rejection> {
+  println!("Received message");
+  info!("Received message: {:?}", message);
+  counter!("messages_received_total").increment(1);
+  gauge!("message_queue_size").increment(1.0);
+
+  info!(
+      "Received message from user {} on platform {}",
+      message.user_id, message.platform
+  );
+
+  match handler.process_message(&message).await {
+      Ok(response) => {
+          counter!("messages_processed_success").increment(1);
+          gauge!("message_queue_size").decrement(1.0);
+          
+          Ok(warp::reply::json(&json!({
+              "success": true,
+              "response": response,
+              "message_id": message.id,
+              "timestamp": chrono::Utc::now().timestamp()
+          })))
+      }
+      Err(e) => {
+          error!("Error processing message: {:?}", e);
+          counter!("messages_processed_error").increment(1);
+          gauge!("message_queue_size").decrement(1.0);
+          
+          Err(warp::reject::custom(e))
+      }
+  }
+}
 
     /// Starts the message processing loop. This method runs indefinitely and should
     /// be spawned in its own task.
@@ -211,8 +236,8 @@ impl MessageHandler {
         HandlerStats {
             queue_size: self.queue.try_read().map(|q| q.len()).unwrap_or(0),
             active_conversations: self.conversations.try_read().map(|c| c.len()).unwrap_or(0),
-            messages_processed: 0, // TODO: Implement counter
-            error_count: 0,        // TODO: Implement counter
+            messages_processed: 0, 
+            error_count: 0,        
             uptime_seconds: (Utc::now() - self.started_at).num_seconds(),
         }
     }
@@ -242,49 +267,6 @@ impl MessageHandler {
                     }
                 }
             }
-        }
-
-        Ok(())
-    }
-
-    async fn check_rate_limit(&self, user_id: &str) -> Result<(), ServiceError> {
-        let mut rate_limiter = self.rate_limiter.write().await;
-        let now = Utc::now().timestamp();
-
-        if let Some((last_time, count)) = rate_limiter.get(user_id) {
-            if now - last_time < RATE_LIMIT_WINDOW && *count >= RATE_LIMIT_MAX {
-                return Err(ServiceError::RateLimitExceeded(
-                    format!("Rate limit exceeded for user {}", user_id)
-                ));
-            }
-        }
-
-        rate_limiter
-            .entry(user_id.to_string())
-            .and_modify(|(time, count)| {
-                if now - *time >= RATE_LIMIT_WINDOW {
-                    *time = now;
-                    *count = 1;
-                } else {
-                    *count += 1;
-                }
-            })
-            .or_insert((now, 1));
-
-        Ok(())
-    }
-
-    fn validate_message(&self, message: &Message) -> Result<(), ServiceError> {
-        if message.content.is_empty() {
-            return Err(ServiceError::InvalidMessage("Empty message content".to_string()));
-        }
-
-        if message.user_id.is_empty() {
-            return Err(ServiceError::InvalidMessage("Empty user ID".to_string()));
-        }
-
-        if message.content.chars().count() > 4000 {
-            return Err(ServiceError::InvalidMessage("Message too long".to_string()));
         }
 
         Ok(())
@@ -392,7 +374,7 @@ impl MessageHandler {
   /// 
   /// # Returns
   /// A tuple of (conversations, total_count)
-  pub async fn list_conversations(
+  pub async fn list_conversations_paginated(
       &self,
       user_id: &str,
       include_inactive: bool,
@@ -453,58 +435,44 @@ impl MessageHandler {
         Ok((messages, has_more))
     }
 
-    /// Lists conversations for a user with pagination and filtering.
-    /// 
-    /// # Arguments
-    /// * `user_id` - The ID of the user whose conversations to list
-    /// * `include_inactive` - Whether to include inactive conversations
-    /// * `page_size` - Number of items per page
-    /// * `page` - Page number (0-based)
-    /// 
-    /// # Returns
-    /// Tuple of (conversations, total count, has more)
-    #[instrument(skip(self))]
-    pub async fn list_conversations_paginated(
-        &self,
-        user_id: &str,
-        include_inactive: bool,
-        page_size: i64,
-        page: i64,
-    ) -> Result<(Vec<Conversation>, i64, bool), ServiceError> {
-        let page_size = page_size.min(100);
-        let page = page.max(0);
+    /// Error handler for rejected requests
+    #[instrument]
+    pub async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> {
+        error!("Rejection occurred: {:?}", err);
 
-        let (conversations, total_count) = self.list_conversations(
-            user_id,
-            include_inactive,
-            page_size,
-            page
-        ).await?;
-
-        let has_more = (page + 1) * page_size < total_count;
-
-        Ok((conversations, total_count, has_more))
-    }
-
-    /// Validates a conversation access attempt
-    async fn validate_conversation_access(
-        &self,
-        conversation_id: Uuid,
-        user_id: Option<&str>
-    ) -> Result<(), ServiceError> {
-        if let Some(user_id) = user_id {
-            let db_client = self.db_pool.get().await
-                .map_err(|e| ServiceError::DatabaseError(e.to_string()))?;
-
-            let conversation = queries::get_conversation_by_id(&db_client, conversation_id).await?;
-            
-            match conversation {
-                Some(conv) if conv.user_id == user_id => Ok(()),
-                Some(_) => Err(ServiceError::Unauthorized("Not authorized to access this conversation".to_string())),
-                None => Err(ServiceError::NotFound("Conversation not found".to_string())),
+        let (code, message) = if err.is_not_found() {
+            (warp::http::StatusCode::NOT_FOUND, "Not Found")
+        } else if let Some(_) = err.find::<warp::reject::MethodNotAllowed>() {
+            (warp::http::StatusCode::METHOD_NOT_ALLOWED, "Method Not Allowed")
+        } else if let Some(e) = err.find::<ServiceError>() {
+            match e {
+                ServiceError::RateLimitExceeded(_) => (
+                    warp::http::StatusCode::TOO_MANY_REQUESTS,
+                    "Rate limit exceeded"
+                ),
+                ServiceError::InvalidMessage(_) => (
+                    warp::http::StatusCode::BAD_REQUEST,
+                    "Invalid message format"
+                ),
+                _ => (
+                    warp::http::StatusCode::INTERNAL_SERVER_ERROR,
+                    "Internal server error"
+                ),
             }
         } else {
-            Ok(()) // No user ID check required
-        }
+            (
+                warp::http::StatusCode::INTERNAL_SERVER_ERROR,
+                "Internal Server Error",
+            )
+        };
+
+        Ok(warp::reply::with_status(
+            warp::reply::json(&json!({
+                "success": false,
+                "error": message,
+                "timestamp": chrono::Utc::now().timestamp()
+            })),
+            code
+        ))
     }
-}
+  }

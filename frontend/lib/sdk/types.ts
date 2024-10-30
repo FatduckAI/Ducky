@@ -24,15 +24,13 @@ export type AgentAction = (typeof AgentAction)[keyof typeof AgentAction];
  * Core interfaces
  */
 export interface Message {
-  id: string;
-  userId: string;
   content: string;
-  threadId?: string;
-  platform: MessagePlatform;
-  priority: MessagePriority;
+  conversationId: string;
+  createdAt: string;
+  id: string;
   metadata: Record<string, any>;
-  timestamp: number;
-  retryCount: number;
+  threadId?: string;
+  userId: string;
 }
 
 export interface ConversationState {
@@ -49,11 +47,28 @@ export interface Conversation {
   id: string;
   userId: string;
   platform: MessagePlatform;
-  state: ConversationState;
-  metadata: Record<string, any>;
-  createdAt: string;
-  updatedAt: string;
+  startedAt: string;
+  endedAt: string | null;
   isActive: boolean;
+  metadata: Record<string, any>;
+}
+
+export interface PaginatedConversations {
+  success: boolean;
+  data: {
+    conversations: Conversation[];
+    totalCount: number;
+    hasMore: boolean;
+  };
+}
+
+export interface MessagesResponse {
+  success: boolean;
+  data: {
+    messages: Message[];
+    hasMore: boolean;
+  };
+  timestamp: number;
 }
 
 export interface HandlerStats {

@@ -41,6 +41,8 @@ pub mod server;
 pub mod models;
 pub mod db;
 pub mod services;
+pub mod handlers; // Add the new handlers module
+
 
 // Internal modules
 mod queue;

@@ -1,4 +1,3 @@
-import { Message } from "postcss";
 import {
   Conversation,
   HandlerStats,
@@ -7,6 +6,7 @@ import {
   MessagePlatform,
   MessagePriority,
   MessageResponse,
+  MessagesResponse,
   PaginatedConversations,
 } from "./types";
 import { toCamelCaseKeys, toSnakeCaseKeys } from "./utils";
@@ -110,7 +110,7 @@ export class MessageHandlerSDK {
    * Get a specific conversation by ID
    */
   async getConversation(conversationId: string): Promise<Conversation | null> {
-    return this.fetch(`/conversation/${conversationId}`);
+    return this.fetch(`/conversations/${conversationId}`);
   }
 
   /**
@@ -143,11 +143,7 @@ export class MessageHandlerSDK {
     conversationId: string;
     offset?: number;
     limit?: number;
-  }): Promise<{
-    messages: Message[];
-    hasMore: boolean;
-    nextCursor?: string;
-  }> {
+  }): Promise<MessagesResponse> {
     console.log(params);
     const searchParams = new URLSearchParams(
       toSnakeCaseKeys({
@@ -156,12 +152,12 @@ export class MessageHandlerSDK {
       })
     );
     console.log(
-      `/conversation/${
+      `/conversations/${
         params.conversationId
       }/messages?${searchParams.toString()}`
     );
     return this.fetch(
-      `/conversation/${
+      `/conversations/${
         params.conversationId
       }/messages?${searchParams.toString()}`
     );
