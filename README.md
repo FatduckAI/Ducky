@@ -18,9 +18,9 @@ This code runs Ducky - its a bit of inbetween refactoring from python and moving
 
 ## Features
 
-**Current Agents**
+**Agents**
 
-He now tweets regularly on two context injecting prompts (RAG) the last 50 tweets and replies he has created and (2) the same prompt but with the generated synthitic data from the llama3.1:70b runs.
+He now tweets regularly on two context injecting prompts (RAG) the last 50 tweets and replies he has created and (2) the same prompt but with the generated synthetic data from llama3.1:70b conversational runs.
 
 **Wallets**
 
