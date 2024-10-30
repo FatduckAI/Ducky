@@ -10,7 +10,6 @@ from dotenv import load_dotenv
 from agents.ducky.interviewer import simulate_conversation_with_ducky
 from agents.ducky.talk_ducky import generate_ducky_response
 from agents.ducky.tweet_poster import handle_tweet_commands
-from agents.ducky.tweet_responder import generate_tweet_claude_responder
 
 # Set up logging
 logging.basicConfig(
@@ -115,19 +114,6 @@ async def on_message(message):
             await handle_start_command(message, command_parts,message.channel)
             return
             
-        # Regular chat responses - allowed in any channel
-        if user_input:
-            try:
-                async with message.channel.typing():
-                    logger.info(f'Generating response for: {user_input}')
-                    response = generate_tweet_claude_responder({"text": user_input})
-                    logger.info(f'Generated response: {response}')
-                    await message.reply(response if response else "*Quacks in error* 🦆")
-            except Exception as e:
-                logger.error(f'Error processing message: {e}', exc_info=True)
-                await message.reply("*Quacks in error* 🦆")
-
-
 def main():
     logger.info("Starting Discord bot...")
     token = os.getenv('DISCORD_TOKEN')

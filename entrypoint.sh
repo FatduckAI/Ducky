@@ -19,8 +19,6 @@ elif [ "$1" = "interview" ]; then
     exec python -m agents.ducky.interviewer
 elif [ "$1" = "ducky-tweet" ]; then
     exec python -m agents.ducky.tweet_generator
-elif [ "$1" = "ducky-reply" ]; then
-    exec python -m agents.ducky.tweet_responder
 else
     echo "Unknown command"
     echo "Available commands:"
