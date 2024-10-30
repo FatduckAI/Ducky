@@ -14,44 +14,22 @@
 use std::convert::Infallible;
 use std::sync::Arc;
 use std::collections::HashMap;
-use metrics::{counter, gauge};
+use metrics::counter;
 use tokio::sync::RwLock;
 use chrono::{DateTime, Utc};
 use deadpool_postgres::Pool;
 use tracing::{debug, error, info, instrument};
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use serde_json::json;
 use uuid::Uuid;
 use warp::reject::Rejection;
 use warp::reply::Reply;
 
 use crate::models::{ConversationState, Message};
-use crate::queue::MessageQueue;
 use crate::error::ServiceError;
 use crate::db::{self, queries, Conversation, StoredMessage};
 use crate::services::ClaudeClient;
 
-/// Maximum number of retry attempts for failed message processing
-const MAX_RETRIES: u32 = 3;
-/// Time window in seconds for rate limiting
-const RATE_LIMIT_WINDOW: i64 = 60;
-/// Maximum number of messages allowed per rate limit window
-const RATE_LIMIT_MAX: u32 = 100;
-
-// Add query parameter structs
-#[derive(Debug, Deserialize)]
-pub struct ConversationsQuery {
-    user_id: String,
-    include_inactive: Option<bool>,
-    page: Option<i64>,
-    page_size: Option<i64>,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct MessagesQuery {
-    offset: Option<i64>,
-    limit: Option<i64>,
-}
 
 
 /// Handles all message processing and conversation management.
@@ -59,12 +37,8 @@ pub struct MessagesQuery {
 pub struct MessageHandler {
     /// Active conversation states indexed by user ID
     conversations: Arc<RwLock<HashMap<String, ConversationState>>>,
-    /// Message processing queue
-    queue: Arc<RwLock<MessageQueue>>,
     /// Database connection pool
     db_pool: Pool,
-    /// Rate limiting state by user ID
-    rate_limiter: Arc<RwLock<HashMap<String, (i64, u32)>>>,
     /// Claude API client
     claude_client: Arc<ClaudeClient>,
     /// Handler creation timestamp
@@ -74,8 +48,6 @@ pub struct MessageHandler {
 /// Statistics about the message handler's operation
 #[derive(Debug, Clone, Serialize)]
 pub struct HandlerStats {
-    /// Current number of messages in the queue
-    pub queue_size: usize,
     /// Number of active conversations
     pub active_conversations: usize,
     /// Total messages processed since startup
@@ -87,29 +59,26 @@ pub struct HandlerStats {
 }
 
 impl MessageHandler {
-    /// Creates a new message handler with the specified queue size and database pool.
+    /// Creates a new message handler with the specified database pool.
     /// 
     /// # Arguments
-    /// * `queue_size` - Maximum number of messages that can be queued
     /// * `db_pool` - Database connection pool
     /// 
     /// # Errors
     /// Returns an error if the ANTHROPIC_API_KEY environment variable is not set
-    pub fn new(queue_size: usize, db_pool: Pool) -> Result<Self, ServiceError> {
+    pub fn new(db_pool: Pool) -> Result<Self, ServiceError> {
         let api_key = std::env::var("ANTHROPIC_API_KEY")
             .map_err(|_| ServiceError::ConfigError("ANTHROPIC_API_KEY not set".to_string()))?;
 
         Ok(Self {
             conversations: Arc::new(RwLock::new(HashMap::new())),
-            queue: Arc::new(RwLock::new(MessageQueue::new(queue_size))),
             db_pool,
-            rate_limiter: Arc::new(RwLock::new(HashMap::new())),
             claude_client: Arc::new(ClaudeClient::new(api_key)),
             started_at: Utc::now(),
         })
     }
 
-    /// Handles an incoming message by validating it and adding it to the processing queue.
+    /// Handles an incoming message by validating it.
     /// 
     /// # Arguments
     /// * `message` - The message to handle
@@ -118,7 +87,6 @@ impl MessageHandler {
     /// Returns an error if:
     /// - Rate limit is exceeded
     /// - Message validation fails
-    /// - Queue is full
     /// Handler for the message submission endpoint
 #[instrument(skip(handler))]
 pub async fn handle_message(
@@ -128,7 +96,6 @@ pub async fn handle_message(
   println!("Received message");
   info!("Received message: {:?}", message);
   counter!("messages_received_total").increment(1);
-  gauge!("message_queue_size").increment(1.0);
 
   info!(
       "Received message from user {} on platform {}",
@@ -138,7 +105,6 @@ pub async fn handle_message(
   match handler.process_message(&message).await {
       Ok(response) => {
           counter!("messages_processed_success").increment(1);
-          gauge!("message_queue_size").decrement(1.0);
           
           Ok(warp::reply::json(&json!({
               "success": true,
@@ -150,7 +116,6 @@ pub async fn handle_message(
       Err(e) => {
           error!("Error processing message: {:?}", e);
           counter!("messages_processed_error").increment(1);
-          gauge!("message_queue_size").decrement(1.0);
           
           Err(warp::reject::custom(e))
       }
@@ -163,9 +128,6 @@ pub async fn handle_message(
         info!("Starting message processing loop");
         
         loop {
-            if let Err(e) = self.process_next_message().await {
-                error!("Error processing message: {:?}", e);
-            }
 
             // Cleanup expired conversations every 5 minutes
             if Utc::now().timestamp() % 300 == 0 {
@@ -234,7 +196,6 @@ pub async fn handle_message(
     /// Retrieves current handler statistics
     pub fn get_stats(&self) -> HandlerStats {
         HandlerStats {
-            queue_size: self.queue.try_read().map(|q| q.len()).unwrap_or(0),
             active_conversations: self.conversations.try_read().map(|c| c.len()).unwrap_or(0),
             messages_processed: 0, 
             error_count: 0,        
@@ -242,66 +203,6 @@ pub async fn handle_message(
         }
     }
 
-    // Private helper methods
-    async fn process_next_message(&self) -> Result<(), ServiceError> {
-        let message = {
-            let mut queue = self.queue.write().await;
-            queue.pop().await
-        };
-
-        if let Some(message) = message {
-            match self.process_message(&message).await {
-                Ok(response) => {
-                    info!("Successfully processed message: {}", message.id);
-                    self.save_response(&message, &response).await?;
-                }
-                Err(e) => {
-                    error!("Failed to process message {}: {:?}", message.id, e);
-                    if message.retry_count < MAX_RETRIES {
-                        let mut retried_msg = message;
-                        retried_msg.retry_count += 1;
-                        let mut queue = self.queue.write().await;
-                        queue.push(retried_msg).await?;
-                    } else {
-                        self.handle_failed_message(&message).await?;
-                    }
-                }
-            }
-        }
-
-        Ok(())
-    }
-
-    async fn handle_failed_message(&self, message: &Message) -> Result<(), ServiceError> {
-        let db_client = self.db_pool.get().await
-            .map_err(|e| ServiceError::DatabaseError(e.to_string()))?;
-
-        queries::mark_message_failed(&db_client, message.id).await?;
-
-        if let Ok(webhook_url) = std::env::var("ERROR_WEBHOOK_URL") {
-            self.send_error_notification(&webhook_url, message).await?;
-        }
-
-        Ok(())
-    }
-
-    async fn send_error_notification(&self, webhook_url: &str, message: &Message) -> Result<(), ServiceError> {
-        let client = reqwest::Client::new();
-        let notification = json!({
-            "message_id": message.id,
-            "user_id": message.user_id,
-            "error": "Message processing failed after max retries",
-            "timestamp": Utc::now().timestamp()
-        });
-
-        client.post(webhook_url)
-            .json(&notification)
-            .send()
-            .await
-            .map_err(|e| ServiceError::ProcessingError(e.to_string()))?;
-
-        Ok(())
-    }
 
     fn build_prompt(&self, message: &Message, context: &Vec<db::models::StoredMessage>) -> Result<String, ServiceError> {
         let mut prompt = String::new();
@@ -320,20 +221,6 @@ pub async fn handle_message(
         prompt.push_str(&format!("Human: {}\n\nAssistant:", message.content));
 
         Ok(prompt)
-    }
-
-    async fn save_response(&self, original_message: &Message, response: &str) -> Result<(), ServiceError> {
-        let db_client = self.db_pool.get().await
-            .map_err(|e| ServiceError::DatabaseError(e.to_string()))?;
-
-        queries::save_response_metrics(
-            &db_client,
-            original_message.id,
-            response.len() as i32,
-            Utc::now().timestamp() - original_message.timestamp,
-        ).await?;
-
-        Ok(())
     }
 
     async fn cleanup_expired_conversations(&self) -> Result<(), ServiceError> {

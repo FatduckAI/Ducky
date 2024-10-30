@@ -4,10 +4,9 @@
 //! 
 //! ## Features
 //! 
-//! - Conversation state management with 24-hour sessions
+//! - Concurrent conversation handling
 //! - Automatic Claude AI integration for responses
-//! - Rate limiting and backpressure handling
-//! - Message queuing
+//! - Rate limiting (1000 RPM)
 //! - Database persistence with PostgreSQL
 //! 
 //! ## Quick Start
@@ -41,11 +40,7 @@ pub mod server;
 pub mod models;
 pub mod db;
 pub mod services;
-pub mod handlers; // Add the new handlers module
-
-
-// Internal modules
-mod queue;
+pub mod handlers;
 
 // Re-export commonly used types
 pub use crate::config::Config;
@@ -63,14 +58,11 @@ pub mod constants {
     /// Default server port
     pub const DEFAULT_PORT: u16 = 3030;
     
-    /// Default message queue size
-    pub const DEFAULT_QUEUE_SIZE: usize = 10000;
-    
     /// Default rate limit window in seconds
     pub const DEFAULT_RATE_LIMIT_WINDOW: i64 = 60;
     
-    /// Default maximum messages per rate limit window
-    pub const DEFAULT_RATE_LIMIT_MAX: u32 = 100;
+    /// Default maximum Claude API calls per minute
+    pub const CLAUDE_RATE_LIMIT_RPM: u32 = 950; // Set slightly below 1000 for safety
     
     /// Conversation timeout in seconds (24 hours)
     pub const CONVERSATION_TIMEOUT: i64 = 24 * 60 * 60;
@@ -86,8 +78,6 @@ pub struct Service {
 impl Service {
     /// Create a new service instance with custom configuration
     pub async fn new(config: Config) -> Result<Self> {
-        // Initialize metrics
-
         info!("Initializing database connection...");
         let db_pool = db::create_pool(&config).await?;
         
@@ -97,19 +87,10 @@ impl Service {
             e
         })?;
         info!("Database connection established successfully");
-        // Create handler
-        let handler = MessageHandler::new(
-            config.queue.size,
-            db_pool,
-        )?;
 
+        // Create handler with rate limiting
+        let handler = MessageHandler::new(db_pool)?;
         let handler = Arc::new(handler);
-        
-        // Spawn processing task
-        let handler_clone = Arc::clone(&handler);
-        tokio::spawn(async move {
-            handler_clone.start_processing().await;
-        });
 
         // Create server
         let server = Server::new(handler.clone(), &config);
@@ -169,12 +150,21 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_message_processing() {
+    async fn test_concurrent_message_processing() {
         let config = Config::load().expect("Failed to load config");
         let service = Service::new(config).await.expect("Failed to create service");
         
-        let message = create_test_message().await;
-        let result = service.handler.process_message(&message).await;
-        assert!(result.is_ok(), "Message processing failed: {:?}", result);
+        // Create multiple messages to test concurrent processing
+        let message1 = create_test_message().await;
+        let message2 = create_test_message().await;
+        
+        // Process messages concurrently
+        let (result1, result2) = tokio::join!(
+            service.handler.process_message(&message1),
+            service.handler.process_message(&message2)
+        );
+        
+        assert!(result1.is_ok(), "First message processing failed: {:?}", result1);
+        assert!(result2.is_ok(), "Second message processing failed: {:?}", result2);
     }
 }
