@@ -46,7 +46,7 @@ This version also doubles to help us compete in [Shaw](https://x.com/shawmakesma
 
 ## To Run:
 
-1. We use Railway.app
+1. We use [Railway.app](https://railway.app)
 2. Create a postgres service
 3. `./entrypoint.sh web` - runs db and webserver that `ducky.fatduck.ai` runs on
 4. Frontend Service: Root Directory: /frontend, custom start command `bun start`
@@ -61,7 +61,7 @@ This version also doubles to help us compete in [Shaw](https://x.com/shawmakesma
 ```
 ANTHROPIC_API_KEY
 DATABASE_URL
-(some others not documented yet)
+TODO:(some others not documented yet)
 ```
 
 ### Structure
@@ -96,7 +96,7 @@ This repo is part python, javascript and rust. Python code will be phased out in
 
 ### Drizzle Studio
 
-`./entrypoint studio`
+`./entrypoint.sh studio`
 
 ### Hosting
 
