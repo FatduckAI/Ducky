@@ -1,6 +1,6 @@
 # Ducky
 
-[![Telegram Chat][tg-badge]][tg-url]
+![Telegram Chat][tg-badge]
 
 [tg-badge]: https://img.shields.io/endpoint?color=neon&logo=telegram&label=chat&url=https%3A%2F%2Ftg.sumanjay.workers.dev%2FDuckUnfiltered
 
