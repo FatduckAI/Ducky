@@ -1,0 +1,16 @@
+# config/default.toml
+[server]
+host = "0.0.0.0"
+port = 3030
+thread_pool_size = 32
+
+[database]
+url = "postgres://localhost/message_handler"
+max_connections = 20
+
+[queue]
+size = 10000
+retry_attempts = 3
+
+[metrics]
+port = 9000

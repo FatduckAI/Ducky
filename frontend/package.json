@@ -22,6 +22,7 @@
     "next": "15.0.1",
     "react": "19.0.0-rc-69d4b800-20241021",
     "react-dom": "19.0.0-rc-69d4b800-20241021",
+    "react-resizable-panels": "^2.1.6",
     "recharts": "^2.13.0",
     "shadcn": "^2.1.2",
     "tailwind-merge": "^2.5.4",

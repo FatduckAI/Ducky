@@ -24,6 +24,8 @@ export function useChat() {
         (a, b) => dayjs(a.timestamp).valueOf() - dayjs(b.timestamp).valueOf()
       );
     },
+    retry: 3, // Will retry failed requests 3 times
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
   });
 
   const sendMessage = useMutation({

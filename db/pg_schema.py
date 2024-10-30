@@ -169,6 +169,54 @@ PG_SCHEMA = {
             is_pinned BOOLEAN,
             PRIMARY KEY (message_id, chat_id)
         )
+    ''',
+    'mentioned_tweets': '''
+        CREATE TABLE mentioned_tweets (
+    -- Primary identifier from Twitter
+    id TEXT PRIMARY KEY,
+    
+    -- Tweet content and metadata
+    text TEXT NOT NULL,
+    author TEXT NOT NULL,
+    author_username TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    likes INTEGER NOT NULL DEFAULT 0,
+    retweets INTEGER NOT NULL DEFAULT 0,
+    author_followers INTEGER NOT NULL DEFAULT 0,
+    author_verified BOOLEAN NOT NULL DEFAULT FALSE,
+    
+    -- Processing metadata
+    processed BOOLEAN NOT NULL DEFAULT FALSE,
+    processed_at TIMESTAMP WITH TIME ZONE,
+    created_timestamp TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    
+    -- Response tracking
+    response_tweet_id TEXT,
+    response_text TEXT,
+    response_error TEXT,
+    
+    -- Search metadata
+    search_query TEXT NOT NULL,
+    mention_type mention_type NOT NULL,
+    
+    -- Metrics and scoring
+    engagement_score FLOAT,
+    sentiment_score FLOAT,
+    priority_score FLOAT,
+    
+    -- Processing attempts tracking
+    retry_count INTEGER NOT NULL DEFAULT 0,
+    last_retry_at TIMESTAMP WITH TIME ZONE,
+    
+    -- Soft delete support
+    deleted_at TIMESTAMP WITH TIME ZONE,
+    
+    -- Constraints
+    CONSTRAINT mentioned_tweets_response_tweet_unique UNIQUE (response_tweet_id),
+    CONSTRAINT mentioned_tweets_retry_count_check CHECK (retry_count >= 0),
+    CONSTRAINT mentioned_tweets_created_at_check CHECK (created_at <= CURRENT_TIMESTAMP)
+);
     '''
 }
 
@@ -223,4 +271,25 @@ ADD_SENTIMENT_ANALYSIS_COLUMNS = '''
     CREATE INDEX IF NOT EXISTS idx_sentiment_helpful ON telegram_messages(sentiment_helpful);
     CREATE INDEX IF NOT EXISTS idx_sentiment_sarcastic ON telegram_messages(sentiment_sarcastic);
     CREATE INDEX IF NOT EXISTS idx_sentiment_analyzed ON telegram_messages(sentiment_analyzed);
+'''
+
+MENTION_TYPE = '''
+    CREATE TYPE mention_type AS ENUM ('username', 'token', 'keyword');
+'''
+
+MENTIONED_TWEETS_INDICES = '''
+-- Create indices for common query patterns
+CREATE INDEX idx_mentioned_tweets_processed ON mentioned_tweets (processed) WHERE processed = FALSE;
+CREATE INDEX idx_mentioned_tweets_created_at ON mentioned_tweets (created_at DESC);
+CREATE INDEX idx_mentioned_tweets_author ON mentioned_tweets (author);
+CREATE INDEX idx_mentioned_tweets_search_query ON mentioned_tweets (search_query);
+CREATE INDEX idx_mentioned_tweets_mention_type ON mentioned_tweets (mention_type);
+CREATE INDEX idx_mentioned_tweets_priority_score ON mentioned_tweets (priority_score DESC) WHERE processed = FALSE;
+
+-- Create composite indices for common query combinations
+CREATE INDEX idx_mentioned_tweets_processing ON mentioned_tweets (processed, priority_score DESC, created_at DESC);
+CREATE INDEX idx_mentioned_tweets_metrics ON mentioned_tweets (engagement_score, sentiment_score, priority_score);
+
+-- Create GIN index for text search
+CREATE INDEX idx_mentioned_tweets_text_search ON mentioned_tweets USING gin(to_tsvector('english', text));
 '''

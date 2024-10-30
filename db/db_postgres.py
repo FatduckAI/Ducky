@@ -10,9 +10,10 @@ import pytz
 from dotenv import load_dotenv
 from psycopg2.extras import RealDictCursor
 
-from db.pg_schema import (FOLLOWER_INDICES, PG_SCHEMA, TELEGRAM_INDICES,
-                          UPDATE_DUCKY_AI_POSTED, UPDATE_USER_TABLE,
-                          USER_INDICES)
+from db.pg_schema import (FOLLOWER_INDICES, MENTION_TYPE,
+                          MENTIONED_TWEETS_INDICES, PG_SCHEMA,
+                          TELEGRAM_INDICES, UPDATE_DUCKY_AI_POSTED,
+                          UPDATE_USER_TABLE, USER_INDICES)
 
 load_dotenv()
 EST = pytz.timezone('US/Eastern')
@@ -108,6 +109,8 @@ def init_db():
 def ensure_db_initialized():
     #conn = get_db_connection()
     #cursor = conn.cursor()
+    #cursor.execute(MENTION_TYPE)
+    #conn.commit()
     """Ensure all required tables exist in the database"""
     print("Ensuring database is initialized")
     tables = [
@@ -121,7 +124,8 @@ def ensure_db_initialized():
         'ducky_ai',
         'tweet_replies',
         'users',
-        'telegram_messages'
+        'telegram_messages',
+        'mentioned_tweets'
     ]
     
     try:
@@ -141,7 +145,7 @@ def ensure_db_initialized():
             
         #cursor.execute(UPDATE_DUCKY_AI_POSTED)
         #cursor.execute(UPDATE_USER_TABLE)
-        #cursor.execute(TELEGRAM_INDICES)
+        #cursor.execute(MENTIONED_TWEETS_INDICES)
         #conn.commit()
         #conn.close()
     except Exception as e:
