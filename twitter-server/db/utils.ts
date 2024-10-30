@@ -90,7 +90,7 @@ export const getDuckyAiTweets = async () => {
     .limit(50);
 };
 
-export const getDuckyAiForTweetGenerationNoTweets = async () => {
+export const getDuckyAiForTweetGeneration = async () => {
   return await db
     .select({
       id: duckyAi.id,
@@ -100,7 +100,7 @@ export const getDuckyAiForTweetGenerationNoTweets = async () => {
       speaker: duckyAi.speaker,
     })
     .from(duckyAi)
-    .where(and(eq(duckyAi.speaker, "Ducky"), eq(duckyAi.posted, false)))
+    .where(and(eq(duckyAi.speaker, "Ducky"), eq(duckyAi.posted, true)))
     .orderBy(desc(duckyAi.timestamp))
     .limit(50);
 };

@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 
-// app/api/chat_history/route.ts
 export async function GET() {
   try {
     console.log("Fetching chat history", process.env.API_URL);

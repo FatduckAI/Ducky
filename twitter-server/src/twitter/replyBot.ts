@@ -77,10 +77,11 @@ export class ReplyBot {
   private rateLimit: RateLimitTracker;
   private readonly testMode: boolean;
 
-  constructor(testMode: boolean = false) {
-    this.dbSave = testMode ? this.mockSaveMessageToDb : saveMessageToDb;
+  constructor(testModeEnv?: string) {
+    this.dbSave =
+      testModeEnv === "true" ? this.mockSaveMessageToDb : saveMessageToDb;
     this.rateLimit = new RateLimitTracker();
-    this.testMode = testMode;
+    this.testMode = testModeEnv?.toLowerCase() === "true";
   }
 
   private async mockSaveMessageToDb(
@@ -431,7 +432,7 @@ export class ReplyBot {
 }
 
 // Export default instance
-export const replyBot = new ReplyBot(process.env.TEST_MODE === "false");
+export const replyBot = new ReplyBot(process.env.TEST_MODE);
 
 // Modify the main execution to handle process exit
 async function main() {
