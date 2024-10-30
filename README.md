@@ -16,8 +16,8 @@ This code runs the Unfiltered Duck, [Ducky](https://x.com/duckunfiltered) on twi
 
 - **Character Prompt**: [Character](/twitter-server/src/ducky/character.ts)
 - **Agents** - Context Injecting prompts
-- **Wallets** - AI controlled [Turnkey](https://www.turnkey.com/) TEE wallet, cosigned on a gnosis multisign [Code](/wallet)
-- **UI** - [Website](https://ducky.fatduck.ai) (Stream of thought backend logs,
+- **Wallets** - AI controlled [Turnkey](https://www.turnkey.com/) TEE wallet, cosigned on a gnosis Safe multisig [Code](/wallet)
+- **UI** - [Website](https://ducky.fatduck.ai) (Stream of thought backend logs, community dashboard, chat v2)
 - **Sentiment Analysis** - Tracks sentiment in telegram and twitter replies
 - **Conversations** - (in progress), personalized chat with Ducky
 
