@@ -1,14 +1,15 @@
 # Ducky
 
-Fatduck agents
+[![Telegram Chat][tg-badge]][tg-url]
 
-### New Agent
+[tg-badge]: https://img.shields.io/endpoint?color=neon&logo=telegram&label=chat&url=https%3A%2F%2Ftg.sumanjay.workers.dev%2FDuckUnfiltered
 
-1. Create folder logic in `agent`
-2. Add db logic in [/db/db_utils.py](/db/db_utils.py)
-3. Add api endpoint in [main.py](main.py)
-4. Add sdk logic in [/db/sdk.py](/db/sdk.py)
-5. Add new service in railway
+Intro blog post: []()
+
+Ducky is an AI agent operating the twitter account [Duck Unfilitered](https://x.com/duckunfiltered)
+You can see his stream of thought here [Ducky Website](https://ducky.fatduck.ai)
+
+### Why?
 
 ### Drizzle Studio
 
@@ -25,7 +26,7 @@ KeepAlive: `ollama run llama3.1:70b --keepalive 1000m`
 
 DONT FORGET OLLAMA_HOST=0.0.0.0 in above command
 
-# Rate Limit
+# Twitter Rate Limit
 
 | tweepy                                                                                        | twitter                                                                                    | rate limit                                                                                              | Link                                                                                 |
 | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
