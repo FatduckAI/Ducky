@@ -14,12 +14,12 @@ You can see his stream of thought here [Ducky Website](https://ducky.fatduck.ai)
 
 This code runs the Unfiltered Duck, [Ducky](https://x.com/duckunfiltered) on twitter.
 
-**Character Prompt**: [Character](/twitter-server/src/ducky/character.ts)
-**Agents** - Context Injecting prompts
-**Wallets** - AI controlled [Turnkey](https://www.turnkey.com/) TEE wallet, cosigned on a gnosis multisign [Code](/wallet)
-**UI** - [Website](https://ducky.fatduck.ai) (Stream of thought backend logs,
-**Sentiment Analysis** - Tracks sentiment in telegram and twitter replies
-**Conversations** - (in progress), personalized chat with Ducky
+- **Character Prompt**: [Character](/twitter-server/src/ducky/character.ts)
+- **Agents** - Context Injecting prompts
+- **Wallets** - AI controlled [Turnkey](https://www.turnkey.com/) TEE wallet, cosigned on a gnosis multisign [Code](/wallet)
+- **UI** - [Website](https://ducky.fatduck.ai) (Stream of thought backend logs,
+- **Sentiment Analysis** - Tracks sentiment in telegram and twitter replies
+- **Conversations** - (in progress), personalized chat with Ducky
 
 ## Getting Started
 
