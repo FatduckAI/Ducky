@@ -165,10 +165,10 @@ export class MentionBot {
     }
 
     try {
-      this.logDebug(`Searching for query: ${query}`);
+      this.logDebug(`Searching...`);
       this.rateLimit.incrementSearch();
 
-      const results = await twitterService.searchMentionsAndKeywords(query);
+      const results = await twitterService.searchMentionsAndKeywords();
 
       const mentions = results.tweets;
 
@@ -246,7 +246,7 @@ export class MentionBot {
           .onConflictDoNothing();
       }
 
-      const prompt = generatePrompt.forMention(mention.text, searchQuery);
+      const prompt = generatePrompt.forMention(mention.text);
       const response = await generateClaudeResponse(
         prompt,
         ducky.prompts.mention.user

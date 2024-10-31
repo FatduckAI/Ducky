@@ -13,7 +13,7 @@ import {
 export const duckyAi = pgTable("ducky_ai", {
   id: serial("id").primaryKey(),
   content: text("content").notNull(),
-  tweetId: text("tweet_id").unique(),
+  tweetId: text("tweet_id"),
   postTime: text("posttime"),
   posted: boolean("posted").default(false),
   timestamp: text("timestamp").notNull(),
