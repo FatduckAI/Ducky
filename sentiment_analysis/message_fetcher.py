@@ -10,7 +10,7 @@ from telethon import TelegramClient
 from telethon.sessions import StringSession
 
 from db.db_postgres import get_db_connection
-from telegram_messages.sentiment_analysis import SentimentAnalyzer
+from sentiment_analysis.core import SentimentAnalyzer
 
 # Set up logging
 logging.basicConfig(

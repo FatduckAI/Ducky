@@ -11,7 +11,7 @@ from telegram.ext import (Application, CommandHandler, ContextTypes,
 
 from db.db_postgres import get_db_connection
 from lib.raydium import format_market_cap, get_token_price
-from telegram_messages.sentiment_analysis import SentimentAnalyzer
+from sentiment_analysis.core import SentimentAnalyzer
 
 # Add these constants near the top of your file with other configurations
 IMAGES_FOLDER = "/static/images/quack"  # Replace with your actual images folder path

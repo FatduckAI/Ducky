@@ -22,3 +22,6 @@ spl
 telethon
 plotly
 pandas
+jupyterlab
+IPython
+ipywidgets
