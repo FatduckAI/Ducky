@@ -3,7 +3,7 @@ import { db } from "../../db";
 import { duckyAi, mentionedTweets } from "../../db/schema";
 import { saveMessageToDb } from "../../db/utils";
 import { ducky, generatePrompt } from "../ducky/character";
-import { generateClaudeResponse } from "../lib/anthropic";
+import { analyzeSentiment, generateClaudeResponse } from "../lib/anthropic";
 import { getTwitterService, TwitterService } from "./index";
 
 const CONFIG = {
@@ -209,23 +209,29 @@ export class MentionBot {
         rateLimitStats: this.rateLimit.stats,
       });
 
-      if (!this.testMode) {
-        const processed = await db
-          .select()
-          .from(mentionedTweets)
-          .where(
-            and(
-              eq(mentionedTweets.id, mention.id),
-              eq(mentionedTweets.processed, true)
-            )
+      const processed = await db
+        .select()
+        .from(mentionedTweets)
+        .where(
+          and(
+            eq(mentionedTweets.id, mention.id),
+            eq(mentionedTweets.processed, true)
           )
-          .limit(1);
+        )
+        .limit(1);
 
-        if (processed.length > 0) {
-          this.logDebug(`Mention ${mention.id} already processed`);
-          return true;
-        }
+      if (processed.length > 0) {
+        this.logDebug(`Mention ${mention.id} already processed`);
+        return true;
+      }
 
+      const sentiment = await analyzeSentiment(mention.text);
+      const prompt = generatePrompt.forMention(mention.text);
+      const response = await generateClaudeResponse(
+        prompt,
+        ducky.prompts.mention.user
+      );
+      if (!this.testMode) {
         await db
           .insert(mentionedTweets)
           .values({
@@ -242,15 +248,15 @@ export class MentionBot {
             createdTimestamp: new Date(),
             searchQuery,
             mentionType: searchQuery.startsWith("@") ? "username" : "keyword",
+            sentimentPositive: sentiment[0],
+            sentimentNegative: sentiment[1],
+            sentimentHelpful: sentiment[2],
+            sentimentSarcastic: sentiment[3],
+            content: mention.text,
+            duckyReply: "",
           })
           .onConflictDoNothing();
       }
-
-      const prompt = generatePrompt.forMention(mention.text);
-      const response = await generateClaudeResponse(
-        prompt,
-        ducky.prompts.mention.user
-      );
 
       await this.logToDatabase(
         `Generated reply to ${searchQuery} from @${mention.author}: "${response}"`,

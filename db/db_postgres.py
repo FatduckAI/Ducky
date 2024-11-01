@@ -10,7 +10,9 @@ import pytz
 from dotenv import load_dotenv
 from psycopg2.extras import RealDictCursor
 
-from db.pg_schema import (ADD_TWEET_CONTENT_TO_REPLIES, ADD_TWEET_DUCKY_REPLY,
+from db.pg_schema import (ADD_SENTIMENT_ANALYSIS_COLUMNS,
+                          ADD_SENTIMENT_ANALYSIS_COLUMNS_TO_MENTIONED_TWEETS,
+                          ADD_TWEET_CONTENT_TO_REPLIES, ADD_TWEET_DUCKY_REPLY,
                           ADD_TWEET_REPLIES_SENTIMENT, FOLLOWER_INDICES,
                           MENTION_TYPE, MENTIONED_TWEETS_INDICES, PG_SCHEMA,
                           TELEGRAM_INDICES, UPDATE_DUCKY_AI_POSTED,
@@ -142,7 +144,7 @@ def ensure_db_initialized():
         else:
             print("All required tables exist")
             
-        #cursor.execute(ADD_TWEET_DUCKY_REPLY)
+        #cursor.execute(ADD_SENTIMENT_ANALYSIS_COLUMNS_TO_MENTIONED_TWEETS)
         #cursor.execute(UPDATE_USER_TABLE)
         #cursor.execute(MENTIONED_TWEETS_INDICES)
         #conn.commit()

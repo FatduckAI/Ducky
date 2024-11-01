@@ -318,3 +318,22 @@ ADD_TWEET_DUCKY_REPLY = '''
     ALTER TABLE tweet_replies
     ADD COLUMN IF NOT EXISTS ducky_reply TEXT;
 '''
+
+
+ADD_SENTIMENT_ANALYSIS_COLUMNS_TO_MENTIONED_TWEETS = '''
+    ALTER TABLE mentioned_tweets
+    ADD COLUMN IF NOT EXISTS sentiment_positive FLOAT,
+    ADD COLUMN IF NOT EXISTS sentiment_negative FLOAT,
+    ADD COLUMN IF NOT EXISTS sentiment_helpful FLOAT,
+    ADD COLUMN IF NOT EXISTS sentiment_sarcastic FLOAT,
+    ADD COLUMN IF NOT EXISTS sentiment_analyzed BOOLEAN DEFAULT FALSE,
+    ADD COLUMN IF NOT EXISTS content TEXT,
+    ADD COLUMN IF NOT EXISTS ducky_reply TEXT;
+
+    CREATE INDEX IF NOT EXISTS idx_sentiment_positive ON mentioned_tweets(sentiment_positive);
+    CREATE INDEX IF NOT EXISTS idx_sentiment_negative ON mentioned_tweets(sentiment_negative);
+    CREATE INDEX IF NOT EXISTS idx_sentiment_helpful ON mentioned_tweets(sentiment_helpful);
+    CREATE INDEX IF NOT EXISTS idx_sentiment_sarcastic ON mentioned_tweets(sentiment_sarcastic);
+    CREATE INDEX IF NOT EXISTS idx_sentiment_analyzed ON mentioned_tweets(sentiment_analyzed);
+
+'''
