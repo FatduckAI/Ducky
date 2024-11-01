@@ -13,7 +13,7 @@ import {
 export const duckyAi = pgTable("ducky_ai", {
   id: serial("id").primaryKey(),
   content: text("content").notNull(),
-  tweetId: text("tweet_id").unique(),
+  tweetId: text("tweet_id"),
   postTime: text("posttime"),
   posted: boolean("posted").default(false),
   timestamp: text("timestamp").notNull(),
@@ -74,6 +74,12 @@ export const mentionedTweets = pgTable("mentioned_tweets", {
   retryCount: integer("retry_count").notNull().default(0),
   lastRetryAt: timestamp("last_retry_at", { withTimezone: true }),
   deletedAt: timestamp("deleted_at", { withTimezone: true }),
+  sentimentPositive: real("sentiment_positive"),
+  sentimentNegative: real("sentiment_negative"),
+  sentimentHelpful: real("sentiment_helpful"),
+  sentimentSarcastic: real("sentiment_sarcastic"),
+  duckyReply: text("ducky_reply"),
+  content: text("content"),
 });
 
 export type DuckyAi = typeof duckyAi.$inferSelect;
