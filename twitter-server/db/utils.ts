@@ -90,6 +90,16 @@ export const getDuckyAiTweets = async () => {
     .limit(50);
 };
 
+export const getDuckyAiTweetsByConversationId = async (
+  conversationId: string
+) => {
+  const res = await db
+    .select()
+    .from(duckyAi)
+    .where(eq(duckyAi.tweetId, conversationId));
+  return res.length > 0;
+};
+
 export const getDuckyAiForTweetGenerationTweets = async () => {
   return await db
     .select({

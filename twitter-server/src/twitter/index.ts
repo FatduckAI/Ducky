@@ -4,6 +4,7 @@ import { Scraper, SearchMode } from "agent-twitter-client";
 import axios from "axios";
 import { db } from "../../db";
 import { duckyAi } from "../../db/schema";
+import { getDuckyAiTweetsByConversationId } from "../../db/utils";
 import type { CookieJSON, TweetResponse, TwitterReply } from "../../types";
 
 export class TwitterService {
@@ -311,9 +312,7 @@ export class TwitterService {
                 tweet.timeParsed?.toISOString() || new Date().toISOString(),
               likes: tweet.likes || 0,
               retweets: tweet.retweets || 0,
-              author_followers: tweet.userId
-                ? await this.getAuthorFollowers(tweet.userId)
-                : 0,
+              author_followers: 0,
               author_verified: false,
             }))
         );
@@ -582,10 +581,7 @@ export class TwitterService {
     };
   }
 
-  public async searchMentionsAndKeywords(
-    query: string,
-    sinceId?: string
-  ): Promise<{
+  public async searchMentionsAndKeywords(): Promise<{
     tweets: Array<{
       id: string;
       author: string;
@@ -602,16 +598,33 @@ export class TwitterService {
     try {
       await this.respectRateLimit("search");
 
-      const searchQuery = `${query} -from:duckunfiltered -is:retweet`;
+      const searchQuery = `@duckunfiltered -from:duckunfiltered`;
 
       const results = await this.scraper.fetchSearchTweets(
         searchQuery,
-        100,
+        40,
         SearchMode.Latest
       );
 
+      // Use Promise.all with filter to properly handle async operations
+      const filterTweets = await Promise.all(
+        results.tweets.map(async (tweet) => {
+          if (
+            tweet.conversationId &&
+            (await getDuckyAiTweetsByConversationId(tweet.conversationId))
+          )
+            return null;
+          if (tweet.text?.startsWith("duckunfiltered")) return null;
+          return tweet;
+        })
+      ).then((tweets) =>
+        tweets.filter(
+          (tweet): tweet is NonNullable<typeof tweet> => tweet !== null
+        )
+      );
+
       const tweets = await Promise.all(
-        results.tweets.map(async (tweet) => ({
+        filterTweets.map(async (tweet) => ({
           id: tweet.id || "",
           author: tweet.username || "",
           text: tweet.text || "",
@@ -619,9 +632,7 @@ export class TwitterService {
             tweet.timeParsed?.toISOString() || new Date().toISOString(),
           likes: tweet.likes || 0,
           retweets: tweet.retweets || 0,
-          author_followers: tweet.userId
-            ? await this.getAuthorFollowers(tweet.userId)
-            : 0,
+          author_followers: 0,
           author_verified: false,
         }))
       );
@@ -633,7 +644,6 @@ export class TwitterService {
         oldestId = tweets[tweets.length - 1].id;
         newestId = tweets[0].id;
       }
-
       return {
         tweets,
         oldestId,
