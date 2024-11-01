@@ -482,7 +482,97 @@ class DataAnalyzer:
         )
 
         return fig
-    
+      
+    def plot_simple_sentiment_timeline(self, interval='hour'):
+      """
+      Plot a simple timeline showing just positive and negative sentiment trends.
+      
+      Parameters:
+      - interval: 'hour' or 'day' to control data granularity
+      """
+      if interval == 'hour':
+          # Create timestamp column for hourly grouping
+          self.df['datetime'] = pd.to_datetime(self.df['timestamp'])
+          
+          # Group by hour
+          stats = (self.df.groupby(pd.Grouper(key='datetime', freq='H'))
+                  .agg({
+                      'sentiment_positive': 'mean',
+                      'sentiment_negative': 'mean'
+                  })
+                  .reset_index())
+          
+          # Remove rows with no data
+          stats = stats.dropna()
+          
+          x_axis = stats['datetime']
+          hover_template = '%{x|%Y-%m-%d %H:%M} <br>Score: %{y:.3f}'
+          
+      else:  # daily interval
+          # Group by date
+          stats = self.df.groupby('date').agg({
+              'sentiment_positive': 'mean',
+              'sentiment_negative': 'mean'
+          }).reset_index()
+          
+          x_axis = stats['date']
+          hover_template = '%{x|%Y-%m-%d} <br>Score: %{y:.3f}'
+      
+      # Create figure
+      fig = go.Figure()
+      
+      # Add positive sentiment line
+      fig.add_trace(
+          go.Scatter(
+              x=x_axis,
+              y=stats['sentiment_positive'],
+              name='Positive',
+              line=dict(color='green', width=2),
+              hovertemplate=hover_template
+          )
+      )
+      
+      # Add negative sentiment line
+      fig.add_trace(
+          go.Scatter(
+              x=x_axis,
+              y=stats['sentiment_negative'],
+              name='Negative',
+              line=dict(color='red', width=2),
+              hovertemplate=hover_template
+          )
+      )
+      
+      # Update layout
+      fig.update_layout(
+          title=f'Sentiment Timeline ({interval}ly intervals)',
+          xaxis_title='Time',
+          yaxis_title='Sentiment Score',
+          template='plotly_white',
+          height=400,
+          hovermode='x unified',
+          showlegend=True,
+          legend=dict(
+              yanchor="top",
+              y=0.99,
+              xanchor="left",
+              x=0.01
+          )
+      )
+      
+      # Update axes
+      fig.update_xaxes(
+          gridcolor='lightgray',
+          rangeslider_visible=True  # Add range slider for easier navigation
+      )
+      fig.update_yaxes(
+          gridcolor='lightgray',
+          zeroline=True,
+          zerolinecolor='gray',
+          zerolinewidth=1
+      )
+      
+      return fig
 """
       # Get overall sentiment stats
 print("Overall Sentiment Statistics:")
