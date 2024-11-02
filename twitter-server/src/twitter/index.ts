@@ -598,7 +598,7 @@ export class TwitterService {
     try {
       await this.respectRateLimit("search");
 
-      const searchQuery = `@duckunfiltered -from:duckunfiltered`;
+      const searchQuery = `@duckunfiltered -from:duckunfiltered -from:89logos`;
 
       const results = await this.scraper.fetchSearchTweets(
         searchQuery,
