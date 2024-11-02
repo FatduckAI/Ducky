@@ -4,3 +4,5 @@ drizzlestudio/.env
 ducky.db
 data/*
 wallet/.env
+db/__pycache__/
+*.pyc
