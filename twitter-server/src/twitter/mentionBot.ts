@@ -209,6 +209,36 @@ export class MentionBot {
         rateLimitStats: this.rateLimit.stats,
       });
 
+      // Skip mentions containing @89logos
+      if (mention.text.includes("@89logos")) {
+        this.logDebug(`Skipping mention ${mention.id} containing @89logos`);
+
+        // Mark as processed in DB so we don't process it again
+        if (!this.testMode) {
+          await db
+            .insert(mentionedTweets)
+            .values({
+              id: mention.id,
+              text: mention.text,
+              author: mention.author,
+              authorUsername: mention.author,
+              createdAt: new Date(mention.created_at),
+              likes: mention.likes,
+              retweets: mention.retweets,
+              authorFollowers: mention.author_followers,
+              authorVerified: mention.author_verified,
+              processed: true, // Mark as processed
+              createdTimestamp: new Date(),
+              searchQuery,
+              mentionType: searchQuery.startsWith("@") ? "username" : "keyword",
+              content: mention.text,
+              duckyReply: "",
+            })
+            .onConflictDoNothing();
+        }
+        return true;
+      }
+
       const processed = await db
         .select()
         .from(mentionedTweets)
