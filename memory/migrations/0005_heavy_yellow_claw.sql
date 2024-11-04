@@ -1,0 +1,1 @@
+ALTER TABLE "mentioned_tweets" ADD COLUMN "thread_depth" text DEFAULT '0';
