@@ -1,0 +1,38 @@
+{
+  "name": "twitter-server",
+  "module": "index.ts",
+  "type": "module",
+  "scripts": {
+    "start": "bun run src/server.ts",
+    "generate": "drizzle-kit generate:pg",
+    "push": "drizzle-kit push:pg",
+    "studio": "drizzle-kit studio",
+    "testTweet": "bun run src/twitter/testTweet.ts",
+    "generateReplies": "bun run src/twitter/replyBot.ts",
+    "generateTweet": "bun run src/twitter/oneOffGenerator.ts",
+    "generateCleoConvos": "bun run src/twitter/oneOffCleoConvos.ts",
+    "mentionResponse": "bun run src/twitter/mentionBot.ts",
+    "telegram": "bun run src/telegram/index.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/dotenv": "^8.2.3"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.30.1",
+    "agent-twitter-client": "^0.0.13",
+    "axios": "^1.7.7",
+    "bun-types": "^1.1.33",
+    "dayjs": "^1.11.13",
+    "dotenv": "^16.4.5",
+    "drizzle": "^1.4.0",
+    "drizzle-kit": "^0.26.2",
+    "drizzle-orm": "^0.35.3",
+    "postgres": "^3.4.5",
+    "telegraf": "^4.16.3",
+    "tough-cookie": "^5.0.0"
+  }
+}
