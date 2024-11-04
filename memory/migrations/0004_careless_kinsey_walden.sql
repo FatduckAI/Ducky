@@ -1,0 +1,1 @@
+ALTER TABLE "mentioned_tweets" RENAME COLUMN "in_reply_to_tweet_id" TO "in_reply_to_id";

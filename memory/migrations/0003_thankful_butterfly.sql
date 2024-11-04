@@ -1,0 +1,1 @@
+ALTER TABLE "mentioned_tweets" ADD COLUMN "in_reply_to_tweet_id" text;
