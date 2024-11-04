@@ -1,0 +1,1 @@
+ALTER TABLE "mentioned_tweets" ADD COLUMN "skipped_reason" text;
