@@ -1,15 +1,14 @@
 import { eq } from "drizzle-orm";
 import { DrizzleError } from "drizzle-orm/errors";
-import { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { Context, Telegraf } from "telegraf";
 import type { Message } from "telegraf/types";
 import { users } from "../../db/schema";
 
 export class WalletHandlers {
   private bot: Telegraf;
-  private db: NodePgDatabase;
+  private db: any;
 
-  constructor(bot: Telegraf, db: NodePgDatabase) {
+  constructor(bot: Telegraf, db: any) {
     this.bot = bot;
     this.db = db;
   }
