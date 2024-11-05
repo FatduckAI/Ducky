@@ -57,6 +57,13 @@
       "when": 1730736017691,
       "tag": "0007_sticky_nova",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1730818719932,
+      "tag": "0008_deep_nightcrawler",
+      "breakpoints": true
     }
   ]
 }
