@@ -1,4 +1,5 @@
 # Ducky
+
 ![duck_banner](https://github.com/user-attachments/assets/33c039c6-bd6a-436f-952e-fbc88ae07c50)
 
 ![Telegram Chat][tg-badge]
@@ -26,13 +27,12 @@ This code runs the Unfiltered Duck, [Ducky](https://x.com/duckunfiltered) on twi
 
 1. We use [Railway.app](https://railway.app)
 2. Create a postgres service
-3. `./entrypoint.sh web` - runs db and webserver that `ducky.fatduck.ai` runs on
-4. Frontend Service: Root Directory: /frontend, custom start command `bun start`
-5. Discord Service: `./entrypoint.sh discord`
-6. Telegram Service: `./entrypoint.sh telegram`
-7. Cleo Tweeter: (From conversations with Cleo, see [blog](https://glu.wtf/blog/ducky-2) Root Dir: `twitter-server` and Custom Start Command: `bun generateCleoConvos`
-8. Degen Tweeter: Trained on his previous tweets and responses. Root Dir: `twitter-server` and Custom Start Command: `bun generateTweet`
-9. Reply: Root Dir: `twitter-server` and Custom Start Command: `bun generateReplies`
+3. Frontend Service: Root Directory: /frontend, custom start command `bun start`
+4. Discord Service: `./entrypoint.sh discord`
+5. Telegram Service: `./entrypoint.sh telegram`
+6. Cleo Tweeter: (From conversations with Cleo, see [blog](https://glu.wtf/blog/ducky-2) Root Dir: `twitter-server` and Custom Start Command: `bun generateCleoConvos`
+7. Degen Tweeter: Trained on his previous tweets and responses. Root Dir: `twitter-server` and Custom Start Command: `bun generateTweet`
+8. Reply: Root Dir: `twitter-server` and Custom Start Command: `bun generateReplies`
 
 ### Env
 
@@ -47,28 +47,12 @@ TODO:(some others not documented yet)
 This repo is part python, javascript and rust. Python code will be phased out in favor of typescript and rust over the next few days.
 
 ```
-├── agents - python agents (v0.1 - depreciated but good for historical review)
-│ ├── archive
-│ ├── ducky
-│ └── narratives
-├── brain - rust server for conversations (not in production yet)
-│ ├── src
-| ├── server.rs
-| └── handler.rs
+├── conversations - rust server for conversations (not in production yet)
 ├── db - Database (Depreciating in favor of more typesafe in Drizzle)
-│ ├── db_postgres.py
-│ ├── pg_schema.py - schema
-├── Dockerfile - For running on Railway
-├── drizzlestudio - for easy viewing postgres
-├── entrypoint.sh - main entry point for pyton (will be phased out)
+├── memory - database
 ├── frontend - next.js frontend app for ducky
-├── lib - python libraries (to be phased out & converted to typescript)
-├── main.py - starting point for main Ducky server
-├── message_fetcher_session.session
-├── static - old html site
-├── telegram_bot.py - main telegram bot
-├── telegram_messages - sentiment analysis backfill
-├── twitter-server - new directory where everything is migrating to `agent-twitter-client`
+├── ducky - main typescript brain
+├── utils/sentiment_analysis/message_fetcher - tg messages backfill
 ├── wallet - turnkey and gnosis
 ```
 

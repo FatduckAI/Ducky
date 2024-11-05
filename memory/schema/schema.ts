@@ -60,7 +60,7 @@ export const narratives = pgTable("narratives", {
 });
 
 export const telegramMessages = pgTable("telegram_messages", {
-  messageId: text("message_id"),
+  messageId: text("message_id").primaryKey(),
   chatId: text("chat_id"),
   senderId: text("sender_id"),
   senderUsername: text("sender_username"),
