@@ -46,8 +46,6 @@ export const generateClaudeResponse = async (
   return textContent && "text" in textContent ? textContent.text : "";
 };
 
-// ... (previous imports remain the same)
-
 interface SentimentAnalysis {
   sentiment_scores: {
     positive: number;
@@ -89,6 +87,14 @@ Rules:
 - Do not include any explanatory text
 - Do not modify the JSON structure
 - Use the current timestamp
+
+Sentiment Rules:
+- messages about check dms are not helpful, nor positive, they should have a low negative score
+- messages that are obvious spam should have a low positive score and high negative score
+- messages that are obviously sarcastic should have a high sarcastic score
+- messages that are helpful should have a high helpful score
+
+
 
 Text to analyze: "${text}"`,
         },

@@ -602,7 +602,7 @@ export class TwitterService {
 
       const results = await this.scraper.fetchSearchTweets(
         searchQuery,
-        40,
+        10,
         SearchMode.Latest
       );
 

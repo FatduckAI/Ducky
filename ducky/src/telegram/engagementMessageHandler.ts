@@ -2,7 +2,7 @@ import { Context } from "telegraf";
 import type { Message } from "telegraf/types";
 import { db } from "../../db";
 import { telegramMessages } from "../../db/schema";
-import { analyzeSentiment } from "../lib/anthropic";
+import { analyzeSentiment } from "../lib/together.sentiment";
 
 interface MessageHandler {
   saveMessage(ctx: Context): Promise<void>;
