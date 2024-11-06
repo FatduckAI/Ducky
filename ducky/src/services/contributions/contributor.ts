@@ -1,6 +1,11 @@
 import { db } from "@/db";
 import { telegramMessages } from "@/db/schema";
+import { getUserByUsername } from "@/db/utils";
+import { ducky } from "@/src/ducky/character";
 import { generateTogetherResponse } from "@/src/lib/together";
+import { getTwitterService } from "@/src/twitter";
+import { DuckAiTokenAirdrop } from "@/src/wallet/DuckAIAirdrop";
+import { turnkeyClient } from "@/src/wallet/turnkeyClient";
 import { sql } from "drizzle-orm";
 
 interface ContributorMetrics {
@@ -90,7 +95,7 @@ ${top3Data}
 
 Return your response in this exact format:
 🚨 Weekly Engagers 🚨:
-These 5 users went above and beyond this past week. Check the telegram to claim your 69,000 $DUCKAI!
+These 5 users went above and beyond this past week. Check the telegram to claim your 6,900 $DUCKAI!
 1. [username] - [summary of reasons for selection]
 2. [username] - [summary of reasons for selection]
 3. [username] - [summary of reasons for selection]
@@ -132,9 +137,109 @@ export async function findTopContributors() {
   }
 }
 
-export const main = async () => {
-  const results = await findTopContributors();
-  console.log(results.selectedContributors.response);
-};
+export const main = async (testMode = true) => {
+  try {
+    console.log("🎯 Starting weekly contributor rewards process...");
 
-//main();
+    let results;
+    if (testMode) {
+      // Test Account
+      results = {
+        selectedContributors: {
+          response: "Test response test_user\n\n",
+          winners: ["test_user"],
+        },
+      };
+      console.log("🧪 Running in test mode with test user");
+    } else {
+      results = await findTopContributors();
+      console.log(
+        "📊 Analysis results:",
+        results.selectedContributors.response
+      );
+    }
+
+    // Get addresses for winners
+    console.log("🔍 Fetching winner addresses...");
+    const addresses = await Promise.all(
+      results.selectedContributors.winners.map(async (winner) => {
+        const user = await getUserByUsername(winner);
+        if (!user?.solanaAddress) {
+          console.log(`⚠️ No Solana address found for user: ${winner}`);
+        }
+        return user?.solanaAddress;
+      })
+    );
+
+    const validAddresses = addresses.filter((addr): addr is string => !!addr);
+    console.log(
+      `✅ Found ${validAddresses.length} valid addresses out of ${addresses.length} winners`
+    );
+
+    if (validAddresses.length === 0) {
+      console.log("⚠️ No valid addresses found for airdrop. Exiting...");
+      return;
+    }
+
+    console.log("🚀 Initializing airdrop manager...");
+    const airdropManager = new DuckAiTokenAirdrop(
+      turnkeyClient,
+      testMode
+        ? ducky.onchain.solanaDevnetAddress
+        : ducky.onchain.solanaAddress,
+      testMode
+        ? ducky.onchain.duckAiDevnetTokenAddress
+        : ducky.onchain.duckAiTokenAddress,
+      testMode
+        ? "https://api.devnet.solana.com"
+        : "https://api.mainnet-beta.solana.com"
+    );
+
+    // Perform airdrops
+    console.log("🎁 Starting airdrops...");
+
+    const signatures = await airdropManager.airdropToMultipleRecipients(
+      addresses as string[]
+    );
+
+    // Send tweet with just the AI response
+    console.log("📣 Preparing to tweet about rewards...");
+    try {
+      //if (!testMode) {
+      const twitterService = await getTwitterService();
+      const tweetResponse = await twitterService.sendTweet(
+        results.selectedContributors.response as string
+      );
+      console.log("🐦 Tweet posted successfully:", tweetResponse.url);
+      /* } else {
+        console.log(
+          "🧪 Test mode - Would tweet:",
+          results.selectedContributors.response
+        );
+      } */
+    } catch (error) {
+      console.error(
+        "⚠️ Error posting tweet (but airdrops were successful):",
+        error
+      );
+    }
+
+    console.log(`
+  🎉 Weekly contributor rewards completed!
+  📊 Summary:
+  - Total winners: ${results.selectedContributors.winners.length}
+  - Successful airdrops: ${signatures.length}
+  - Failed airdrops: ${addresses.filter(Boolean).length - signatures.length}
+  
+  🔍 Transaction Details:
+  ${signatures
+    .map((sig) => `https://explorer.solana.com/tx/${sig}?cluster=devnet`)
+    .join("\n")}
+      `);
+
+    return signatures;
+  } catch (error) {
+    console.error("❌ Error in contributor main:", error);
+    throw error;
+  }
+};

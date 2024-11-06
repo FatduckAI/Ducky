@@ -20,6 +20,12 @@ export interface DuckyCharacter {
     topP: number;
     maxTokens: number;
   };
+  onchain: {
+    solanaAddress: string;
+    solanaDevnetAddress: string;
+    duckAiTokenAddress: string;
+    duckAiDevnetTokenAddress: string;
+  };
 }
 
 interface Rule {
@@ -223,6 +229,12 @@ export const ducky: DuckyCharacter = {
     temperature: 0.7,
     topP: 0.9,
     maxTokens: 1024,
+  },
+  onchain: {
+    solanaAddress: "4WdSxAVrCFDWeTxKJ1YLZHwAwxBt4qknTCQr9DwyfSHF",
+    solanaDevnetAddress: "FGgfg7pLexNPRGM1NNEFs5pmhqLHGetNr8VfH1PgTekR",
+    duckAiTokenAddress: "HFw81sUUPBkNF5tKDanV8VCYTfVY4XbrEEPiwzyypump",
+    duckAiDevnetTokenAddress: "3XeKoHnXCJZtxvywpFSzb3NcsbR1c9JdSh77cjhdemwe",
   },
 };
 

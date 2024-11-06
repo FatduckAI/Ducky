@@ -3,7 +3,7 @@ import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
 import { and, asc, desc, eq, gt } from "drizzle-orm";
 import { db } from ".";
-import { duckyAi } from "./schema";
+import { duckyAi, users } from "./schema";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -158,4 +158,12 @@ export const saveTweetToDbNotPosted = async (content: string) => {
     postTime: timestamp,
     speaker: "Ducky",
   });
+};
+
+export const getUserByUsername = async (username: string) => {
+  const res = await db
+    .select()
+    .from(users)
+    .where(eq(users.telegramUsername, username));
+  return res[0];
 };
