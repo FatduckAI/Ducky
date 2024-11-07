@@ -84,7 +84,14 @@ export class TwitterService {
         return parts.join("; ");
       });
     } catch (error) {
-      this.logError("Could not parse cookies from environment variable", error);
+      this.logError("Could not load cookies", error);
+      // If there's any error, try to create/reset the cookies file
+      try {
+        await Bun.write(this.cookiesPath, "[]");
+        this.logDebug("Created new empty cookies file");
+      } catch (writeError) {
+        this.logError("Failed to create cookies file", writeError);
+      }
       return [];
     }
   }
