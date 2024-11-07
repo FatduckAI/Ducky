@@ -1,4 +1,5 @@
 // imageService.ts
+import { ducky } from "@/src/ducky/character";
 import dotenv from "dotenv";
 import { OpenAI } from "openai";
 
@@ -63,7 +64,7 @@ export class ImageService {
   static async generateImage(text: string): Promise<ImageGenerationResult> {
     try {
       const response = await openai.images.generate({
-        prompt: `A fat white duck with black sunglasses and a red scarf and ${text}. In a comic style.`,
+        prompt: `${ducky.imageGen.description} and ${text}. In a ${ducky.imageGen.style}.`,
         model: "black-forest-labs/FLUX.1.1-pro",
         n: 1,
       });

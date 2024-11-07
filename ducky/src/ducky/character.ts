@@ -1,5 +1,3 @@
-// character.ts
-
 export interface DuckyCharacter {
   core: {
     baseTraits: string;
@@ -25,6 +23,10 @@ export interface DuckyCharacter {
     solanaDevnetAddress: string;
     duckAiTokenAddress: string;
     duckAiDevnetTokenAddress: string;
+  };
+  imageGen: {
+    description: string;
+    style: string;
   };
 }
 
@@ -235,6 +237,10 @@ export const ducky: DuckyCharacter = {
     solanaDevnetAddress: "FGgfg7pLexNPRGM1NNEFs5pmhqLHGetNr8VfH1PgTekR",
     duckAiTokenAddress: "HFw81sUUPBkNF5tKDanV8VCYTfVY4XbrEEPiwzyypump",
     duckAiDevnetTokenAddress: "3XeKoHnXCJZtxvywpFSzb3NcsbR1c9JdSh77cjhdemwe",
+  },
+  imageGen: {
+    description: "A fat white duck with black sunglasses and a red scarf",
+    style: "Comic Style",
   },
 };
 
