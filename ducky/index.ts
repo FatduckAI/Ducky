@@ -1,26 +1,27 @@
-import { Ducky } from "./src/ducky";
-import { main as contributorMain } from "./src/services/contributions/contributor";
+import { Scraper } from "agent-twitter-client";
+import { Agent } from "./src/agent/Agent";
+import { TwitterDeliveryService } from "./src/delivery/TwitterDeliveryService";
+import { anthropicProvider } from "./src/providers/AnthropicProvider";
 
-// Create Ducky instance
-const ducky = new Ducky();
+// Initialize services
+const scraper = new Scraper(/* your config */);
+const twitterDelivery = TwitterDeliveryService.getInstance(scraper);
 
-ducky.addTask({
-  name: "Weekly Contributors",
-  description:
-    "Analyzes top contributors and airdrops DUCKAI tokens to winners",
-  cronPattern: "0 0 * * 1", // Every Monday at midnight
-  task: async () => {
-    // Use ducky's internal test mode flag
-    const isTestMode =
-      process.argv.includes("--test") || process.argv.includes("-t");
-    console.log(
-      `🦆 Running contributor rewards in ${
-        isTestMode ? "test" : "production"
-      } mode`
-    );
-    await contributorMain(isTestMode);
+// Create an agent
+const agent = new Agent({ name: "twitter-bot" });
+
+// Create a tasks
+const tweetTask = {
+  name: "daily-tweet",
+  cronPattern: "0 12 * * *", // Run at noon every day
+  systemPrompt: "You are a friendly and engaging Twitter bot...",
+  provider: anthropicProvider,
+  delivery: twitterDelivery,
+  prompt: async () => {
+    return "Generate an engaging tweet about...";
   },
-});
+};
 
-// Start all tasks
-ducky.start();
+// Add and start the task
+await agent.addTask(tweetTask);
+agent.startAll();

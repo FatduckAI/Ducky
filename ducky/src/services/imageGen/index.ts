@@ -34,7 +34,7 @@ export class ImageService {
           {
             role: "system",
             content:
-              "You are a content moderator. Analyze the following text for inappropriate content including: explicit material, violence, hate speech, or other unsafe content. Respond with a JSON object containing 'isAppropriate' (boolean) and 'reason' (string if inappropriate).",
+              'You are a content moderator. Analyze the following text for inappropriate content including: explicit material, violence, hate speech, or other unsafe content. Respond with a JSON object containing \'isAppropriate\' (boolean) and \'reason\' (string if inappropriate). Example response: {"isAppropriate": true} or {"isAppropriate": false, "reason": "Contains violent content"}',
           },
           {
             role: "user",
@@ -44,16 +44,40 @@ export class ImageService {
         response_format: { type: "json_object" },
       });
 
-      const result = JSON.parse(completion.choices[0].message.content ?? "");
-      return {
-        isAppropriate: result.isAppropriate,
-        reason: result.reason,
-      };
-    } catch (error) {
+      const content = completion.choices[0]?.message?.content;
+
+      if (!content) {
+        throw new Error("No content received from moderation API");
+      }
+      try {
+        const result = JSON.parse(content);
+
+        // Validate the response structure
+        if (typeof result.isAppropriate !== "boolean") {
+          throw new Error(
+            "Invalid response format: missing isAppropriate boolean"
+          );
+        }
+
+        return {
+          isAppropriate: result.isAppropriate,
+          reason: result.reason,
+        };
+      } catch (parseError: unknown) {
+        console.error("Failed to parse moderation response:", content);
+        const errorMessage =
+          parseError instanceof Error
+            ? parseError.message
+            : "Unknown parsing error";
+        throw new Error(`JSON parsing error: ${errorMessage}`);
+      }
+    } catch (error: unknown) {
       console.error("Error in content moderation:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
       return {
         isAppropriate: false,
-        reason: "Error during content moderation",
+        reason: `Moderation check failed: ${errorMessage}`,
       };
     }
   }
@@ -63,28 +87,43 @@ export class ImageService {
    */
   static async generateImage(text: string): Promise<ImageGenerationResult> {
     try {
+      // First moderate the content
+      const moderationResult = await this.moderateContent(text);
+
+      if (!moderationResult.isAppropriate) {
+        return {
+          success: false,
+          error: `Content moderation failed: ${moderationResult.reason}`,
+        };
+      }
+
+      // Construct a safe prompt
+      const safePrompt =
+        `${ducky.imageGen.description} and ${text}. In a ${ducky.imageGen.style}`.trim();
+
       const response = await openai.images.generate({
-        prompt: `${ducky.imageGen.description} and ${text}. In a ${ducky.imageGen.style}.`,
+        prompt: safePrompt,
         model: "black-forest-labs/FLUX.1.1-pro",
         n: 1,
       });
 
-      if (response.data[0]?.url) {
-        return {
-          success: true,
-          url: response.data[0].url,
-        };
-      } else {
-        return {
-          success: false,
-          error: "No image URL received",
-        };
+      const imageUrl = response.data[0]?.url;
+
+      if (!imageUrl) {
+        throw new Error("No image URL received from API");
       }
-    } catch (error) {
+
+      return {
+        success: true,
+        url: imageUrl,
+      };
+    } catch (error: unknown) {
       console.error("Error generating image:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
       return {
         success: false,
-        error: "Failed to generate image",
+        error: `Image generation failed: ${errorMessage}`,
       };
     }
   }

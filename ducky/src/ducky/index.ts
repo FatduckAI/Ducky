@@ -3,7 +3,7 @@ import { duckyAi } from "@/db/schema";
 import { CronJob } from "cron";
 import parse from "cronstrue";
 
-interface DuckyTask {
+export interface DuckyTask {
   name: string;
   cronPattern: string;
   description?: string;
