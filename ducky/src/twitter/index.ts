@@ -63,7 +63,19 @@ export class TwitterService {
   private async loadCookies(): Promise<string[]> {
     try {
       console.log("Loading cookies from", this.cookiesPath);
-      const cookiesJson = JSON.parse(await Bun.file(this.cookiesPath).text());
+
+      // Check if file exists, if not create it with empty array
+      const cookiesFile = Bun.file(this.cookiesPath);
+      if (!(await cookiesFile.exists())) {
+        console.log(
+          "Cookies file doesn't exist, creating empty file at",
+          this.cookiesPath
+        );
+        await Bun.write(this.cookiesPath, "[]");
+        return [];
+      }
+
+      const cookiesJson = JSON.parse(await cookiesFile.text());
       return cookiesJson.map((cookieJson: CookieJSON) => {
         const parts = [
           `${cookieJson.key}=${cookieJson.value}`,
@@ -80,6 +92,13 @@ export class TwitterService {
       });
     } catch (error) {
       this.logError("Could not load cookies", error);
+      // If there's any error, try to create/reset the cookies file
+      try {
+        await Bun.write(this.cookiesPath, "[]");
+        this.logDebug("Created new empty cookies file");
+      } catch (writeError) {
+        this.logError("Failed to create cookies file", writeError);
+      }
       return [];
     }
   }
