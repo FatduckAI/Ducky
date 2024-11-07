@@ -10,11 +10,12 @@ import { Agent } from "./Agent";
 import type { AgentTask } from "./types";
 
 async function main() {
+  const isTestMode = process.argv.includes("--test");
   // Initialize Twitter services
   const scraper = await ServiceInitializer.initialize();
   const twitterDelivery = TwitterDeliveryService.getInstance(scraper);
 
-  const agent = new Agent({ name: "ducky-bot", isTestMode: true });
+  const agent = new Agent({ name: "ducky-bot", isTestMode });
 
   // Hot Takes
   const hotTakeTask: AgentTask = {
