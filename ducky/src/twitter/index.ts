@@ -39,6 +39,7 @@ export class TwitterService {
     if (!this.telegramBotToken || !this.targetChannelId) {
       console.warn("Missing Telegram credentials");
     }
+    console.log(process.env.COOKIES_PATH);
   }
 
   private logDebug(message: string, data?: any) {
@@ -61,6 +62,7 @@ export class TwitterService {
 
   private async loadCookies(): Promise<string[]> {
     try {
+      console.log("Loading cookies from", this.cookiesPath);
       const cookiesJson = JSON.parse(await Bun.file(this.cookiesPath).text());
       return cookiesJson.map((cookieJson: CookieJSON) => {
         const parts = [
