@@ -6,6 +6,8 @@ import { db } from "../../db";
 import { duckyAi } from "../../db/schema";
 import { getDuckyAiTweetsByConversationId } from "../../db/utils";
 import type { CookieJSON, TweetResponse, TwitterReply } from "../../types";
+import { ducky, generatePrompt } from "../ducky/character";
+import { generateClaudeResponse } from "../lib/anthropic";
 
 export class TwitterService {
   private scraper: Scraper;
@@ -683,6 +685,80 @@ export class TwitterService {
   // Method to get the scraper instance (useful for direct access when needed)
   public getScraper(): Scraper {
     return this.scraper;
+  }
+
+  async generateAndSendTweet(
+    getTweetsFunction: () => Promise<any[]>,
+    testMode: boolean = false
+  ): Promise<void> {
+    try {
+      const logMessage = `Starting Tweet Generation (${
+        testMode ? "TEST MODE" : "LIVE MODE"
+      })`;
+      await this.logToDatabase(logMessage);
+
+      const tweets = await getTweetsFunction();
+      const prompt = generatePrompt.forTweet(
+        tweets.map((tweet) => tweet.content)
+      );
+      const tweetContent = await generateClaudeResponse(
+        prompt,
+        ducky.prompts.tweet.user
+      );
+
+      await this.logToDatabase(`Generated tweet: "${tweetContent}"`);
+
+      if (testMode) {
+        console.log("TEST MODE - Would tweet:", { content: tweetContent });
+        return;
+      }
+
+      const tweetResponse = await this.sendTweet(tweetContent);
+
+      if (tweetResponse.success && tweetResponse.url) {
+        await this.logToDatabase(
+          `Successfully posted tweet: ${tweetResponse.url}`
+        );
+      } else {
+        throw new Error("Failed to post tweet");
+      }
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      await this.logToDatabase(`Error in Tweet Generation: ${errorMessage}`);
+      throw error;
+    }
+  }
+
+  async generateAndSendAnnouncement(content: string): Promise<TweetResponse> {
+    try {
+      await this.respectRateLimit("tweet");
+      await this.ensureLoggedIn();
+
+      const response = await this.scraper.sendTweet(content);
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Twitter API error: ${response.status} ${errorText}`);
+      }
+
+      const tweetId = await this.extractTweetId(response);
+      const tweetUrl = `https://twitter.com/i/status/${tweetId}`;
+
+      await this.saveTweetToDatabase(content, tweetId);
+      await this.logToDatabase(
+        `Posted weekly contributor announcement: ${tweetUrl}`
+      );
+
+      return { success: true, url: tweetUrl };
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      this.logError("Error sending announcement tweet", error);
+      await this.logToDatabase(
+        `Error sending announcement tweet: ${errorMessage}`
+      );
+      return { success: false, error: errorMessage };
+    }
   }
 }
 

@@ -45,6 +45,7 @@
     "drizzle-kit": "^0.26.2",
     "drizzle-orm": "^0.35.3",
     "ethers": "^6.13.4",
+    "neverthrow": "^8.1.1",
     "openai": "^4.71.1",
     "postgres": "^3.4.5",
     "telegraf": "^4.16.3",
