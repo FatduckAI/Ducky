@@ -1,3 +1,5 @@
+import { db } from "@/db";
+import { duckyAi } from "@/db/schema";
 import { CronJob } from "cron";
 import parse from "cronstrue";
 
@@ -24,6 +26,19 @@ export class Ducky {
     this.processArguments();
   }
 
+  private async logToDatabase(message: string, speaker = "System") {
+    if (!this.isTestMode) {
+      await db.insert(duckyAi).values({
+        content: message,
+        timestamp: new Date().toISOString(),
+        speaker,
+        posted: false,
+      });
+    } else {
+      console.log("TEST MODE - Would log to DB:", { message, speaker });
+    }
+  }
+
   private processArguments(): void {
     // Use Bun's built-in arg parser
     const args = Bun.argv;
@@ -36,16 +51,17 @@ export class Ducky {
     }
   }
 
-  public addTask(config: DuckyTask): boolean {
+  public async addTask(config: DuckyTask): Promise<boolean> {
     try {
       this.taskList.push(config);
       const taskNumber = this.taskList.length;
 
       if (!this.isTestMode && !this.isHelpMode) {
-        const task = new CronJob(config.cronPattern, async () => {
+        await this.executeTask(config);
+        /* const task = new CronJob(config.cronPattern, async () => {
           await this.executeTask(config);
-        });
-        this.tasks.set(config.name, task);
+        }); */
+        //this.tasks.set(config.name, task);
         console.log(`🦆 Added task ${taskNumber}: ${config.name}`);
       }
       return true;
@@ -115,11 +131,17 @@ export class Ducky {
     // Always show task list at startup
     if (!this.isHelpMode) {
       console.log("\n🦆 Starting Ducky with the following tasks:");
+      await this.logToDatabase("🦆 Starting Ducky with the following tasks:");
       console.log("----------------------------------------");
-      this.taskList.forEach((task, index) => {
+      await this.logToDatabase("----------------------------------------");
+      this.taskList.forEach(async (task, index) => {
         console.log(`${index + 1}. ${task.name} (${task.cronPattern})`);
+        await this.logToDatabase(
+          `${index + 1}. ${task.name} (${task.cronPattern})`
+        );
       });
       console.log("----------------------------------------\n");
+      await this.logToDatabase("----------------------------------------");
     }
 
     if (this.isHelpMode) {
