@@ -62,20 +62,13 @@ export class TwitterService {
 
   private async loadCookies(): Promise<string[]> {
     try {
-      console.log("Loading cookies from", this.cookiesPath);
-
-      // Check if file exists, if not create it with empty array
-      const cookiesFile = Bun.file(this.cookiesPath);
-      if (!(await cookiesFile.exists())) {
-        console.log(
-          "Cookies file doesn't exist, creating empty file at",
-          this.cookiesPath
-        );
-        await Bun.write(this.cookiesPath, "[]");
+      const cookiesEnv = process.env.TWITTER_COOKIES;
+      if (!cookiesEnv) {
+        this.logDebug("No cookies found in environment variables");
         return [];
       }
 
-      const cookiesJson = JSON.parse(await cookiesFile.text());
+      const cookiesJson: CookieJSON[] = JSON.parse(cookiesEnv);
       return cookiesJson.map((cookieJson: CookieJSON) => {
         const parts = [
           `${cookieJson.key}=${cookieJson.value}`,
