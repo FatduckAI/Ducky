@@ -1,4 +1,5 @@
 import { Scraper } from "agent-twitter-client";
+import axios from "axios";
 import { desc, eq } from "drizzle-orm";
 import { db } from "../../db";
 import { duckyAi } from "../../db/schema";
@@ -7,6 +8,8 @@ import type { DeliverySystem } from "../agent/types";
 export class TwitterDeliveryService implements DeliverySystem {
   type: "twitter" = "twitter";
   private scraper: Scraper;
+  private telegramBotToken: string;
+  private targetChannelId: string;
   private static instance: TwitterDeliveryService;
   private lastTweetTime: number = 0;
 
@@ -16,13 +19,27 @@ export class TwitterDeliveryService implements DeliverySystem {
     MIN_DELAY_BETWEEN_TWEETS: 3000,
   };
 
-  private constructor(scraper: Scraper) {
+  private constructor(
+    scraper: Scraper,
+    telegramBotToken: string,
+    targetChannelId: string
+  ) {
     this.scraper = scraper;
+    this.telegramBotToken = telegramBotToken;
+    this.targetChannelId = targetChannelId;
   }
 
-  public static getInstance(scraper: Scraper): TwitterDeliveryService {
+  public static getInstance(
+    scraper: Scraper,
+    telegramBotToken: string,
+    targetChannelId: string
+  ): TwitterDeliveryService {
     if (!TwitterDeliveryService.instance) {
-      TwitterDeliveryService.instance = new TwitterDeliveryService(scraper);
+      TwitterDeliveryService.instance = new TwitterDeliveryService(
+        scraper,
+        telegramBotToken,
+        targetChannelId
+      );
     }
     return TwitterDeliveryService.instance;
   }
@@ -112,6 +129,7 @@ export class TwitterDeliveryService implements DeliverySystem {
         conversationId: replyToTweetId,
         speaker: "Ducky",
       });
+      await this.sendTelegramNotification(content, tweetUrl);
 
       await this.logToDatabase(`Successfully posted tweet: ${tweetUrl}`);
       this.lastTweetTime = Date.now();
@@ -121,6 +139,32 @@ export class TwitterDeliveryService implements DeliverySystem {
         error instanceof Error ? error.message : String(error);
       await this.logToDatabase(`Error sending tweet: ${errorMessage}`);
       throw error;
+    }
+  }
+
+  protected async sendTelegramNotification(
+    content: string,
+    tweetUrl: string,
+    replyTweetUrl?: string
+  ) {
+    if (!this.telegramBotToken || !this.targetChannelId) return;
+
+    const message = replyTweetUrl
+      ? `🦆 Replying...\n\n'${content}'\n\n${tweetUrl}\n\n`
+      : `🦆 Tweeting...\n\n'${content}'\n\n${tweetUrl}`;
+
+    try {
+      await axios.post(
+        `https://api.telegram.org/bot${this.telegramBotToken}/sendMessage`,
+        {
+          chat_id: this.targetChannelId,
+          text: message,
+          disable_web_page_preview: false,
+        }
+      );
+    } catch (error) {
+      console.error("Error sending Telegram notification", error);
+      // Don't throw - this is non-critical
     }
   }
 

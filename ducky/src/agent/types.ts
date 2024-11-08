@@ -25,6 +25,7 @@ export interface DeliverySystem {
 export interface AgentTask {
   name: string;
   production: boolean;
+  ai?: boolean;
   description?: string;
   cronPattern?: string;
   systemPrompt: string;
