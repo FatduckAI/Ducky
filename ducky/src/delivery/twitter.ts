@@ -60,13 +60,30 @@ export class TwitterDeliveryService implements DeliverySystem {
 
   private async extractTweetId(response: Response): Promise<string> {
     const data = await response.json();
+
+    // Log the response structure for debugging
+    console.log("Twitter API Response:", JSON.stringify(data, null, 2));
+
+    // Try all possible paths to find the tweet ID
     const tweetId =
+      // New Twitter API v2 path
+      data?.data?.id ||
+      // Legacy API path
       data?.rest_id ||
-      data?.data?.tweet?.rest_id ||
-      data?.data?.create_tweet?.tweet_results?.result?.rest_id;
+      // Alternative v2 paths
+      data?.data?.tweet?.id ||
+      data?.data?.create_tweet?.tweet_id ||
+      // Nested results path
+      data?.data?.create_tweet?.tweet_results?.result?.rest_id ||
+      // Deep nested path for quoted/replied tweets
+      data?.data?.create_tweet?.tweet_results?.result?.tweet?.rest_id;
 
     if (!tweetId) {
-      throw new Error("Could not find tweet ID in response");
+      console.error("Failed to extract tweet ID from response:", data);
+      throw new Error(
+        "Could not find tweet ID in response. Response structure: " +
+          JSON.stringify(data, null, 2)
+      );
     }
 
     return tweetId;
