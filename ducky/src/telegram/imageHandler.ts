@@ -30,7 +30,7 @@ export class ImageHandler {
         return;
       }
 
-      await ctx.reply("🎨 Generating your duck image...");
+      await ctx.reply("🎨 Generating...");
 
       // Generate image
       const imageResult = await ImageService.generateImage(text);

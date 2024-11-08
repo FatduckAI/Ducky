@@ -72,7 +72,7 @@ export class TwitterDeliveryService implements DeliverySystem {
     return tweetId;
   }
 
-  async send(content: string, replyToTweetId?: string): Promise<void> {
+  async send(content: string, replyToTweetId?: string): Promise<string> {
     try {
       await this.respectRateLimit();
 
@@ -98,6 +98,7 @@ export class TwitterDeliveryService implements DeliverySystem {
 
       await this.logToDatabase(`Successfully posted tweet: ${tweetUrl}`);
       this.lastTweetTime = Date.now();
+      return tweetId;
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);

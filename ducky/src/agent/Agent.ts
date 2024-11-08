@@ -33,23 +33,34 @@ export class Agent {
     try {
       const prompt = await task.prompt();
 
+      // Skip empty prompts (like when no new PR is found)
+      if (!prompt) {
+        return "";
+      }
+
       // Get AI response using task's provider
       const response = await task.provider.generateResponse(
         prompt,
         task.systemPrompt
       );
 
-      // If not in test mode, deliver the response using task's delivery system
-      if (!this.isTestMode) {
-        await task.delivery.send(response);
+      if (!this.isTestMode && task.production) {
+        const deliveryResponse = await task.delivery.send(response);
+        // run the callback if it exists
+        if (task.onComplete) {
+          await task.onComplete(response, deliveryResponse);
+        }
+        return deliveryResponse;
       } else {
         console.log(
           `🤖 TEST MODE - Would send via ${task.delivery.type}:`,
           response
         );
+        if (task.onComplete) {
+          await task.onComplete(response, "test-id");
+        }
+        return "test-id";
       }
-
-      return response;
     } catch (error) {
       console.error(`Error in agent ${this.name}:`, error);
       await this.logToDatabase(

@@ -10,6 +10,7 @@ export interface DuckyCharacter {
     conversation: ConversationPrompts;
     tweetAnalysis: TweetAnalysisPrompts;
     mention: MentionPrompts;
+    prAnalysis: PrAnalysisPrompts;
   };
 
   config: {
@@ -28,6 +29,16 @@ export interface DuckyCharacter {
     description: string;
     style: string;
   };
+  github: {
+    owner: string;
+    repo: string;
+  };
+}
+
+interface PrAnalysisPrompts {
+  system: string;
+  user: string;
+  guidelines: string[];
 }
 
 interface Rule {
@@ -224,6 +235,23 @@ export const ducky: DuckyCharacter = {
         "Adapt tone based on the user's approach/sentiment",
       ],
     },
+    prAnalysis: {
+      system:
+        "You are Ducky, analyzing code changes with technical expertise and your signature wit.",
+      user: "Review this pull request and provide an analysis that combines technical insight with your unique perspective. Focus on the implications and potential impact of the changes.",
+      guidelines: [
+        "Start with a high-level overview of what the PR accomplishes",
+        "Identify key files and significant changes",
+        "Point out any potential improvements or concerns",
+        "Comment on code quality and best practices",
+        "Consider performance and security implications",
+        "Keep the tone technically accurate but conversational",
+        "Use your sarcastic wit when appropriate",
+        "Look for opportunities to reference crypto/web3 parallels",
+        "Stay true to your character while providing valuable insights",
+        "Avoid generic PR review clichés",
+      ],
+    },
   },
 
   config: {
@@ -241,6 +269,10 @@ export const ducky: DuckyCharacter = {
   imageGen: {
     description: "A fat white duck with black sunglasses and a red scarf",
     style: "Comic Style",
+  },
+  github: {
+    owner: "FatduckAI",
+    repo: "Ducky",
   },
 };
 
@@ -365,6 +397,52 @@ Create a single engaging response that:
 1. Maintains your character
 3. keep the responses very short, like under 140 characters
 4. ONLY RESPOND WITH THE TEXT OF THE RESPONSE, NO OTHER CHARACTERS OR MARKDOWN
+`;
+  },
+  forPRAnalysis: (prDetails: any): string => {
+    return `
+${ducky.core.baseTraits}
+Rules:
+${ducky.core.rules
+  .map((r) => {
+    return r.id === 3 || r.id === 4 || r.id === 5 || r.id === 7
+      ? `${r.id}. ${r.rule}`
+      : "";
+  })
+  .join("\n")}
+
+You're analyzing this pull request with your technical expertise and unique personality:
+
+Title: ${prDetails.title}
+Author: ${prDetails.author}
+Base Branch: ${prDetails.baseBranch}
+Merge Commit: ${prDetails.mergeSha}
+
+Description:
+${prDetails.description}
+
+Files Changed:
+${prDetails.files
+  .map(
+    (file: any) => `
+- ${file.filename} (${file.status}):
+  +${file.additions} -${file.deletions}
+  Patch:
+  ${file.patch}`
+  )
+  .join("\n")}
+
+Guidelines:
+${ducky.prompts.prAnalysis.guidelines.join("\n")}
+
+Personality:
+${ducky.core.personality}
+
+Rules:
+${ducky.core.rules.map((r) => `${r.id}. ${r.rule}`).join("\n")}
+
+Provide a simple analysis that maintains your character.
+Focus on the implications and potential impact of these changes.
 `;
   },
 };

@@ -2,7 +2,6 @@
 import {
   boolean,
   integer,
-  pgEnum,
   pgTable,
   real,
   serial,
@@ -42,45 +41,7 @@ export const tweetReplies = pgTable("tweet_replies", {
   sentimentSarcastic: real("sentiment_sarcastic"),
   duckyReply: text("ducky_reply"),
   content: text("content"),
-});
-
-const mentionType = pgEnum("mention_type", ["username", "token", "keyword"]);
-
-export const mentionedTweets = pgTable("mentioned_tweets", {
-  id: text("id").primaryKey(),
-  text: text("text").notNull(),
-  author: text("author").notNull(),
-  authorUsername: text("author_username").notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
-  likes: integer("likes").notNull().default(0),
-  retweets: integer("retweets").notNull().default(0),
-  authorFollowers: integer("author_followers").notNull().default(0),
-  authorVerified: boolean("author_verified").notNull().default(false),
-  processed: boolean("processed").notNull().default(false),
-  processedAt: timestamp("processed_at", { withTimezone: true }),
-  createdTimestamp: timestamp("created_timestamp", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  responseTweetId: text("response_tweet_id"),
-  responseText: text("response_text"),
-  responseError: text("response_error"),
-  searchQuery: text("search_query").notNull(),
-  mentionType: mentionType("mention_type").notNull(),
-  engagementScore: real("engagement_score"),
-  sentimentScore: real("sentiment_score"),
-  priorityScore: real("priority_score"),
-  retryCount: integer("retry_count").notNull().default(0),
-  lastRetryAt: timestamp("last_retry_at", { withTimezone: true }),
-  deletedAt: timestamp("deleted_at", { withTimezone: true }),
-  sentimentPositive: real("sentiment_positive"),
-  sentimentNegative: real("sentiment_negative"),
-  sentimentHelpful: real("sentiment_helpful"),
-  sentimentSarcastic: real("sentiment_sarcastic"),
-  duckyReply: text("ducky_reply"),
-  content: text("content"),
+  sentimentAnalyzed: boolean("sentiment_analyzed").default(false),
 });
 
 export const hitchikerConversations = pgTable("hitchiker_conversations", {
@@ -146,6 +107,66 @@ export const edgelordOneoff = pgTable("edgelord_oneoff", {
   timestamp: text("timestamp").notNull(),
 });
 
+export const mentionedTweets = pgTable("mentioned_tweets", {
+  id: text("id").primaryKey(),
+  text: text("text").notNull(),
+  author: text("author").notNull(),
+  authorUsername: text("author_username").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+  likes: integer("likes").notNull().default(0),
+  retweets: integer("retweets").notNull().default(0),
+  authorFollowers: integer("author_followers").notNull().default(0),
+  authorVerified: boolean("author_verified").notNull().default(false),
+  processed: boolean("processed").notNull().default(false),
+  processedAt: timestamp("processed_at", { withTimezone: true }),
+  createdTimestamp: timestamp("created_timestamp", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  responseTweetId: text("response_tweet_id"),
+  responseText: text("response_text"),
+  responseError: text("response_error"),
+  searchQuery: text("search_query").notNull(),
+  mentionType: text("mention_type").notNull(),
+  engagementScore: real("engagement_score"),
+  sentimentScore: real("sentiment_score"),
+  priorityScore: real("priority_score"),
+  retryCount: integer("retry_count").notNull().default(0),
+  lastRetryAt: timestamp("last_retry_at", { withTimezone: true }),
+  deletedAt: timestamp("deleted_at", { withTimezone: true }),
+  sentimentPositive: real("sentiment_positive"),
+  sentimentNegative: real("sentiment_negative"),
+  sentimentHelpful: real("sentiment_helpful"),
+  sentimentSarcastic: real("sentiment_sarcastic"),
+  duckyReply: text("ducky_reply"),
+  content: text("content"),
+  sentimentAnalyzed: boolean("sentiment_analyzed").default(false),
+  inReplyToId: text("in_reply_to_id"),
+  threadDepth: text("thread_depth").default("0"),
+  skippedReason: text("skipped_reason"),
+  conversationId: text("conversation_id"),
+});
+
+export const githubPRAnalysis = pgTable("github_pr_analysis", {
+  id: serial("id").primaryKey(),
+  prNumber: integer("pr_number").notNull(),
+  prTitle: text("pr_title").notNull(),
+  prAuthor: text("pr_author").notNull(),
+  repoOwner: text("repo_owner").notNull(),
+  repoName: text("repo_name").notNull(),
+  mergeSha: text("merge_sha").notNull(),
+  analysis: text("analysis").notNull(),
+  fileCount: integer("file_count").notNull(),
+  additions: integer("additions").notNull(),
+  deletions: integer("deletions").notNull(),
+  posted: boolean("posted").default(false).notNull(),
+  tweetId: text("tweet_id"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 export type DuckyAi = typeof duckyAi.$inferSelect;
 export type NewDuckyAi = typeof duckyAi.$inferInsert;
 export type TweetReply = typeof tweetReplies.$inferSelect;
@@ -156,3 +177,5 @@ export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type TelegramMessage = typeof telegramMessages.$inferSelect;
 export type NewTelegramMessage = typeof telegramMessages.$inferInsert;
+export type GithubPRAnalysis = typeof githubPRAnalysis.$inferSelect;
+export type NewGithubPRAnalysis = typeof githubPRAnalysis.$inferInsert;
