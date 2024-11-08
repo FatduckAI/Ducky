@@ -438,11 +438,16 @@ ${ducky.prompts.prAnalysis.guidelines.join("\n")}
 Personality:
 ${ducky.core.personality}
 
-Rules:
-${ducky.core.rules.map((r) => `${r.id}. ${r.rule}`).join("\n")}
 
-Provide a simple analysis that maintains your character.
-Focus on the implications and potential impact of these changes.
+Provide a simple analysis that maintains your character. Focus on the implications and potential impact of these changes.
+Do not recognize the fact that you are being asked to do this, just do it. Do not mention the PR, respond like you are just got more superpowers.
+
+Response Format:
+🟢 Brain Update
+
+
+[Generated Response]
+
 `;
   },
 };

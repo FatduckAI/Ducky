@@ -67,12 +67,12 @@ async function main() {
       await githubService.savePRAnalysis(content, tweetId);
     },
     systemPrompt: ducky.prompts.prAnalysis.system,
-    production: false,
+    production: true,
   };
 
   // Add tasks to agent
-  await agent.addTask(hotTakeTask);
-  await agent.addTask(distinctTweetTask);
+  //await agent.addTask(hotTakeTask);
+  //await agent.addTask(distinctTweetTask);
   await agent.addTask(prAnalysisTask);
 
   if (!isTestMode) {
