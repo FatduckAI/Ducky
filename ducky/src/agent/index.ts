@@ -71,8 +71,8 @@ async function main() {
   };
 
   // Add tasks to agent
-  //await agent.addTask(hotTakeTask);
-  //await agent.addTask(distinctTweetTask);
+  await agent.addTask(hotTakeTask);
+  await agent.addTask(distinctTweetTask);
   await agent.addTask(prAnalysisTask);
 
   if (!isTestMode) {
