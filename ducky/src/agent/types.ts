@@ -18,18 +18,25 @@ export interface AIProvider {
 
 export interface DeliverySystem {
   type: string;
-  send: (content: string, replyToId?: string) => Promise<void>;
+  send: (content: string) => Promise<string>;
   getRecentMessages?: () => Promise<string[]>;
 }
 
 export interface AgentTask {
   name: string;
+  production: boolean;
   description?: string;
   cronPattern?: string;
   systemPrompt: string;
   prompt: () => Promise<string>;
   provider: AIProvider;
   delivery: DeliverySystem;
+  onComplete?: (content: string, deliveryId: string) => Promise<void>;
+}
+
+export interface WebhookTask extends AgentTask {
+  validateEvent: (payload: any) => boolean;
+  preparePrompt: (payload: any) => Promise<string>;
 }
 
 export interface PromptContext {
@@ -52,4 +59,10 @@ export interface PromptOutput {
 export interface RAGSystem {
   getContext: () => Promise<any>;
   processContext?: (context: any) => any;
+}
+
+export interface Tweet {
+  id: string;
+  content: string;
+  url: string;
 }

@@ -3,7 +3,7 @@ import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
 import { and, asc, desc, eq, gt } from "drizzle-orm";
 import { db } from ".";
-import { duckyAi, users } from "./schema";
+import { duckyAi, githubPRAnalysis, users } from "./schema";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -167,3 +167,42 @@ export const getUserByUsername = async (username: string) => {
     .where(eq(users.telegramUsername, username));
   return res[0];
 };
+
+export async function checkPRAnalysisExists(
+  prNumber: number,
+  repoOwner: string,
+  repoName: string
+): Promise<boolean> {
+  const existing = await db
+    .select({ id: githubPRAnalysis.id })
+    .from(githubPRAnalysis)
+    .where(
+      and(
+        eq(githubPRAnalysis.prNumber, prNumber),
+        eq(githubPRAnalysis.repoOwner, repoOwner),
+        eq(githubPRAnalysis.repoName, repoName)
+      )
+    )
+    .limit(1);
+
+  return existing.length > 0;
+}
+
+export async function savePRAnalysis(analysisData: {
+  prNumber: number;
+  prTitle: string;
+  prAuthor: string;
+  repoOwner: string;
+  repoName: string;
+  mergeSha: string;
+  analysis: string;
+  fileCount: number;
+  additions: number;
+  deletions: number;
+  tweetId?: string;
+}) {
+  return db.insert(githubPRAnalysis).values({
+    ...analysisData,
+    posted: !!analysisData.tweetId,
+  });
+}

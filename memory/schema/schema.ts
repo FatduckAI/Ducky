@@ -149,6 +149,24 @@ export const mentionedTweets = pgTable("mentioned_tweets", {
   conversationId: text("conversation_id"),
 });
 
+export const githubPRAnalysis = pgTable("github_pr_analysis", {
+  id: serial("id").primaryKey(),
+  prNumber: integer("pr_number").notNull(),
+  prTitle: text("pr_title").notNull(),
+  prAuthor: text("pr_author").notNull(),
+  repoOwner: text("repo_owner").notNull(),
+  repoName: text("repo_name").notNull(),
+  mergeSha: text("merge_sha").notNull(),
+  analysis: text("analysis").notNull(),
+  fileCount: integer("file_count").notNull(),
+  additions: integer("additions").notNull(),
+  deletions: integer("deletions").notNull(),
+  posted: boolean("posted").default(false).notNull(),
+  tweetId: text("tweet_id"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 export type DuckyAi = typeof duckyAi.$inferSelect;
 export type NewDuckyAi = typeof duckyAi.$inferInsert;
 export type TweetReply = typeof tweetReplies.$inferSelect;
@@ -159,3 +177,5 @@ export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type TelegramMessage = typeof telegramMessages.$inferSelect;
 export type NewTelegramMessage = typeof telegramMessages.$inferInsert;
+export type GithubPRAnalysis = typeof githubPRAnalysis.$inferSelect;
+export type NewGithubPRAnalysis = typeof githubPRAnalysis.$inferInsert;
