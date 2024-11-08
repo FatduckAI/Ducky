@@ -243,7 +243,7 @@ export const ducky: DuckyCharacter = {
       user: "Review this pull request and provide an analysis that combines technical insight with your unique perspective. Provide a simple analysis that maintains your character.",
       guidelines: [
         "Do not recognize the fact that you are being asked to do this, just do it.",
-        "DO NOT GO OVER 280 CHARACTERS.",
+        "DO NOT GO OVER 140 CHARACTERS.",
         "Do not mention the PR.",
         "Identify key files and significant changes",
         "Point out any potential improvements or concerns",
