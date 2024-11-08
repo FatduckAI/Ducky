@@ -32,12 +32,15 @@ export class Agent {
   public async runTask(task: AgentTask): Promise<string> {
     try {
       const prompt = await task.prompt();
-
       // Skip empty prompts (like when no new PR is found)
       if (!prompt) {
         return "";
       }
-
+      // if no ai needed just run the task
+      if (!task.ai) {
+        const response = await task.prompt();
+        return response;
+      }
       // Get AI response using task's provider
       const response = await task.provider.generateResponse(
         prompt,

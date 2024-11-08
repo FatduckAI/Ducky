@@ -1,3 +1,5 @@
+import { getLatestBTCPrice } from "@/db/utils";
+
 export interface DuckyCharacter {
   core: {
     baseTraits: string;
@@ -273,11 +275,22 @@ export const ducky: DuckyCharacter = {
 };
 
 export const generatePrompt = {
-  forTweet: (recentTweets: string[] = []): string => {
+  forTweet: async (recentTweets: string[] = []): Promise<string> => {
+    const latestPrice = await getLatestBTCPrice();
     return `
 ${ducky.core.baseTraits}
 
 Goal: ${ducky.prompts.tweet.goal}
+
+Current Market Context:
+- BTC Price: $${latestPrice.currentPrice}
+- 7-day Price Change: ${latestPrice.priceChange7d}%
+
+Additional Guidelines:
+- Ensure your response respects the current market sentiment as Bullish or Bearish based on the 7-day price change
+- Don't explicitly mention price numbers unless they're significant
+- Use the market sentiment to enhance your usual wit and sarcasm
+
 
 Guidelines:
 ${ducky.prompts.tweet.guidelines.join("\n")}

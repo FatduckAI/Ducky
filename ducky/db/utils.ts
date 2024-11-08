@@ -3,7 +3,7 @@ import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
 import { and, asc, desc, eq, gt } from "drizzle-orm";
 import { db } from ".";
-import { duckyAi, githubPRAnalysis, users } from "./schema";
+import { btcPriceData, duckyAi, githubPRAnalysis, users } from "./schema";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -206,3 +206,12 @@ export async function savePRAnalysis(analysisData: {
     posted: !!analysisData.tweetId,
   });
 }
+
+export const getLatestBTCPrice = async () => {
+  const res = await db
+    .select()
+    .from(btcPriceData)
+    .orderBy(desc(btcPriceData.timestamp))
+    .limit(1);
+  return res[0];
+};

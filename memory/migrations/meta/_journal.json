@@ -71,6 +71,13 @@
       "when": 1731076621918,
       "tag": "0009_familiar_sabretooth",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1731103709451,
+      "tag": "0010_slimy_supernaut",
+      "breakpoints": true
     }
   ]
 }

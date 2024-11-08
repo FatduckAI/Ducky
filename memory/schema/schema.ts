@@ -167,6 +167,13 @@ export const githubPRAnalysis = pgTable("github_pr_analysis", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+export const btcPriceData = pgTable("btc_price_data", {
+  id: serial("id").primaryKey(),
+  timestamp: timestamp("timestamp").defaultNow(),
+  currentPrice: integer("current_price"),
+  priceChange7d: integer("price_change_7d"),
+});
+
 export type DuckyAi = typeof duckyAi.$inferSelect;
 export type NewDuckyAi = typeof duckyAi.$inferInsert;
 export type TweetReply = typeof tweetReplies.$inferSelect;
@@ -179,3 +186,5 @@ export type TelegramMessage = typeof telegramMessages.$inferSelect;
 export type NewTelegramMessage = typeof telegramMessages.$inferInsert;
 export type GithubPRAnalysis = typeof githubPRAnalysis.$inferSelect;
 export type NewGithubPRAnalysis = typeof githubPRAnalysis.$inferInsert;
+export type BtcPriceData = typeof btcPriceData.$inferSelect;
+export type NewBtcPriceData = typeof btcPriceData.$inferInsert;
