@@ -1,0 +1,1 @@
+ALTER TABLE "generic_data" ADD COLUMN "description" text DEFAULT 'Default description' NOT NULL;
