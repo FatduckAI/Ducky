@@ -174,6 +174,20 @@ export const btcPriceData = pgTable("btc_price_data", {
   priceChange7d: integer("price_change_7d"),
 });
 
+export const finetuneTweets = pgTable("finetune_tweets", {
+  id: serial("id").primaryKey(),
+  content: text("content").notNull(),
+  tweetId: text("tweet_id").unique(),
+  userId: text("user_id").notNull(),
+  timestamp: text("timestamp").notNull(),
+});
+
+export const genericData = pgTable("generic_data", {
+  id: serial("id").primaryKey(),
+  description: text("description").notNull().default("Default description"),
+  content: text("content").notNull(),
+});
+
 export type DuckyAi = typeof duckyAi.$inferSelect;
 export type NewDuckyAi = typeof duckyAi.$inferInsert;
 export type TweetReply = typeof tweetReplies.$inferSelect;
@@ -188,3 +202,5 @@ export type GithubPRAnalysis = typeof githubPRAnalysis.$inferSelect;
 export type NewGithubPRAnalysis = typeof githubPRAnalysis.$inferInsert;
 export type BtcPriceData = typeof btcPriceData.$inferSelect;
 export type NewBtcPriceData = typeof btcPriceData.$inferInsert;
+export type FinetuneTweet = typeof finetuneTweets.$inferSelect;
+export type NewFinetuneTweet = typeof finetuneTweets.$inferInsert;

@@ -7,22 +7,27 @@ import { TwitterDeliveryService } from "../delivery/twitter";
 import { ServiceInitializer } from "../delivery/twitter.init";
 import { ducky, generatePrompt } from "../ducky/character";
 import { anthropicProvider } from "../providers/anthropic";
+import { ollamaProvider } from "../providers/ollama";
+import { togetherProvider } from "../providers/together";
 import { fetchBTCPriceData } from "../services/coingecko/price";
 import { createGitHubService } from "../services/github";
 import { Agent } from "./Agent";
-import type { AgentTask } from "./types";
+import type { AgentTask, DeliverySystem } from "./types";
 
 async function main() {
   const isTestMode = process.argv.includes("--test");
 
   const agent = new Agent({ name: "ducky-bot", isTestMode });
   // Initialize Twitter services
-  const scraper = await ServiceInitializer.initialize();
-  const twitterDelivery = TwitterDeliveryService.getInstance(
-    scraper,
-    process.env.TELEGRAM_BOT_TOKEN!,
-    process.env.TARGET_CHANNEL_ID!
-  );
+  let twitterDelivery: DeliverySystem = new ConsoleDeliveryService();
+  if (!isTestMode) {
+    const scraper = await ServiceInitializer.initialize();
+    twitterDelivery = TwitterDeliveryService.getInstance(
+      scraper,
+      process.env.TELEGRAM_BOT_TOKEN!,
+      process.env.TARGET_CHANNEL_ID!
+    );
+  }
   // Initialize GitHub service with the agent
   const githubService = createGitHubService(process.env.GITHUB_TOKEN!);
 
@@ -32,8 +37,8 @@ async function main() {
     description: "Generate and post hot take",
     ai: true,
     cronPattern: "10 * * * *", // At 10 minutes past the hour
-    provider: anthropicProvider,
-    delivery: twitterDelivery,
+    provider: ollamaProvider,
+    delivery: isTestMode ? new ConsoleDeliveryService() : twitterDelivery,
     prompt: async () => {
       const tweets = await getDuckyAiForTweetGenerationTweets();
       return await generatePrompt.forTweet(tweets.map((t) => t.content));
@@ -48,8 +53,8 @@ async function main() {
     description: "Generate and post distinct tweet",
     ai: true,
     cronPattern: "50 * * * *", // At 50 minutes past the hour
-    provider: anthropicProvider,
-    delivery: twitterDelivery,
+    provider: togetherProvider,
+    delivery: isTestMode ? new ConsoleDeliveryService() : twitterDelivery,
     prompt: async () => {
       const tweets = await getDuckyAiForTweetGenerationCleo();
       return await generatePrompt.forTweet(tweets.map((t) => t.content));
@@ -65,7 +70,7 @@ async function main() {
     ai: true,
     cronPattern: "*/10 * * * *", // Every 10 minutes
     provider: anthropicProvider,
-    delivery: twitterDelivery,
+    delivery: isTestMode ? new ConsoleDeliveryService() : twitterDelivery,
     prompt: async () => {
       // Only get the prompt here, don't set the callback
       const { prompt } = await githubService.getNextPRAnalysis();

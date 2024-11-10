@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.30.1",
+    "@dsnp/parquetjs": "^1.8.5",
     "@octokit/rest": "^21.0.2",
     "@octokit/webhooks-types": "^7.6.1",
     "@safe-global/api-kit": "^2.5.4",

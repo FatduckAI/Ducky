@@ -23,13 +23,13 @@ export async function fetchBTCPriceData(): Promise<{
     const priceChange = ((currentPrice - startPrice) / startPrice) * 100;
 
     await db.insert(btcPriceData).values({
-      currentPrice: currentPrice,
-      priceChange7d: priceChange,
+      currentPrice: Math.round(currentPrice),
+      priceChange7d: Math.round(priceChange),
     });
 
     return {
-      priceChange: priceChange,
-      currentPrice: currentPrice,
+      priceChange: Math.round(priceChange),
+      currentPrice: Math.round(currentPrice),
     };
   } catch (error) {
     console.error("Error fetching BTC price:", error);

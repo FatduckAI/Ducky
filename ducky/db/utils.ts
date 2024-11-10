@@ -3,7 +3,14 @@ import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
 import { and, asc, desc, eq, gt } from "drizzle-orm";
 import { db } from ".";
-import { btcPriceData, duckyAi, githubPRAnalysis, users } from "./schema";
+import {
+  btcPriceData,
+  duckyAi,
+  finetuneTweets,
+  genericData,
+  githubPRAnalysis,
+  users,
+} from "./schema";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -113,6 +120,18 @@ export const getDuckyAiForTweetGenerationTweets = async () => {
     .where(and(eq(duckyAi.speaker, "Ducky"), eq(duckyAi.posted, true)))
     .orderBy(desc(duckyAi.timestamp))
     .limit(50);
+};
+
+export const getTweetsFromFinetune = async () => {
+  return await db.select().from(finetuneTweets).limit(150);
+};
+
+export const getGenericData = async () => {
+  return await db.select().from(genericData);
+};
+
+export const getGithubPRAnalysis = async () => {
+  return await db.select().from(githubPRAnalysis);
 };
 
 export const getDuckyAiForTweetGenerationCleo = async () => {
